@@ -1,2 +1,6 @@
 . Background using SCREEN/READONLY flags
 . Edit Video Flags
+. Cartridget Info Window
+. Show/Hide Graphics ...
+. Buttons for Keys
+. Graphical Border + Keys for Screen

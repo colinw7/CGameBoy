@@ -3750,7 +3750,7 @@ void
 CZ80::
 f_ld_hl_sp_n(CZ80OpData *op_data)
 {
-  op_data->z80->setHL(op_data->z80->getWord(op_data->z80->getSP() + op_data->getSByte1()));
+  op_data->z80->setHL(op_data->z80->getWord(op_data->z80->getSP() + op_data->getSByte2()));
 }
 #endif
 
@@ -6576,9 +6576,9 @@ f_err(CZ80OpData *op_data)
 
 void
 CZ80::
-f_invalid(CZ80OpData *)
+f_invalid(CZ80OpData *op_data)
 {
-  std::cerr << "invalid op" << std::endl;
+  std::cerr << "invalid op : " << std::hex << op_data->op->ind << std::endl;
 
-  assert(false);
+  //assert(false);
 }

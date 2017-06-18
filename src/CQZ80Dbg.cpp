@@ -57,8 +57,8 @@ setFixedFont(const QFont &font)
 
   memoryText_      ->setFont(getFixedFont());
   instructionsText_->setFont(getFixedFont());
-  stackText_      ->setFont(getFixedFont());
-  breakpointsText_->setFont(getFixedFont());
+  stackText_       ->setFont(getFixedFont());
+  breakpointsText_ ->setFont(getFixedFont());
 
   af_edit_ ->setFont(getFixedFont());
   af1_edit_->setFont(getFixedFont());
@@ -1137,12 +1137,15 @@ paintEvent(QPaintEvent *)
         std::string mid = line.memStr().substr(i1, 2);
         std::string rhs = line.memStr().substr(i2);
 
-        p.drawText(x                 , ya, lhs.c_str());
-        p.drawText(x + char_width_*i2, ya, rhs.c_str());
+        int w1 = fm.width(lhs.c_str());
+        int w2 = fm.width(mid.c_str());
+
+        p.drawText(x          , ya, lhs.c_str());
+        p.drawText(x + w1 + w2, ya, rhs.c_str());
 
         p.setPen(dbg_->currentColor());
 
-        p.drawText(x + char_width_*i1, ya, mid.c_str());
+        p.drawText(x + w1, ya, mid.c_str());
       }
       else {
         p.drawText(x, ya, line.memStr().c_str());

@@ -98,6 +98,16 @@ CGameBoy()
   z80_.setExecData(execData_ = new CGameBoyExecData(this));
   z80_.setMemData (memData_  = new CGameBoyMemData (this));
   z80_.setPortData(portData_ = new CGameBoyPortData(this));
+
+  //---
+
+  ram_ = new uchar [65536];
+
+  //---
+
+  z80_.setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+                                   uint(CZ80MemType::WRITE_TRIGGER));
+  z80_.setMemFlags(0x8000, 0x2000, uint(CZ80MemType::SCREEN));
 }
 
 CGameBoy::
@@ -137,7 +147,7 @@ loadCartridge(const std::string &filename)
   }
 
   static size_t cartridgeSizes[] = {
-      32767, // 0 - 256Kbit =  32KByte =   2 banks
+      32768, // 0 - 256Kbit =  32KByte =   2 banks
       65536, // 1 - 512Kbit =  64KByte =   4 banks
      131072, // 2 -   1Mbit = 128KByte =   8 banks
      262144, // 3 -   2Mbit = 256KByte =  16 banks
@@ -159,21 +169,17 @@ loadCartridge(const std::string &filename)
 
   memData_->setEnabled(false);
 
-  z80->setBytes(cartridge_, 0, 32678);
+  z80_.resetMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+                                     uint(CZ80MemType::WRITE_TRIGGER));
+
+  z80->setBytes(cartridge_, 0, 0x8000);
+
+  z80_.setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+                                   uint(CZ80MemType::WRITE_TRIGGER));
 
   memData_->setEnabled(true);
 
   //---
-
-  ram_ = new uchar [65536];
-
-  //---
-
-  z80->setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
-                                   uint(CZ80MemType::WRITE_TRIGGER));
-  z80->setMemFlags(0x8000, 0x2000, uint(CZ80MemType::SCREEN));
-
-  z80->setPC(0x000);
 
   return true;
 }
@@ -367,7 +373,10 @@ memReadData(uchar *data, ushort pos)
 
   // 16kB switchable ROM bank
   if      (pos <= 0x4000 && pos < 0x8000) {
-    *data = gameboy_->cartridge()[pos + gameboy_->romOffset()];
+    if (gameboy_->cartridge())
+      *data = gameboy_->readCartridge(pos + gameboy_->romOffset());
+    else
+      *data = z80_.getMemory(pos);
   }
   // 8kB switchable RAM bank
   else if (pos <= 0xA000 && pos < 0xC000) {

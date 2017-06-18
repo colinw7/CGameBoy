@@ -80,6 +80,8 @@ class CGameBoy {
 
   uchar *cartridge() const { return cartridge_; }
 
+  uchar readCartridge(ushort pos) const { return cartridge_[pos]; }
+
   size_t cartridgeLen() const { return cartridgeLen_; }
 
   const uchar &romBank() const { return romBank_; }

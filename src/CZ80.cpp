@@ -3594,7 +3594,7 @@ getNumArgValues(uint type, uint arg)
       return 1;
 #ifdef GAMEBOY_Z80
     case A_REG_O:
-      return 0;
+      return 1;
 #endif
     default:
       return 0;
