@@ -1,0 +1,236 @@
+Interrupt Enable Register    
+---------------------------  FFFF
+Internal RAM
+---------------------------  FF80
+Empty but unusable for I/O
+---------------------------  FF4C
+I/O ports
+---------------------------  FF00
+Empty but unusable for I/O
+---------------------------  FEA0
+Sprite Attrib Memory (OAM)
+---------------------------  FE00
+Echo of 8kB Internal RAM
+---------------------------  E000
+8kB Internal RAM
+---------------------------  C000
+8kB switchable RAM bank
+---------------------------  A000
+8kB Video RAM
+---------------------------  8000 --
+16kB switchable ROM bank            |
+---------------------------  4000   | = 32kB Cartridge
+16kB ROM bank #0                    |
+---------------------------  0000 --
+
+0000-3FFF   16KB ROM Bank 00     (in cartridge, fixed at bank 00)
+4000-7FFF   16KB ROM Bank 01..NN (in cartridge, switchable bank number)
+8000-9FFF   8KB Video RAM (VRAM) (switchable bank 0-1 in CGB Mode)
+A000-BFFF   8KB External RAM     (in cartridge, switchable bank, if any)
+C000-CFFF   4KB Work RAM Bank 0 (WRAM)
+D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
+E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
+FE00-FE9F   Sprite Attribute Table (OAM)
+FEA0-FEFF   Not Usable
+FF00-FF7F   I/O Ports
+FF80-FFFE   High RAM (HRAM)
+FFFF        Interrupt Enable Register
+
+0000 Restart $00 Address
+     (RST $00 calls this address.)
+0008 Restart $08 Address
+     (RST $08 calls this address.)
+0010 Restart $10 Address
+     (RST $10 calls this address.)
+0018 Restart $18 Address
+     (RST $18 calls this address.)
+0020 Restart $20 Address
+     (RST $20 calls this address.)
+0028 Restart $28 Address
+     (RST $28 calls this address.)
+0030 Restart $30 Address
+     (RST $30 calls this address.)
+0038 Restart $38 Address
+     (RST $38 calls this address.)
+0040 Vertical Blank Interrupt Start Address
+
+0048 LCDC Status Interrupt Start Address
+
+0050 Timer Overflow Interrupt Start Address
+
+0058 Serial Transfer Completion Interrupt
+     Start Address
+
+0060 High-to-Low of P10-P13 Interrupt
+     Start Address
+
+An internal information area is located at 0100-014F in
+each cartridge. It contains the following values:
+
+0100-0103 This is the begin code execution point in a
+          cart. Usually there is a NOP and a JP
+          instruction here but not always.
+
+0104-0133  Scrolling Nintendo graphic:
+           CE ED 66 66 CC 0D 00 0B 03 73 00 83 00 0C 00 0D
+           00 08 11 1F 88 89 00 0E DC CC 6E E6 DD DD D9 99
+           BB BB 67 63 6E 0E EC CC DD DC 99 9F BB B9 33 3E
+           ( PROGRAM WON'T RUN IF CHANGED!!!)
+
+0134-0142 Title of the game in UPPER CASE ASCII. If it
+          is less than 16 characters then the
+          remaining bytes are filled with 00's.
+
+0143      $80 = Color GB, $00 or other = not Color GB
+0144      Ascii hex digit, high nibble of licensee
+          code (new).
+0145      Ascii hex digit, low nibble of licensee
+          code (new). (These are normally $00 if
+          [$014B] <> $33.)
+0146      GB/SGB Indicator (00 = GameBoy, 03 = Super
+          GameBoy functions)
+          (Super GameBoy functions won't work
+          if <> $03.)
+0147      Cartridge type:
+            0-ROM ONLY                12-ROM+MBC3+RAM
+            1-ROM+MBC1                13-ROM+MBC3+RAM+BATT
+            2-ROM+MBC1+RAM            19-ROM+MBC5
+            3-ROM+MBC1+RAM+BATT       1A-ROM+MBC5+RAM
+            5-ROM+MBC2                1B-ROM+MBC5+RAM+BATT
+            6-ROM+MBC2+BATTERY        1C-ROM+MBC5+RUMBLE
+            8-ROM+RAM                 1D-ROM+MBC5+RUMBLE+SRAM
+            9-ROM+RAM+BATTERY         1E-ROM+MBC5+RUMBLE+SRAM+BATT
+            B-ROM+MMM01               1F-Pocket Camera
+            C-ROM+MMM01+SRAM          FD-Bandai TAMA5
+            D-ROM+MMM01+SRAM+BATT     FE - Hudson HuC-3
+            F-ROM+MBC3+TIMER+BATT     FF - Hudson HuC-1
+           10-ROM+MBC3+TIMER+RAM+BATT
+           11-ROM+MBC3
+
+0148 ROM size:
+       0 - 256Kbit =  32KByte =   2 banks
+       1 - 512Kbit =  64KByte =   4 banks
+       2 -   1Mbit = 128KByte =   8 banks
+       3 -   2Mbit = 256KByte =  16 banks
+       4 -   4Mbit = 512KByte =  32 banks
+       5 -   8Mbit =   1MByte =  64 banks
+       6 -  16Mbit =   2MByte = 128 banks
+     $52 -   9Mbit = 1.1MByte =  72 banks
+     $53 -  10Mbit = 1.2MByte =  80 banks
+     $54 -  12Mbit = 1.5MByte =  96 banks
+
+0149 RAM size:
+     0 - None
+     1 -  16kBit =  2kB =  1 bank
+     2 -  64kBit =  8kB =  1 bank
+     3 - 256kBit = 32kB =  4 banks
+     4 -   1MBit =128kB = 16 banks
+
+014A Destination code:
+     0 - Japanese
+     1 - Non-Japanese
+
+014B Licensee code (old):
+     33 - Check 0144/0145 for Licensee code.
+     79 - Accolade
+     A4 - Konami
+     (Super GameBoy function won't work
+     if <> $33.)
+
+014C Mask ROM Version number (Usually $00)
+
+014D Complement check
+     (PROGRAM WON'T RUN ON GB IF NOT CORRECT!!!)
+     (It will run on Super GB, however,
+     if incorrect.)
+
+014E-014F Checksum (higher byte first) produced by
+          adding all bytes of a cartridge except for
+          two checksum bytes and taking two lower
+          bytes of the result. (GameBoy ignores this
+          value.)
+
+0150 Start address
+
+fe00-fe9f 40 OBJ characters
+  y-axis, x-axis, character code, attribute (4 bytes)
+
+8000-9800 Character Data
+9800      BG Data 1
+9C00      BG Data 2
+
+SP init 0xFFFE
+
+-------------------
+
+LCD Display Registers
+
+VBK  ff4f
+
+P1   ff00
+SB   ff01
+SC   ff02
+DIV  ff04
+TIMA ff05
+TMA  ff06
+TAC  ff07
+
+IF   ff0f
+IE   ffff
+IME
+
+LCDC ff40 (init value 0x91)
+STAT ff41
+SCY  ff42 // window y offset
+SCX  ff43 // window x offset
+LY   ff44
+LYC  ff45
+DMA  ff46
+BGP  ff47 // palete color 1 (Non CGB)
+OBP0 ff48 // palete color 2 (Non CGB)
+OBP1 ff49 // palete color 3 (Non CGB)
+WY   ff4a
+WX   ff4b
+
+FF40 - LCDC - LCD Control (R/W)
+
+  Bit 7 - LCD Display Enable             (0=Off, 1=On)
+  Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+  Bit 5 - Window Display Enable          (0=Off, 1=On)
+  Bit 4 - BG & Window Tile Data Select   (0=8800-97FF, 1=8000-8FFF)
+  Bit 3 - BG Tile Map Display Select     (0=9800-9BFF, 1=9C00-9FFF)
+  Bit 2 - OBJ (Sprite) Size              (0=8x8, 1=8x16)
+  Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
+  Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
+
+FF41 - STAT - LCDC Status (R/W)
+
+  Bit 6 - LYC=LY Coincidence Interrupt (1=Enable) (Read/Write)
+  Bit 5 - Mode 2 OAM Interrupt         (1=Enable) (Read/Write)
+  Bit 4 - Mode 1 V-Blank Interrupt     (1=Enable) (Read/Write)
+  Bit 3 - Mode 0 H-Blank Interrupt     (1=Enable) (Read/Write)
+  Bit 2 - Coincidence Flag  (0:LYC<>LY, 1:LYC=LY) (Read Only)
+  Bit 1-0 - Mode Flag       (Mode 0-3, see below) (Read Only)
+            0: During H-Blank
+            1: During V-Blank
+            2: During Searching OAM-RAM
+            3: During Transfering Data to LCD Driver
+
+BCPS ff68 // palete color 1 (CGB)
+BCPD ff69 // palete color 2 (CGB)
+OCPS ff6a // palete color 3 (CGB)
+OCPD ff6b // palete color 4 (CGB)
+
+OAM
+OBJ0 fe00
+     fe01
+     fe02
+     fe03
+
+SVBK ff70
+KEY1 ff4d
+
+RP   ff56
+
+NR xx        ff10-ff26
+Waveform RAM ff30-ff3f
