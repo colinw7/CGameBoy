@@ -1,6 +1,8 @@
 #include <CQGameBoy.h>
 #include <CGameBoy.h>
 #include <CQUtil.h>
+#include <QMouseEvent>
+#include <svg/GameboyShell_png.h>
 
 #include <QPainter>
 #include <QTimer>
@@ -18,9 +20,11 @@ CQGameBoy(CGameBoy *gameboy) :
   int w = gameboy_->getScreenPixelWidth ()*s + 2*border_;
   int h = gameboy_->getScreenPixelHeight()*s + 2*border_;
 
-  resize(w, h);
+  resize(302, 383);
 
   image_ = new QImage(QSize(w, h), QImage::Format_ARGB32);
+
+  pixmap_.loadFromData(GameboyShell_data, GAMEBOYSHELL_DATA_LEN);
 
   ipainter_ = new QPainter(image_);
 }
@@ -90,7 +94,8 @@ screenStep(int t)
         if (screenLine_ >= 144) {
           setLCDMode(1); // Vertical Blank
 
-          z80->setBit(0xff0f, 0);
+          if (z80->getAllowInterrups())
+            z80->setBit(0xff0f, 0);
         }
         else {
           setLCDMode(2); // OAM
@@ -139,6 +144,7 @@ setLCDMode(int mode)
 
   CZ80 *z80 = gameboy_->getZ80();
 
+  // update mode in stat (bottom two bits)
   z80->setByte(0xff41, (z80->getByte(0xff41) & 0xFC) | screenMode_);
 }
 
@@ -149,6 +155,13 @@ updateLCDLine()
   CZ80 *z80 = gameboy_->getZ80();
 
   z80->setByte(0xff44, screenLine_);
+
+  uchar lyc = z80->getByte(0xff45); // LYC
+
+  if (lyc == screenLine_)
+    z80->setBit  (0xff41, 2);
+  else
+    z80->resetBit(0xff41, 2);
 }
 
 void
@@ -164,7 +177,64 @@ paintEvent(QPaintEvent *)
 {
   QPainter painter(this);
 
-  painter.drawImage(QPoint(border_, border_), *image_);
+  painter.drawPixmap(0, 0, pixmap_);
+
+  painter.drawImage(QPoint(61, 30), *image_);
+
+  painter.setPen(Qt::NoPen);
+  painter.setBrush(Qt::black);
+
+  QRect arect(214, 231, 34, 34);
+  QRect brect(171, 258, 34, 34);
+
+  //painter.drawEllipse(arect);
+  //painter.drawEllipse(brect);
+
+  painter.setPen(Qt::white);
+
+  QFont font;
+
+  font.setPointSizeF(20);
+
+  painter.setFont(font);
+
+  painter.drawText(arect, Qt::AlignCenter, "A");
+  painter.drawText(brect, Qt::AlignCenter, "B");
+
+  QPainterPath path;
+
+  path.moveTo(68, 248);
+  path.lineTo(76, 230);
+  path.lineTo(84, 248);
+
+  path.closeSubpath();
+
+  path.moveTo(62, 253);
+  path.lineTo(44, 261);
+  path.lineTo(62, 269);
+
+  path.closeSubpath();
+
+  path.moveTo( 91, 253);
+  path.lineTo(109, 261);
+  path.lineTo( 91, 269);
+
+  path.closeSubpath();
+
+  path.moveTo(68, 277);
+  path.lineTo(76, 295);
+  path.lineTo(84, 277);
+
+  path.closeSubpath();
+
+  painter.fillPath(path, Qt::white);
+}
+
+void
+CQGameBoy::
+mousePressEvent(QMouseEvent *e)
+{
+std::cerr << e->x() << " " << e->y() << std::endl;
 }
 
 void
@@ -189,9 +259,9 @@ drawScreenPixel(int pixel, int line)
   uchar lcdc = z80->getByte(0xff40);
 
 //bool lcdDisplay    = TST_BIT(lcdc, 7);
-  int  windowTile    = TST_BIT(lcdc, 6);
+//int  windowTile    = TST_BIT(lcdc, 6);
 //bool windowDisplay = TST_BIT(lcdc, 5);
-//int  windowTile    = TST_BIT(lcdc, 4);
+  int  bgWindowData  = TST_BIT(lcdc, 4);
   int  bgTile        = TST_BIT(lcdc, 3);
 //int  spriteSize    = TST_BIT(lcdc, 2);
 //int  spriteDisplay = TST_BIT(lcdc, 1);
@@ -205,7 +275,7 @@ drawScreenPixel(int pixel, int line)
 
   //---
 
-  ushort memStart = (windowTile == 0 ? 0x9800 : 0x9C00);
+  ushort memStart = (bgTile == 0 ? 0x9800 : 0x9C00);
 
   int ty = line1 / 8;
   int tl = line1 % 8;
@@ -217,7 +287,7 @@ drawScreenPixel(int pixel, int line)
 
   uchar tile = z80->getByte(p);
 
-  drawTilePixel(pixel, line, bgTile, tile, tp, tl);
+  drawTilePixel(pixel, line, bgWindowData, tile, tp, tl);
 }
 
 void

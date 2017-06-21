@@ -63,6 +63,7 @@ CQGameBoyVideo(CQGameBoy *gameboy) :
   registersLayout->addWidget(addRegisterWidget("SCX" , 0xff43));
   registersLayout->addWidget(addRegisterWidget("LY"  , 0xff44));
   registersLayout->addWidget(addRegisterWidget("LYC" , 0xff45));
+  registersLayout->addWidget(addRegisterWidget("DMA" , 0xff46));
   registersLayout->addWidget(addRegisterWidget("BGP" , 0xff47));
   registersLayout->addWidget(addRegisterWidget("OBP0", 0xff48));
   registersLayout->addWidget(addRegisterWidget("OBP1", 0xff49));
@@ -187,6 +188,9 @@ memChanged(ushort pos, ushort len)
     return;
 
   for (int i = 0; i < len; ++i) {
+    if (pos < 0xff40)
+      continue;
+
     auto p = addrEdits_.find(pos + i);
 
     if (p == addrEdits_.end())

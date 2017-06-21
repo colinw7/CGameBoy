@@ -644,9 +644,9 @@ setPOIY(schar o, uchar iy)
 
 void
 CZ80::
-setPSP2(ushort sp)
+setPSP2(ushort w)
 {
-  setWord(getSP(), sp);
+  setWord(getSP(), w);
 }
 
 //---------

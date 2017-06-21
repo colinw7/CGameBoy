@@ -39,7 +39,10 @@ class CQGameBoy : public QWidget, public CZ80Screen {
   void redraw();
 
   void paintEvent(QPaintEvent *);
-  void keyPressEvent(QKeyEvent *e);
+
+  void mousePressEvent(QMouseEvent *e);
+
+  void keyPressEvent  (QKeyEvent *e);
   void keyReleaseEvent(QKeyEvent *e);
 
   void drawScreen();
@@ -65,6 +68,7 @@ class CQGameBoy : public QWidget, public CZ80Screen {
   int       instSteps_    { 1000 };
   int       border_       { 0 };
   QImage*   image_;
+  QPixmap   pixmap_;
   QPainter* ipainter_     { nullptr };
   uint      screenMode_   { 0 };
   uint      screenScan_   { 0 };

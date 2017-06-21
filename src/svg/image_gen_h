@@ -1,0 +1,15 @@
+#!/bin/csh -f
+
+if ($#argv > 0) then
+  set files = $*
+else
+  set files = *.png
+endif
+
+foreach file ($files)
+  set name = $file:r
+
+  CBinArr ${name}.png > ${name}_png.h
+end
+
+exit 0
