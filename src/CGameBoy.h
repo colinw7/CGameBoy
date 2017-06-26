@@ -3,6 +3,7 @@
 
 #include <CZ80.h>
 #include <CRGBA.h>
+#include <CEvent.h>
 
 class CGameBoyExecData;
 class CGameBoyMemData;
@@ -34,10 +35,29 @@ struct CGameBoySprite {
   }
 };
 
+struct CGameBoyInterruptFlag {
+  uchar pad   :3;
+  uchar key   :1;
+  uchar serial:1;
+  uchar timer :1;
+  uchar lcdc  :1;
+  uchar vblank:1;
+};
+
+struct CGameBoyInterruptEnable {
+  uchar pad   :3;
+  uchar key   :1;
+  uchar serial:1;
+  uchar timer :1;
+  uchar lcdc  :1;
+  uchar vblank:1;
+};
+
 class CGameBoy {
  public:
   CGameBoy();
- ~CGameBoy();
+
+  virtual ~CGameBoy();
 
   void setInvert(bool invert) { invert_ = invert; }
   bool getInvert() { return invert_; }
@@ -102,12 +122,36 @@ class CGameBoy {
   void setRamOffset(ushort s) { ramOffset_ = s; }
 
   bool loadCartridge(const std::string &fileName);
+  bool loadAsm(const std::string &fileName);
 
   bool onScreen(ushort pos, ushort len);
 
   bool getScreenPos(ushort pos, int *x, int *y);
 
   bool getSprite(int i, CGameBoySprite &sprite);
+
+  uchar interruptFlag  () const { return z80_.getMemory(0xff0f); }
+  uchar interruptEnable() const { return z80_.getMemory(0xffff); }
+
+  uchar keySel() const;
+
+  uchar key0() const { return keys_[0] & 0x0F; }
+  uchar key1() const { return keys_[1] & 0x0F; }
+
+  virtual void updateKeys() { }
+
+  virtual void keyPress  (CKeyType key);
+  virtual void keyRelease(CKeyType key);
+
+  // Start : Home, Select : Return, A : A, B : B
+  CKeyType aKey     () const { return CKEY_TYPE_A;      }
+  CKeyType bKey     () const { return CKEY_TYPE_B;      }
+  CKeyType leftKey  () const { return CKEY_TYPE_Left;   }
+  CKeyType rightKey () const { return CKEY_TYPE_Right;  }
+  CKeyType upKey    () const { return CKEY_TYPE_Up;     }
+  CKeyType downKey  () const { return CKEY_TYPE_Down;   }
+  CKeyType selectKey() const { return CKEY_TYPE_Return; }
+  CKeyType startKey () const { return CKEY_TYPE_Home;   }
 
  private:
   CZ80              z80_;
@@ -126,6 +170,7 @@ class CGameBoy {
   uchar*            ram_           { nullptr };
   uchar             ramBank_       { 0 };
   ushort            ramOffset_     { 0x0000 };
+  uchar             keys_[2]       { 0x0f, 0x0f };
 };
 
 #endif

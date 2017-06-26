@@ -133,5 +133,5 @@ void
 CZ80::
 stop()
 {
-  stop_ = true;
+  setStop(true);
 }

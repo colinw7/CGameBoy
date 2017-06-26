@@ -1,97 +1,42 @@
 #ifndef CQGameBoy_H
 #define CQGameBoy_H
 
-#include <QWidget>
-#include <CZ80.h>
 #include <CGameBoy.h>
+#include <QFont>
+#include <QPointer>
 
-//---
+class CQGameBoyScreen;
+class CQGameBoyVideo;
+class CQGameBoyKeys;
+class CQGameBoyInterrupt;
+class CQGameBoyTimer;
+class CQGameBoyDbg;
 
-class CQGameBoy : public QWidget, public CZ80Screen {
-  Q_OBJECT
-
-  Q_PROPERTY(int border       READ border       WRITE setBorder      )
-  Q_PROPERTY(int instTimerLen READ instTimerLen WRITE setInstTimerLen)
-  Q_PROPERTY(int instSteps    READ instSteps    WRITE setInstSteps   )
-
+class CQGameBoy : public CGameBoy {
  public:
-  CQGameBoy(CGameBoy *gameboy);
+  CQGameBoy();
 
- ~CQGameBoy();
+  CQGameBoyVideo     *addVideo();
+  CQGameBoyKeys      *addKeys();
+  CQGameBoyInterrupt *addInterrupt();
+  CQGameBoyTimer     *addTimer();
+  CQGameBoyDbg       *addDebug();
 
-  CGameBoy *gameboy() const { return gameboy_; }
+  void setFixedFont(const QFont &font);
 
-  int border() const { return border_; }
-  void setBorder(int i) { border_ = i; }
+  void updateKeys() override;
 
-  int instTimerLen() const { return instTimerLen_; }
-  void setInstTimerLen(int i) { instTimerLen_ = i; }
-
-  int instSteps() const { return instSteps_; }
-  void setInstSteps(int i) { instSteps_ = i; }
-
-  void exec();
-
-  void screenMemChanged(ushort pos, ushort len) override;
-
-  void screenStep(int t) override;
-
-  void redraw();
-
-  void paintEvent(QPaintEvent *);
-
-  void mousePressEvent(QMouseEvent *e);
-
-  void keyPressEvent  (QKeyEvent *e);
-  void keyReleaseEvent(QKeyEvent *e);
-
-  void drawScreen();
-  void drawScreenPixel(int pixel, int line);
-
-  void drawTilePixel(int x, int y, int bank, int tile, int pixel, int line);
-
-  void displaySprites();
-
-  QSize sizeHint() const;
-
- public slots:
-  void instTimeOut();
+  void keyPress  (CKeyType key) override;
+  void keyRelease(CKeyType key) override;
 
  private:
-  void setLCDMode(int mode);
-  void updateLCDLine();
-
- private:
-  CGameBoy *gameboy_      { nullptr };
-  QTimer*   instTimer_    { nullptr };
-  int       instTimerLen_ { 1 };
-  int       instSteps_    { 1000 };
-  int       border_       { 0 };
-  QImage*   image_;
-  QPixmap   pixmap_;
-  QPainter* ipainter_     { nullptr };
-  uint      screenMode_   { 0 };
-  uint      screenScan_   { 0 };
-  uint      screenLine_   { 0 };
+  QFont                        fixedFont_;
+  QPointer<CQGameBoyScreen>    screen_;
+  QPointer<CQGameBoyVideo>     video_;
+  QPointer<CQGameBoyKeys>      keys_;
+  QPointer<CQGameBoyInterrupt> interrupt_;
+  QPointer<CQGameBoyTimer>     timer_;
+  QPointer<CQGameBoyDbg>       dbg_;
 };
-
-//---
-
-#if 0
-class CQGameBoyRenderer : public CGameBoyRenderer {
- public:
-  CQGameBoyRenderer(CQGameBoy *qgameboy, QPainter *painter) :
-   qgameboy_(qgameboy), painter_(painter) {
-  }
-
-  void clear(const CRGBA &bg);
-
- private:
-  CQGameBoy *qgameboy_ { nullptr };
-  QPainter  *painter_  { nullptr };
-};
-#endif
-
-//---
 
 #endif

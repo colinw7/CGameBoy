@@ -1,10 +1,11 @@
 #include <CQGameBoyDbg.h>
+#include <CQGameBoyScreen.h>
 #include <CQGameBoy.h>
 #include <QPushButton>
 
 CQGameBoyDbg::
 CQGameBoyDbg(CQGameBoy *gameboy) :
- CQZ80Dbg(gameboy->gameboy()->getZ80()), gameboy_(gameboy)
+ CQZ80Dbg(gameboy->getZ80()), gameboy_(gameboy)
 {
   setWindowTitle("GameBoy CPU Debugger");
 }
@@ -24,7 +25,7 @@ void
 CQGameBoyDbg::
 bootSlot()
 {
-  CZ80 *z80 = gameboy_->gameboy()->getZ80();
+  CZ80 *z80 = gameboy_->getZ80();
 
   z80->addBreakpoint(0x0100);
 

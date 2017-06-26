@@ -51,11 +51,16 @@ OBJECTS_DIR   = ../obj/
 SOURCES       = CGameBoy.cpp \
 		CQGameBoy.cpp \
 		CQGameBoyDbg.cpp \
-		CQGameBoyGraphics.cpp \
+		CQGameBoyHexEdit.cpp \
+		CQGameBoyInterrupt.cpp \
+		CQGameBoyKeys.cpp \
 		CQGameBoyMain.cpp \
+		CQGameBoyScreen.cpp \
+		CQGameBoyTimer.cpp \
+		CQGameBoyVideo.cpp \
 		CQZ80Dbg.cpp \
-		CZ80Assemble.cpp \
 		CZ80.cpp \
+		CZ80Assemble.cpp \
 		CZ80DebugData.cpp \
 		CZ80Disassemble.cpp \
 		CZ80Execute.cpp \
@@ -67,17 +72,26 @@ SOURCES       = CGameBoy.cpp \
 		CZ80Rst.cpp \
 		CZ80Snapshot.cpp \
 		CZ80SpeedData.cpp .moc/moc_CQGameBoyDbg.cpp \
-		.moc/moc_CQGameBoyGraphics.cpp \
-		.moc/moc_CQGameBoy.cpp \
+		.moc/moc_CQGameBoyHexEdit.cpp \
+		.moc/moc_CQGameBoyInterrupt.cpp \
+		.moc/moc_CQGameBoyKeys.cpp \
+		.moc/moc_CQGameBoyScreen.cpp \
+		.moc/moc_CQGameBoyTimer.cpp \
+		.moc/moc_CQGameBoyVideo.cpp \
 		.moc/moc_CQZ80Dbg.cpp
 OBJECTS       = ../obj/CGameBoy.o \
 		../obj/CQGameBoy.o \
 		../obj/CQGameBoyDbg.o \
-		../obj/CQGameBoyGraphics.o \
+		../obj/CQGameBoyHexEdit.o \
+		../obj/CQGameBoyInterrupt.o \
+		../obj/CQGameBoyKeys.o \
 		../obj/CQGameBoyMain.o \
+		../obj/CQGameBoyScreen.o \
+		../obj/CQGameBoyTimer.o \
+		../obj/CQGameBoyVideo.o \
 		../obj/CQZ80Dbg.o \
-		../obj/CZ80Assemble.o \
 		../obj/CZ80.o \
+		../obj/CZ80Assemble.o \
 		../obj/CZ80DebugData.o \
 		../obj/CZ80Disassemble.o \
 		../obj/CZ80Execute.o \
@@ -90,8 +104,12 @@ OBJECTS       = ../obj/CGameBoy.o \
 		../obj/CZ80Snapshot.o \
 		../obj/CZ80SpeedData.o \
 		../obj/moc_CQGameBoyDbg.o \
-		../obj/moc_CQGameBoyGraphics.o \
-		../obj/moc_CQGameBoy.o \
+		../obj/moc_CQGameBoyHexEdit.o \
+		../obj/moc_CQGameBoyInterrupt.o \
+		../obj/moc_CQGameBoyKeys.o \
+		../obj/moc_CQGameBoyScreen.o \
+		../obj/moc_CQGameBoyTimer.o \
+		../obj/moc_CQGameBoyVideo.o \
 		../obj/moc_CQZ80Dbg.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
@@ -158,31 +176,41 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
 		CQGameBoy.pro CGameBoy.h \
-		CQGameBoyDbg.h \
-		CQGameBoyGraphics.h \
 		CQGameBoy.h \
+		CQGameBoyDbg.h \
+		CQGameBoyHexEdit.h \
+		CQGameBoyInterrupt.h \
+		CQGameBoyKeys.h \
+		CQGameBoyScreen.h \
+		CQGameBoyTimer.h \
+		CQGameBoyVideo.h \
 		CQZ80Dbg.h \
+		CZ80.h \
 		CZ80Assemble.h \
 		CZ80DebugData.h \
 		CZ80Disassemble.h \
 		CZ80Execute.h \
 		CZ80Fn.h \
-		CZ80.h \
 		CZ80LabelData.h \
 		CZ80Load.h \
-		CZ80OpData.h \
 		CZ80Op.h \
+		CZ80OpData.h \
 		CZ80OpP.h \
 		CZ80Rst.h \
 		CZ80Snapshot.h \
 		CZ80SpeedData.h CGameBoy.cpp \
 		CQGameBoy.cpp \
 		CQGameBoyDbg.cpp \
-		CQGameBoyGraphics.cpp \
+		CQGameBoyHexEdit.cpp \
+		CQGameBoyInterrupt.cpp \
+		CQGameBoyKeys.cpp \
 		CQGameBoyMain.cpp \
+		CQGameBoyScreen.cpp \
+		CQGameBoyTimer.cpp \
+		CQGameBoyVideo.cpp \
 		CQZ80Dbg.cpp \
-		CZ80Assemble.cpp \
 		CZ80.cpp \
+		CZ80Assemble.cpp \
 		CZ80DebugData.cpp \
 		CZ80Disassemble.cpp \
 		CZ80Execute.cpp \
@@ -376,8 +404,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents CGameBoy.h CQGameBoyDbg.h CQGameBoyGraphics.h CQGameBoy.h CQZ80Dbg.h CZ80Assemble.h CZ80DebugData.h CZ80Disassemble.h CZ80Execute.h CZ80Fn.h CZ80.h CZ80LabelData.h CZ80Load.h CZ80OpData.h CZ80Op.h CZ80OpP.h CZ80Rst.h CZ80Snapshot.h CZ80SpeedData.h $(DISTDIR)/
-	$(COPY_FILE) --parents CGameBoy.cpp CQGameBoy.cpp CQGameBoyDbg.cpp CQGameBoyGraphics.cpp CQGameBoyMain.cpp CQZ80Dbg.cpp CZ80Assemble.cpp CZ80.cpp CZ80DebugData.cpp CZ80Disassemble.cpp CZ80Execute.cpp CZ80Fn.cpp CZ80LabelData.cpp CZ80Load.cpp CZ80Op.cpp CZ80OpData.cpp CZ80Rst.cpp CZ80Snapshot.cpp CZ80SpeedData.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents CGameBoy.h CQGameBoy.h CQGameBoyDbg.h CQGameBoyHexEdit.h CQGameBoyInterrupt.h CQGameBoyKeys.h CQGameBoyScreen.h CQGameBoyTimer.h CQGameBoyVideo.h CQZ80Dbg.h CZ80.h CZ80Assemble.h CZ80DebugData.h CZ80Disassemble.h CZ80Execute.h CZ80Fn.h CZ80LabelData.h CZ80Load.h CZ80Op.h CZ80OpData.h CZ80OpP.h CZ80Rst.h CZ80Snapshot.h CZ80SpeedData.h $(DISTDIR)/
+	$(COPY_FILE) --parents CGameBoy.cpp CQGameBoy.cpp CQGameBoyDbg.cpp CQGameBoyHexEdit.cpp CQGameBoyInterrupt.cpp CQGameBoyKeys.cpp CQGameBoyMain.cpp CQGameBoyScreen.cpp CQGameBoyTimer.cpp CQGameBoyVideo.cpp CQZ80Dbg.cpp CZ80.cpp CZ80Assemble.cpp CZ80DebugData.cpp CZ80Disassemble.cpp CZ80Execute.cpp CZ80Fn.cpp CZ80LabelData.cpp CZ80Load.cpp CZ80Op.cpp CZ80OpData.cpp CZ80Rst.cpp CZ80Snapshot.cpp CZ80SpeedData.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -400,34 +428,39 @@ check: first
 
 compiler_rcc_make_all:
 compiler_rcc_clean:
-compiler_moc_header_make_all: .moc/moc_CQGameBoyDbg.cpp .moc/moc_CQGameBoyGraphics.cpp .moc/moc_CQGameBoy.cpp .moc/moc_CQZ80Dbg.cpp
+compiler_moc_header_make_all: .moc/moc_CQGameBoyDbg.cpp .moc/moc_CQGameBoyHexEdit.cpp .moc/moc_CQGameBoyInterrupt.cpp .moc/moc_CQGameBoyKeys.cpp .moc/moc_CQGameBoyScreen.cpp .moc/moc_CQGameBoyTimer.cpp .moc/moc_CQGameBoyVideo.cpp .moc/moc_CQZ80Dbg.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) .moc/moc_CQGameBoyDbg.cpp .moc/moc_CQGameBoyGraphics.cpp .moc/moc_CQGameBoy.cpp .moc/moc_CQZ80Dbg.cpp
+	-$(DEL_FILE) .moc/moc_CQGameBoyDbg.cpp .moc/moc_CQGameBoyHexEdit.cpp .moc/moc_CQGameBoyInterrupt.cpp .moc/moc_CQGameBoyKeys.cpp .moc/moc_CQGameBoyScreen.cpp .moc/moc_CQGameBoyTimer.cpp .moc/moc_CQGameBoyVideo.cpp .moc/moc_CQZ80Dbg.cpp
 .moc/moc_CQGameBoyDbg.cpp: CQZ80Dbg.h \
 		CZ80.h \
 		CQGameBoyDbg.h
 	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyDbg.h -o .moc/moc_CQGameBoyDbg.cpp
 
-.moc/moc_CQGameBoyGraphics.cpp: CZ80.h \
-		CQGameBoyGraphics.h
-	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyGraphics.h -o .moc/moc_CQGameBoyGraphics.cpp
+.moc/moc_CQGameBoyHexEdit.cpp: CQGameBoyHexEdit.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyHexEdit.h -o .moc/moc_CQGameBoyHexEdit.cpp
 
-.moc/moc_CQGameBoy.cpp: CZ80.h \
-		CGameBoy.h \
-		../../CUtil/include/CRGBA.h \
-		../../CUtil/include/CRGB.h \
-		../../CUtil/include/CRGBUtil.h \
-		../../CUtil/include/CCMYK.h \
-		../../CUtil/include/CHSL.h \
-		../../CUtil/include/CHSV.h \
-		../../CUtil/include/CHSB.h \
-		../../CUtil/include/CHSI.h \
-		../../CMath/include/CMathGen.h \
-		../../COS/include/NaN.h \
+.moc/moc_CQGameBoyInterrupt.cpp: CZ80.h \
+		CQGameBoyInterrupt.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyInterrupt.h -o .moc/moc_CQGameBoyInterrupt.cpp
+
+.moc/moc_CQGameBoyKeys.cpp: CQGameBoyKeys.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyKeys.h -o .moc/moc_CQGameBoyKeys.cpp
+
+.moc/moc_CQGameBoyScreen.cpp: CZ80.h \
+		../../CUtil/include/CEvent.h \
 		../../CMath/include/CIPoint2D.h \
-		../../CUtil/include/CColorComponent.h \
-		CQGameBoy.h
-	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoy.h -o .moc/moc_CQGameBoy.cpp
+		../../CUtil/include/CKeyType.h \
+		CQGameBoyScreen.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyScreen.h -o .moc/moc_CQGameBoyScreen.cpp
+
+.moc/moc_CQGameBoyTimer.cpp: CZ80.h \
+		CQGameBoyTimer.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyTimer.h -o .moc/moc_CQGameBoyTimer.cpp
+
+.moc/moc_CQGameBoyVideo.cpp: CQGameBoyHexEdit.h \
+		CZ80.h \
+		CQGameBoyVideo.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyVideo.h -o .moc/moc_CQGameBoyVideo.cpp
 
 .moc/moc_CQZ80Dbg.cpp: CZ80.h \
 		CQZ80Dbg.h
@@ -469,8 +502,8 @@ compiler_clean: compiler_moc_header_clean
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CGameBoy.o CGameBoy.cpp
 
 ../obj/CQGameBoy.o: CQGameBoy.cpp CQGameBoy.h \
-		CZ80.h \
 		CGameBoy.h \
+		CZ80.h \
 		../../CUtil/include/CRGBA.h \
 		../../CUtil/include/CRGB.h \
 		../../CUtil/include/CRGBUtil.h \
@@ -483,54 +516,25 @@ compiler_clean: compiler_moc_header_clean
 		../../COS/include/NaN.h \
 		../../CMath/include/CIPoint2D.h \
 		../../CUtil/include/CColorComponent.h \
-		../../CQUtil/include/CQUtil.h \
 		../../CUtil/include/CEvent.h \
 		../../CUtil/include/CKeyType.h \
-		../../CUtil/include/CLineDash.h \
-		../../CUtil/include/CILineDash.h \
-		../../CMath/include/CAngle.h \
-		../../CFont/include/CFontStyle.h \
-		../../CUtil/include/CFlags.h \
-		../../CFont/include/CFont.h \
-		../../CUtil/include/CRefPtr.h \
-		../../CImageLib/include/CImageLib.h \
-		../../CFile/include/CFile.h \
-		../../CFile/include/CFileBase.h \
-		../../CFile/include/CFileType.h \
-		../../CUtil/include/CAlignType.h \
-		../../CImageLib/include/CImageState.h \
-		../../CImageLib/include/CImage.h \
-		../../CUtil/include/CRGBACombineDef.h \
-		../../CMath/include/CISize2D.h \
-		../../CMath/include/CIBBox2D.h \
-		../../CMath/include/CIVector2D.h \
-		../../CUtil/include/COptVal.h \
-		../../CImageLib/include/CImagePtr.h \
-		../../CImageLib/include/CImageMgr.h \
-		../../CStrUtil/include/CStrUtil.h \
-		../../CImageLib/include/CImageAnim.h \
-		../../CImageLib/include/CImageFile.h \
-		../../CMath/include/CPoint2D.h \
-		../../CMath/include/CBBox2D.h \
-		../../CMath/include/CVector2D.h \
-		../../CMath/include/CSize2D.h \
-		../../CMath/include/CMatrix2D.h \
-		../../CMath/include/CMathMacros.h \
-		../../CMath/include/CMatrixType.h \
-		../../CUtil/include/CThrow.h \
-		../../CUtil/include/CBrush.h \
-		../../CUtil/include/CBrushStyle.h \
-		../../CUtil/include/CFillType.h \
-		../../CUtil/include/CAutoPtr.h \
-		../../CMath/include/CGenGradient.h \
-		../../CUtil/include/CPen.h \
-		../../CUtil/include/CLineCapType.h \
-		../../CUtil/include/CLineJoinType.h
+		CQGameBoyScreen.h \
+		CQGameBoyVideo.h \
+		CQGameBoyHexEdit.h \
+		CQGameBoyKeys.h \
+		CQGameBoyInterrupt.h \
+		CQGameBoyTimer.h \
+		CQGameBoyDbg.h \
+		CQZ80Dbg.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoy.o CQGameBoy.cpp
 
 ../obj/CQGameBoyDbg.o: CQGameBoyDbg.cpp CQGameBoyDbg.h \
 		CQZ80Dbg.h \
 		CZ80.h \
+		CQGameBoyScreen.h \
+		../../CUtil/include/CEvent.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CKeyType.h \
 		CQGameBoy.h \
 		CGameBoy.h \
 		../../CUtil/include/CRGBA.h \
@@ -543,12 +547,33 @@ compiler_clean: compiler_moc_header_clean
 		../../CUtil/include/CHSI.h \
 		../../CMath/include/CMathGen.h \
 		../../COS/include/NaN.h \
-		../../CMath/include/CIPoint2D.h \
 		../../CUtil/include/CColorComponent.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyDbg.o CQGameBoyDbg.cpp
 
-../obj/CQGameBoyGraphics.o: CQGameBoyGraphics.cpp CQGameBoyGraphics.h \
+../obj/CQGameBoyHexEdit.o: CQGameBoyHexEdit.cpp CQGameBoyHexEdit.h \
+		CQGameBoy.h \
+		CGameBoy.h \
 		CZ80.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CColorComponent.h \
+		../../CUtil/include/CEvent.h \
+		../../CUtil/include/CKeyType.h \
+		../../CStrUtil/include/CStrUtil.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyHexEdit.o CQGameBoyHexEdit.cpp
+
+../obj/CQGameBoyInterrupt.o: CQGameBoyInterrupt.cpp CQGameBoyInterrupt.h \
+		CZ80.h \
+		CQGameBoyHexEdit.h \
 		CQGameBoy.h \
 		CGameBoy.h \
 		../../CUtil/include/CRGBA.h \
@@ -563,9 +588,9 @@ compiler_clean: compiler_moc_header_clean
 		../../COS/include/NaN.h \
 		../../CMath/include/CIPoint2D.h \
 		../../CUtil/include/CColorComponent.h \
-		../../CQUtil/include/CQUtil.h \
 		../../CUtil/include/CEvent.h \
 		../../CUtil/include/CKeyType.h \
+		../../CQUtil/include/CQUtil.h \
 		../../CUtil/include/CLineDash.h \
 		../../CUtil/include/CILineDash.h \
 		../../CMath/include/CAngle.h \
@@ -606,10 +631,162 @@ compiler_clean: compiler_moc_header_clean
 		../../CUtil/include/CPen.h \
 		../../CUtil/include/CLineCapType.h \
 		../../CUtil/include/CLineJoinType.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyGraphics.o CQGameBoyGraphics.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyInterrupt.o CQGameBoyInterrupt.cpp
 
-../obj/CQGameBoyMain.o: CQGameBoyMain.cpp CQGameBoy.h \
+../obj/CQGameBoyKeys.o: CQGameBoyKeys.cpp CQGameBoyKeys.h \
+		CQGameBoy.h \
+		CGameBoy.h \
 		CZ80.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CColorComponent.h \
+		../../CUtil/include/CEvent.h \
+		../../CUtil/include/CKeyType.h \
+		../../CQUtil/include/CQUtil.h \
+		../../CUtil/include/CLineDash.h \
+		../../CUtil/include/CILineDash.h \
+		../../CMath/include/CAngle.h \
+		../../CFont/include/CFontStyle.h \
+		../../CUtil/include/CFlags.h \
+		../../CFont/include/CFont.h \
+		../../CUtil/include/CRefPtr.h \
+		../../CImageLib/include/CImageLib.h \
+		../../CFile/include/CFile.h \
+		../../CFile/include/CFileBase.h \
+		../../CFile/include/CFileType.h \
+		../../CUtil/include/CAlignType.h \
+		../../CImageLib/include/CImageState.h \
+		../../CImageLib/include/CImage.h \
+		../../CUtil/include/CRGBACombineDef.h \
+		../../CMath/include/CISize2D.h \
+		../../CMath/include/CIBBox2D.h \
+		../../CMath/include/CIVector2D.h \
+		../../CUtil/include/COptVal.h \
+		../../CImageLib/include/CImagePtr.h \
+		../../CImageLib/include/CImageMgr.h \
+		../../CStrUtil/include/CStrUtil.h \
+		../../CImageLib/include/CImageAnim.h \
+		../../CImageLib/include/CImageFile.h \
+		../../CMath/include/CPoint2D.h \
+		../../CMath/include/CBBox2D.h \
+		../../CMath/include/CVector2D.h \
+		../../CMath/include/CSize2D.h \
+		../../CMath/include/CMatrix2D.h \
+		../../CMath/include/CMathMacros.h \
+		../../CMath/include/CMatrixType.h \
+		../../CUtil/include/CThrow.h \
+		../../CUtil/include/CBrush.h \
+		../../CUtil/include/CBrushStyle.h \
+		../../CUtil/include/CFillType.h \
+		../../CUtil/include/CAutoPtr.h \
+		../../CMath/include/CGenGradient.h \
+		../../CUtil/include/CPen.h \
+		../../CUtil/include/CLineCapType.h \
+		../../CUtil/include/CLineJoinType.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyKeys.o CQGameBoyKeys.cpp
+
+../obj/CQGameBoyMain.o: CQGameBoyMain.cpp CQGameBoyScreen.h \
+		CZ80.h \
+		../../CUtil/include/CEvent.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CKeyType.h \
+		CQGameBoyVideo.h \
+		CQGameBoyHexEdit.h \
+		CQGameBoyKeys.h \
+		CQGameBoyDbg.h \
+		CQZ80Dbg.h \
+		CQGameBoy.h \
+		CGameBoy.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CUtil/include/CColorComponent.h \
+		../../CArgs/include/CArgs.h \
+		../../CQUtil/include/CQApp.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyMain.o CQGameBoyMain.cpp
+
+../obj/CQGameBoyScreen.o: CQGameBoyScreen.cpp CQGameBoyScreen.h \
+		CZ80.h \
+		../../CUtil/include/CEvent.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CKeyType.h \
+		CQGameBoy.h \
+		CGameBoy.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CUtil/include/CColorComponent.h \
+		../../CQUtil/include/CQUtil.h \
+		../../CUtil/include/CLineDash.h \
+		../../CUtil/include/CILineDash.h \
+		../../CMath/include/CAngle.h \
+		../../CFont/include/CFontStyle.h \
+		../../CUtil/include/CFlags.h \
+		../../CFont/include/CFont.h \
+		../../CUtil/include/CRefPtr.h \
+		../../CImageLib/include/CImageLib.h \
+		../../CFile/include/CFile.h \
+		../../CFile/include/CFileBase.h \
+		../../CFile/include/CFileType.h \
+		../../CUtil/include/CAlignType.h \
+		../../CImageLib/include/CImageState.h \
+		../../CImageLib/include/CImage.h \
+		../../CUtil/include/CRGBACombineDef.h \
+		../../CMath/include/CISize2D.h \
+		../../CMath/include/CIBBox2D.h \
+		../../CMath/include/CIVector2D.h \
+		../../CUtil/include/COptVal.h \
+		../../CImageLib/include/CImagePtr.h \
+		../../CImageLib/include/CImageMgr.h \
+		../../CStrUtil/include/CStrUtil.h \
+		../../CImageLib/include/CImageAnim.h \
+		../../CImageLib/include/CImageFile.h \
+		../../CMath/include/CPoint2D.h \
+		../../CMath/include/CBBox2D.h \
+		../../CMath/include/CVector2D.h \
+		../../CMath/include/CSize2D.h \
+		../../CMath/include/CMatrix2D.h \
+		../../CMath/include/CMathMacros.h \
+		../../CMath/include/CMatrixType.h \
+		../../CUtil/include/CThrow.h \
+		../../CUtil/include/CBrush.h \
+		../../CUtil/include/CBrushStyle.h \
+		../../CUtil/include/CFillType.h \
+		../../CUtil/include/CAutoPtr.h \
+		../../CMath/include/CGenGradient.h \
+		../../CUtil/include/CPen.h \
+		../../CUtil/include/CLineCapType.h \
+		../../CUtil/include/CLineJoinType.h \
+		svg/GameboyShell_png.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyScreen.o CQGameBoyScreen.cpp
+
+../obj/CQGameBoyTimer.o: CQGameBoyTimer.cpp CQGameBoyTimer.h \
+		CZ80.h \
+		CQGameBoyHexEdit.h \
+		CQGameBoy.h \
 		CGameBoy.h \
 		../../CUtil/include/CRGBA.h \
 		../../CUtil/include/CRGB.h \
@@ -623,17 +800,159 @@ compiler_clean: compiler_moc_header_clean
 		../../COS/include/NaN.h \
 		../../CMath/include/CIPoint2D.h \
 		../../CUtil/include/CColorComponent.h \
-		CQGameBoyGraphics.h \
-		CQGameBoyDbg.h \
-		CQZ80Dbg.h \
-		../../CArgs/include/CArgs.h \
-		../../CQUtil/include/CQApp.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyMain.o CQGameBoyMain.cpp
+		../../CUtil/include/CEvent.h \
+		../../CUtil/include/CKeyType.h \
+		../../CQUtil/include/CQUtil.h \
+		../../CUtil/include/CLineDash.h \
+		../../CUtil/include/CILineDash.h \
+		../../CMath/include/CAngle.h \
+		../../CFont/include/CFontStyle.h \
+		../../CUtil/include/CFlags.h \
+		../../CFont/include/CFont.h \
+		../../CUtil/include/CRefPtr.h \
+		../../CImageLib/include/CImageLib.h \
+		../../CFile/include/CFile.h \
+		../../CFile/include/CFileBase.h \
+		../../CFile/include/CFileType.h \
+		../../CUtil/include/CAlignType.h \
+		../../CImageLib/include/CImageState.h \
+		../../CImageLib/include/CImage.h \
+		../../CUtil/include/CRGBACombineDef.h \
+		../../CMath/include/CISize2D.h \
+		../../CMath/include/CIBBox2D.h \
+		../../CMath/include/CIVector2D.h \
+		../../CUtil/include/COptVal.h \
+		../../CImageLib/include/CImagePtr.h \
+		../../CImageLib/include/CImageMgr.h \
+		../../CStrUtil/include/CStrUtil.h \
+		../../CImageLib/include/CImageAnim.h \
+		../../CImageLib/include/CImageFile.h \
+		../../CMath/include/CPoint2D.h \
+		../../CMath/include/CBBox2D.h \
+		../../CMath/include/CVector2D.h \
+		../../CMath/include/CSize2D.h \
+		../../CMath/include/CMatrix2D.h \
+		../../CMath/include/CMathMacros.h \
+		../../CMath/include/CMatrixType.h \
+		../../CUtil/include/CThrow.h \
+		../../CUtil/include/CBrush.h \
+		../../CUtil/include/CBrushStyle.h \
+		../../CUtil/include/CFillType.h \
+		../../CUtil/include/CAutoPtr.h \
+		../../CMath/include/CGenGradient.h \
+		../../CUtil/include/CPen.h \
+		../../CUtil/include/CLineCapType.h \
+		../../CUtil/include/CLineJoinType.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyTimer.o CQGameBoyTimer.cpp
+
+../obj/CQGameBoyVideo.o: CQGameBoyVideo.cpp CQGameBoyVideo.h \
+		CQGameBoyHexEdit.h \
+		CZ80.h \
+		CQGameBoyScreen.h \
+		../../CUtil/include/CEvent.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CKeyType.h \
+		CQGameBoy.h \
+		CGameBoy.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CUtil/include/CColorComponent.h \
+		../../CQUtil/include/CQUtil.h \
+		../../CUtil/include/CLineDash.h \
+		../../CUtil/include/CILineDash.h \
+		../../CMath/include/CAngle.h \
+		../../CFont/include/CFontStyle.h \
+		../../CUtil/include/CFlags.h \
+		../../CFont/include/CFont.h \
+		../../CUtil/include/CRefPtr.h \
+		../../CImageLib/include/CImageLib.h \
+		../../CFile/include/CFile.h \
+		../../CFile/include/CFileBase.h \
+		../../CFile/include/CFileType.h \
+		../../CUtil/include/CAlignType.h \
+		../../CImageLib/include/CImageState.h \
+		../../CImageLib/include/CImage.h \
+		../../CUtil/include/CRGBACombineDef.h \
+		../../CMath/include/CISize2D.h \
+		../../CMath/include/CIBBox2D.h \
+		../../CMath/include/CIVector2D.h \
+		../../CUtil/include/COptVal.h \
+		../../CImageLib/include/CImagePtr.h \
+		../../CImageLib/include/CImageMgr.h \
+		../../CStrUtil/include/CStrUtil.h \
+		../../CImageLib/include/CImageAnim.h \
+		../../CImageLib/include/CImageFile.h \
+		../../CMath/include/CPoint2D.h \
+		../../CMath/include/CBBox2D.h \
+		../../CMath/include/CVector2D.h \
+		../../CMath/include/CSize2D.h \
+		../../CMath/include/CMatrix2D.h \
+		../../CMath/include/CMathMacros.h \
+		../../CMath/include/CMatrixType.h \
+		../../CUtil/include/CThrow.h \
+		../../CUtil/include/CBrush.h \
+		../../CUtil/include/CBrushStyle.h \
+		../../CUtil/include/CFillType.h \
+		../../CUtil/include/CAutoPtr.h \
+		../../CMath/include/CGenGradient.h \
+		../../CUtil/include/CPen.h \
+		../../CUtil/include/CLineCapType.h \
+		../../CUtil/include/CLineJoinType.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyVideo.o CQGameBoyVideo.cpp
 
 ../obj/CQZ80Dbg.o: CQZ80Dbg.cpp CQZ80Dbg.h \
 		CZ80.h \
 		../../CStrUtil/include/CStrUtil.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQZ80Dbg.o CQZ80Dbg.cpp
+
+../obj/CZ80.o: CZ80.cpp CZ80.h \
+		CZ80OpP.h \
+		CZ80Op.h \
+		../../CFile/include/CFile.h \
+		../../CFile/include/CFileBase.h \
+		../../CFile/include/CFileType.h \
+		../../CStrUtil/include/CStrUtil.h \
+		../../CCeil/include/CCeilP.h \
+		../../CGlob/include/CGlob.h \
+		../../CCeil/include/CAngleType.h \
+		../../CCeil/include/CCeilPTypes.h \
+		../../CUtil/include/CRefPtr.h \
+		../../CUtil/include/CAutoPtr.h \
+		../../CCeil/include/CCeilPError.h \
+		../../CCeil/include/CCeilPType.h \
+		../../CCeil/include/CCeilPValue.h \
+		../../CCeil/include/CCeilPOp.h \
+		../../CCeil/include/CCeilPIFunc.h \
+		../../CCeil/include/CCeilPArray.h \
+		../../CCeil/include/CCeilPObj.h \
+		../../CUtil/include/CMultiArray.h \
+		../../CCeil/include/CCeilPList.h \
+		../../CCeil/include/CCeilPStruct.h \
+		../../CCeil/include/CCeilPIdent.h \
+		../../CCeil/include/CCeilPInteger.h \
+		../../CCeil/include/CCeilPReal.h \
+		../../CCeil/include/CCeilPString.h \
+		../../CCeil/include/CCeilPStack.h \
+		../../CCeil/include/CCeilPVar.h \
+		../../CCeil/include/CCeilPDict.h \
+		../../CCeil/include/CCeilPFunc.h \
+		../../CCeil/include/CCeilPParse.h \
+		../../CStrUtil/include/CStrParse.h \
+		../../CCeil/include/CCeilPEval.h \
+		../../CCeil/include/CCeilPProcess.h \
+		../../CCeil/include/CCeilPUserfn.h \
+		../../CCeil/include/CCeilPScope.h \
+		../../CCeil/include/CCeilPInit.h \
+		../../CUtil/include/accessor.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CZ80.o CZ80.cpp
 
 ../obj/CZ80Assemble.o: CZ80Assemble.cpp CZ80Assemble.h \
 		CZ80.h \
@@ -677,47 +996,6 @@ compiler_clean: compiler_moc_header_clean
 		../../CCeil/include/CCeilPInit.h \
 		../../CUtil/include/accessor.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CZ80Assemble.o CZ80Assemble.cpp
-
-../obj/CZ80.o: CZ80.cpp CZ80.h \
-		CZ80OpP.h \
-		CZ80Op.h \
-		../../CFile/include/CFile.h \
-		../../CFile/include/CFileBase.h \
-		../../CFile/include/CFileType.h \
-		../../CStrUtil/include/CStrUtil.h \
-		../../CCeil/include/CCeilP.h \
-		../../CGlob/include/CGlob.h \
-		../../CCeil/include/CAngleType.h \
-		../../CCeil/include/CCeilPTypes.h \
-		../../CUtil/include/CRefPtr.h \
-		../../CUtil/include/CAutoPtr.h \
-		../../CCeil/include/CCeilPError.h \
-		../../CCeil/include/CCeilPType.h \
-		../../CCeil/include/CCeilPValue.h \
-		../../CCeil/include/CCeilPOp.h \
-		../../CCeil/include/CCeilPIFunc.h \
-		../../CCeil/include/CCeilPArray.h \
-		../../CCeil/include/CCeilPObj.h \
-		../../CUtil/include/CMultiArray.h \
-		../../CCeil/include/CCeilPList.h \
-		../../CCeil/include/CCeilPStruct.h \
-		../../CCeil/include/CCeilPIdent.h \
-		../../CCeil/include/CCeilPInteger.h \
-		../../CCeil/include/CCeilPReal.h \
-		../../CCeil/include/CCeilPString.h \
-		../../CCeil/include/CCeilPStack.h \
-		../../CCeil/include/CCeilPVar.h \
-		../../CCeil/include/CCeilPDict.h \
-		../../CCeil/include/CCeilPFunc.h \
-		../../CCeil/include/CCeilPParse.h \
-		../../CStrUtil/include/CStrParse.h \
-		../../CCeil/include/CCeilPEval.h \
-		../../CCeil/include/CCeilPProcess.h \
-		../../CCeil/include/CCeilPUserfn.h \
-		../../CCeil/include/CCeilPScope.h \
-		../../CCeil/include/CCeilPInit.h \
-		../../CUtil/include/accessor.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CZ80.o CZ80.cpp
 
 ../obj/CZ80DebugData.o: CZ80DebugData.cpp CZ80DebugData.h \
 		CZ80.h \
@@ -831,11 +1109,23 @@ compiler_clean: compiler_moc_header_clean
 ../obj/moc_CQGameBoyDbg.o: .moc/moc_CQGameBoyDbg.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyDbg.o .moc/moc_CQGameBoyDbg.cpp
 
-../obj/moc_CQGameBoyGraphics.o: .moc/moc_CQGameBoyGraphics.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyGraphics.o .moc/moc_CQGameBoyGraphics.cpp
+../obj/moc_CQGameBoyHexEdit.o: .moc/moc_CQGameBoyHexEdit.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyHexEdit.o .moc/moc_CQGameBoyHexEdit.cpp
 
-../obj/moc_CQGameBoy.o: .moc/moc_CQGameBoy.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoy.o .moc/moc_CQGameBoy.cpp
+../obj/moc_CQGameBoyInterrupt.o: .moc/moc_CQGameBoyInterrupt.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyInterrupt.o .moc/moc_CQGameBoyInterrupt.cpp
+
+../obj/moc_CQGameBoyKeys.o: .moc/moc_CQGameBoyKeys.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyKeys.o .moc/moc_CQGameBoyKeys.cpp
+
+../obj/moc_CQGameBoyScreen.o: .moc/moc_CQGameBoyScreen.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyScreen.o .moc/moc_CQGameBoyScreen.cpp
+
+../obj/moc_CQGameBoyTimer.o: .moc/moc_CQGameBoyTimer.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyTimer.o .moc/moc_CQGameBoyTimer.cpp
+
+../obj/moc_CQGameBoyVideo.o: .moc/moc_CQGameBoyVideo.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyVideo.o .moc/moc_CQGameBoyVideo.cpp
 
 ../obj/moc_CQZ80Dbg.o: .moc/moc_CQZ80Dbg.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQZ80Dbg.o .moc/moc_CQZ80Dbg.cpp

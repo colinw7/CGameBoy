@@ -17,7 +17,7 @@ CZ80()
   memset(memory_, 0, 65536);
   memset(flags_ , 0, 65536);
 
-  mhz_ = 4.00;
+  mhz_ = 4.00; // 4,194,304Hz for gameboy
   htz_ = 50.0;
   t_   = 0;
 
@@ -26,7 +26,7 @@ CZ80()
   im0_ = 0x38;
   im2_ = 0xfe;
 
-  ifreq_ = int(mhz_*1e6/htz_);
+  ifreq_ = int(mhz_*1e6/htz_); // cycles per second
 
   setWord(0x0000, 0x76);
   setWord(0x0008, 0x76);
@@ -59,7 +59,9 @@ CZ80::
 #endif
 
   delete dump_file_;
+
   delete [] memory_;
+  delete [] flags_;
 }
 
 void
@@ -108,7 +110,7 @@ reset()
 
   setHalt(false);
 
-  stop_ = false;
+  setStop(false);
 
   if (debugData_)
     debugData_->removeAllBreakpoints();
@@ -197,9 +199,9 @@ setRstData(CZ80RstData *rst_data)
 
 void
 CZ80::
-setDebugData(CZ80DebugData *debug_data)
+setDebugData(CZ80DebugData *debugData)
 {
-  debugData_ = debug_data;
+  debugData_ = debugData;
 }
 
 void
@@ -328,6 +330,10 @@ setF(uchar f)
 {
   registers_.f_ = f;
 
+#ifdef GAMEBOY_Z80
+  registers_.f_ &= 0xf0;
+#endif
+
   if (debugData_)
     debugData_->setAFChanged(true);
 }
@@ -407,6 +413,10 @@ CZ80::
 setAF(ushort af)
 {
   registers_.af_ = af;
+
+#ifdef GAMEBOY_Z80
+  registers_.f_ &= 0xf0;
+#endif
 
   if (debugData_)
     debugData_->setAFChanged(true);
@@ -657,6 +667,10 @@ setFlag(uchar bit)
 {
   SET_BIT(registers_.f_, bit);
 
+#ifdef GAMEBOY_Z80
+  registers_.f_ &= 0xf0;
+#endif
+
   if (debugData_)
     debugData_->setAFChanged(true);
 }
@@ -666,6 +680,10 @@ CZ80::
 resFlag(uchar bit)
 {
   RST_BIT(registers_.f_, bit);
+
+#ifdef GAMEBOY_Z80
+  registers_.f_ &= 0xf0;
+#endif
 
   if (debugData_)
     debugData_->setAFChanged(true);
@@ -705,36 +723,42 @@ decT(ushort d)
     t_ -= d;
   else
     t_ = 0;
+
+  if (execData_)
+    execData_->decT(d);
 }
 
 void
 CZ80::
 incT(ushort d)
 {
-  if (t_ + d <= ifreq_)
-    t_ += d;
-  else {
-    t_ = 0;
+  ulong t1 = t_;
+
+  t_ += d;
+
+#ifndef GAMEBOY_Z80
+  if (t_ >= ifreq_) {
+    t_ -= ifreq_;
 
     if (execData_)
-      t_ = execData_->timerOverflow();
-    else
-      t_ = interrupt();
+      execData_->overflowT();
   }
-}
+#else
+  if (t_ < t1) {
+    if (execData_)
+      execData_->overflowT();
+  }
+#endif
 
-int
-CZ80::
-timerInterrupt()
-{
-  return interrupt();
+  if (execData_)
+    execData_->incT(d);
 }
 
 int
 CZ80::
 interrupt()
 {
-  if (! getAllowInterrups())
+  if (! getAllowInterrupts())
     return 0;
 
   if (speedData_)
@@ -1735,6 +1759,7 @@ xorA(uchar a)
 
 //---------
 
+#ifndef GAMEBOY_Z80
 void
 CZ80::
 sllA()
@@ -1790,7 +1815,65 @@ sllPHL()
 {
   setPHL(sll(getPHL()));
 }
+#else
+void
+CZ80::
+swapA()
+{
+  setA(swap(getA()));
+}
 
+void
+CZ80::
+swapB()
+{
+  setB(swap(getB()));
+}
+
+void
+CZ80::
+swapC()
+{
+  setC(swap(getC()));
+}
+
+void
+CZ80::
+swapD()
+{
+  setD(swap(getD()));
+}
+
+void
+CZ80::
+swapE()
+{
+  setE(swap(getE()));
+}
+
+void
+CZ80::
+swapH()
+{
+  setH(swap(getH()));
+}
+
+void
+CZ80::
+swapL()
+{
+  setL(swap(getL()));
+}
+
+void
+CZ80::
+swapPHL()
+{
+  setPHL(swap(getPHL()));
+}
+#endif
+
+#ifndef GAMEBOY_Z80
 void
 CZ80::
 sllPOIX(schar o)
@@ -1804,6 +1887,7 @@ sllPOIY(schar o)
 {
   setPOIY(o, sll(getPOIY(o)));
 }
+#endif
 
 //---------
 
@@ -2467,6 +2551,7 @@ rr(uchar r)
 
 //---------
 
+#ifndef GAMEBOY_Z80
 uchar
 CZ80::
 sll(uchar r)
@@ -2484,6 +2569,19 @@ sll(uchar r)
 
   return r;
 }
+#else
+uchar
+CZ80::
+swap(uchar r)
+{
+  uchar h = r & 0xF0;
+  uchar l = r & 0x0F;
+
+  r = (h >> 4) | (l << 4);
+
+  return r;
+}
+#endif
 
 uchar
 CZ80::
@@ -2989,14 +3087,16 @@ void
 CZ80::
 di()
 {
-  setIFF(0);
+  setIFF1(0);
+  setIFF2(0);
 }
 
 void
 CZ80::
 ei()
 {
-  setIFF(1);
+  setIFF1(1);
+  setIFF2(1);
 }
 
 void
@@ -3021,7 +3121,7 @@ void
 CZ80::
 halt()
 {
-//setPC(getPC() - 1);
+  setPC(getPC() - 1);
 
   setHalt(true);
 }
@@ -3281,7 +3381,7 @@ void
 CZ80::
 out(uchar port, uchar value)
 {
-  if (portData_ == nullptr) {
+  if (! portData_) {
     std::cerr << "No port defined" << std::endl;
     halt();
     return;
@@ -3310,7 +3410,7 @@ uchar
 CZ80::
 in(uchar port, uchar qual)
 {
-  if (portData_ == nullptr) {
+  if (! portData_) {
     std::cerr << "No port defined" << std::endl;
     halt();
     return 0;
@@ -3432,7 +3532,7 @@ readOpData(CZ80OpData *op_data)
   op_data->z80 = this;
   op_data->op  = readOp();
 
-  if (op_data->op == nullptr) {
+  if (! op_data->op) {
     halt();
     return;
   }
@@ -3452,7 +3552,7 @@ readOp()
 
   CZ80Op *op = &op_normal[c];
 
-  if (op->func == nullptr) {
+  if (! op->func) {
     uchar c1 = getByte();
 
     incPC();
@@ -3464,7 +3564,7 @@ readOp()
 #ifndef GAMEBOY_Z80
       op = &op_dd[c1];
 
-      if (op->func == nullptr) {
+      if (! op->func) {
         uchar c2 = getByte();
 
         incPC();
@@ -3492,7 +3592,7 @@ readOp()
 #ifndef GAMEBOY_Z80
       op = &op_fd[c1];
 
-      if (op->func == nullptr) {
+      if (! op->func) {
         uchar c2 = getByte();
 
         incPC();

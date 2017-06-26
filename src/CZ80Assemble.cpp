@@ -13,7 +13,7 @@ bool
 CZ80::
 assemble(CFile *ifile, CFile *ofile)
 {
-  return assemble(ifile, ofile);
+  return assemble(ifile, (CFileBase *) ofile);
 }
 
 bool
@@ -181,6 +181,16 @@ assembleParseOp(CFileParse *parse, std::string &op_str, uint pass, bool *continu
     }
 
     assembleSetLabelValue(str, i);
+  }
+  else if (CStrUtil::casecmp(str, "TITLE") == 0) {
+    std::string title;
+
+    parse->skipSpace();
+
+    if (! parse->readString(title)) {
+      assembleError("Invalid title value");
+      return false;
+    }
   }
   else if (CStrUtil::casecmp(str, "ORG") == 0) {
     if (! assembleParseInteger(parse, pass, &i)) {

@@ -75,7 +75,7 @@ enum CZ80RegisterId {
   R_AF1
 };
 
-// op indices (if chaneg this then update cz80_op_names)
+// op indices (if change this then update cz80_op_names)
 enum CZ80OpId {
   OP_NONE=-1,
 
@@ -147,6 +147,7 @@ enum CZ80OpId {
   OP_SRL,
   OP_STOP,
   OP_SUB,
+  OP_SWAP,
   OP_XOR
 };
 

@@ -1,50 +1,29 @@
-#ifndef CQGameBoyGraphics_H
-#define CQGameBoyGraphics_H
+#ifndef CQGameBoyVideo_H
+#define CQGameBoyVideo_H
 
+#include <CQGameBoyHexEdit.h>
 #include <CZ80.h>
 #include <QListWidget>
-#include <QLineEdit>
 
 class CQGameBoyVideo;
 class CQGameBoyGraphics;
-class CQGameBoy;
+class CQGameBoyScreen;
 class QLabel;
 class QSpinBox;
 class QCheckBox;
 
 //---
 
-class CQGameBoyVideoRegEdit : public QLineEdit {
+class CQGameBoyVideoRegEdit : public CQGameBoyAddrEdit {
   Q_OBJECT
-
-  Q_PROPERTY(int value READ value WRITE setValue)
 
  public:
   CQGameBoyVideoRegEdit(CQGameBoyVideo *video, const QString &name, ushort addr);
 
   CQGameBoyVideo *video() const { return video_; }
 
-  QLabel *label() const { return label_; }
-  void setLabel(QLabel *label) { label_ = label; }
-
-  int value() const;
-  void setValue(int v);
-
-  void setFont(const QFont &font);
-
-  void update();
-
- signals:
-  void valueChanged(int);
-
- private slots:
-  void valueSlot();
-
  private:
   CQGameBoyVideo* video_ { nullptr };
-  QString         name_;
-  ushort          addr_  { 0 };
-  QLabel*         label_ { nullptr };
 };
 
 //---
@@ -67,11 +46,11 @@ class CQGameBoyVideo : public QWidget, public CZ80Trace {
   Q_OBJECT
 
  public:
-  CQGameBoyVideo(CQGameBoy *gameboy);
+  CQGameBoyVideo(CQGameBoyScreen *gameboy);
 
  ~CQGameBoyVideo();
 
-  CQGameBoy *gameboy() const { return gameboy_; }
+  CQGameBoyScreen *gameboy() const { return gameboy_; }
 
   bool isTrace() const { return trace_; }
   void setTrace(bool b) { trace_ = b; }
@@ -95,7 +74,7 @@ class CQGameBoyVideo : public QWidget, public CZ80Trace {
   typedef std::map<QString,CQGameBoyVideoRegEdit*> NameRegisterEdits;
   typedef std::map<ushort,CQGameBoyVideoRegEdit*>  AddrRegisterEdits;
 
-  CQGameBoy*         gameboy_    { nullptr };
+  CQGameBoyScreen*   gameboy_    { nullptr };
   CQGameBoyGraphics* graphics_   { nullptr };
   QSpinBox*          scaleSpin_  { nullptr };
   NameRegisterEdits  nameEdits_;
@@ -112,7 +91,7 @@ class CQGameBoyGraphics : public QWidget {
   Q_PROPERTY(int scale READ getScale WRITE setScale)
 
  public:
-  CQGameBoyGraphics(CQGameBoy *gameboy);
+  CQGameBoyGraphics(CQGameBoyScreen *gameboy);
 
  ~CQGameBoyGraphics();
 
@@ -137,10 +116,10 @@ class CQGameBoyGraphics : public QWidget {
   QSize sizeHint() const;
 
  private:
-  CQGameBoy *gameboy_ { nullptr };
-  int        scale_   { 1 };
-  int        bank_    { 0 };
-  int        tile_    { 0 };
+  CQGameBoyScreen *gameboy_ { nullptr };
+  int              scale_   { 1 };
+  int              bank_    { 0 };
+  int              tile_    { 0 };
 };
 
 //---

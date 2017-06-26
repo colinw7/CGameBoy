@@ -12,6 +12,8 @@ class CQGameBoyDbg : public CQZ80Dbg {
  public:
   CQGameBoyDbg(CQGameBoy *gameboy);
 
+  CQGameBoy *gameboy() const { return gameboy_; }
+
   void addButtonsWidgets() override;
 
  private slots:

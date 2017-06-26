@@ -38,77 +38,87 @@ typedef unsigned long  ulong;
 //  76543210
 //  SZYHXPNC
 
-enum CZ80Flag {
-  CZ80_FLAG_NONE=-1,
+enum class CZ80Flag {
+  NONE=-1,
 
-  CZ80_FLAG_C=0,
-  CZ80_FLAG_N=1,
-  CZ80_FLAG_P=2,
-  CZ80_FLAG_V=2,
-  CZ80_FLAG_X=3,
-  CZ80_FLAG_H=4,
-  CZ80_FLAG_Y=5,
-  CZ80_FLAG_Z=6,
-  CZ80_FLAG_S=7,
+#ifdef GAMEBOY_Z80
+  N=0,      // Not used (Always zero)
+  P=1, V=1, // Not used (Always zero)
+  X=2,      // Not used (Always zero)
+  Y=3,      // Not used (Always zero)
+  C=4,      // Carry
+  H=5,      // Half Carry
+  S=6,      // Sign
+  Z=7,      // Zero
+#else
+  C=0,      // Carry
+  N=1,      // Last Op was Subtract
+  P=2, V=2, // Parity
+  X=3,      // Unused ?
+  H=4,      // Half Carry
+  Y=5,      // Unused ?
+  Z=6,      // Zero
+  S=7       // Sign
+#endif
 
-  CZ80_FLAG_INV=(1<<30),
+  INV=(1<<30),
 
-  CZ80_FLAG_NC=(CZ80_FLAG_C|CZ80_FLAG_INV),
-  CZ80_FLAG_NN=(CZ80_FLAG_N|CZ80_FLAG_INV),
-  CZ80_FLAG_NP=(CZ80_FLAG_P|CZ80_FLAG_INV),
-  CZ80_FLAG_NV=(CZ80_FLAG_V|CZ80_FLAG_INV),
-  CZ80_FLAG_NX=(CZ80_FLAG_X|CZ80_FLAG_INV),
-  CZ80_FLAG_NH=(CZ80_FLAG_H|CZ80_FLAG_INV),
-  CZ80_FLAG_NY=(CZ80_FLAG_Y|CZ80_FLAG_INV),
-  CZ80_FLAG_NZ=(CZ80_FLAG_Z|CZ80_FLAG_INV),
-  CZ80_FLAG_NS=(CZ80_FLAG_S|CZ80_FLAG_INV)
+  NC=(C|INV),
+  NN=(N|INV),
+  NP=(P|INV),
+  NV=(V|INV),
+  NX=(X|INV),
+  NH=(H|INV),
+  NY=(Y|INV),
+  NZ=(Z|INV),
+  NS=(S|INV)
 };
 
 // Registers
 
-enum CZ80Reg {
-  CZ80_REG_NONE=0,
+enum class CZ80Reg {
+  NONE=0,
 
-  CZ80_REG_A    =(1<< 0),
-  CZ80_REG_B    =(1<< 1),
-  CZ80_REG_C    =(1<< 2),
-  CZ80_REG_D    =(1<< 3),
-  CZ80_REG_E    =(1<< 4),
-  CZ80_REG_F    =(1<< 5),
-  CZ80_REG_H    =(1<< 6),
-  CZ80_REG_L    =(1<< 7),
-  CZ80_REG_IXL  =(1<< 8),
-  CZ80_REG_IXH  =(1<< 9),
-  CZ80_REG_IYL  =(1<<10),
-  CZ80_REG_IYH  =(1<<11),
-  CZ80_REG_SP   =(1<<12),
-  CZ80_REG_PC   =(1<<13),
-  CZ80_REG_A1   =(1<<14),
-  CZ80_REG_B1   =(1<<15),
-  CZ80_REG_C1   =(1<<16),
-  CZ80_REG_D1   =(1<<17),
-  CZ80_REG_E1   =(1<<18),
-  CZ80_REG_F1   =(1<<19),
-  CZ80_REG_H1   =(1<<20),
-  CZ80_REG_L1   =(1<<21),
-  CZ80_REG_I    =(1<<22),
-  CZ80_REG_R    =(1<<23),
-  CZ80_REG_IM   =(1<<24),
-  CZ80_REG_IFF  =(1<<25),
-  CZ80_REG_PHL  =(1<<26),
-  CZ80_REG_PO_IX=(1<<27),
-  CZ80_REG_PO_IY=(1<<28),
-  CZ80_REG_N    =(1<<29),
-  CZ80_REG_AF   =(CZ80_REG_A  |CZ80_REG_F),
-  CZ80_REG_BC   =(CZ80_REG_B  |CZ80_REG_C),
-  CZ80_REG_DE   =(CZ80_REG_D  |CZ80_REG_E),
-  CZ80_REG_HL   =(CZ80_REG_H  |CZ80_REG_L),
-  CZ80_REG_IX   =(CZ80_REG_IXH|CZ80_REG_IXL),
-  CZ80_REG_IY   =(CZ80_REG_IYH|CZ80_REG_IYL),
-  CZ80_REG_AF1  =(CZ80_REG_A1 |CZ80_REG_F1),
-  CZ80_REG_BC1  =(CZ80_REG_B1 |CZ80_REG_C1),
-  CZ80_REG_DE1  =(CZ80_REG_D1 |CZ80_REG_E1),
-  CZ80_REG_HL1  =(CZ80_REG_H1 |CZ80_REG_L1)
+  A    =(1<< 0),
+  B    =(1<< 1),
+  C    =(1<< 2),
+  D    =(1<< 3),
+  E    =(1<< 4),
+  F    =(1<< 5),
+  H    =(1<< 6),
+  L    =(1<< 7),
+  IXL  =(1<< 8),
+  IXH  =(1<< 9),
+  IYL  =(1<<10),
+  IYH  =(1<<11),
+  SP   =(1<<12),
+  PC   =(1<<13),
+  A1   =(1<<14),
+  B1   =(1<<15),
+  C1   =(1<<16),
+  D1   =(1<<17),
+  E1   =(1<<18),
+  F1   =(1<<19),
+  H1   =(1<<20),
+  L1   =(1<<21),
+  I    =(1<<22),
+  R    =(1<<23),
+  IM   =(1<<24),
+  IFF  =(1<<25),
+  PHL  =(1<<26),
+  PO_IX=(1<<27),
+  PO_IY=(1<<28),
+  N    =(1<<29),
+  AF   =(A  |F),
+  BC   =(B  |C),
+  DE   =(D  |E),
+  HL   =(H  |L),
+  IX   =(IXH|IXL),
+  IY   =(IYH|IYL),
+  AF1  =(A1 |F1),
+  BC1  =(B1 |C1),
+  DE1  =(D1 |E1),
+  HL1  =(H1 |L1)
 };
 
 //------
@@ -369,8 +379,8 @@ class CZ80 {
 
   // Interrupts
 
-  bool getAllowInterrups() const { return allowInterrupts_; }
-  void setAllowInterrups(bool allow) { allowInterrupts_ = allow; }
+  bool getAllowInterrupts() const { return allowInterrupts_; }
+  void setAllowInterrupts(bool allow) { allowInterrupts_ = allow; }
 
   void setIM0(ushort im0) { im0_ = im0; }
   void setIM2(ushort im2) { im2_ = im2; }
@@ -491,35 +501,35 @@ class CZ80 {
   void  resFlag(uchar bit);
   uchar tstFlag(uchar bit);
 
-  void setCFlag(bool b=true) {b ? setFlag(CZ80_FLAG_C) : resFlag(CZ80_FLAG_C);}
-  void setNFlag(bool b=true) {b ? setFlag(CZ80_FLAG_N) : resFlag(CZ80_FLAG_N);}
-  void setPFlag(bool b=true) {b ? setFlag(CZ80_FLAG_P) : resFlag(CZ80_FLAG_P);}
-  void setVFlag(bool b=true) {b ? setFlag(CZ80_FLAG_V) : resFlag(CZ80_FLAG_V);}
-  void setXFlag(bool b=true) {b ? setFlag(CZ80_FLAG_X) : resFlag(CZ80_FLAG_X);}
-  void setHFlag(bool b=true) {b ? setFlag(CZ80_FLAG_H) : resFlag(CZ80_FLAG_H);}
-  void setYFlag(bool b=true) {b ? setFlag(CZ80_FLAG_Y) : resFlag(CZ80_FLAG_Y);}
-  void setZFlag(bool b=true) {b ? setFlag(CZ80_FLAG_Z) : resFlag(CZ80_FLAG_Z);}
-  void setSFlag(bool b=true) {b ? setFlag(CZ80_FLAG_S) : resFlag(CZ80_FLAG_S);}
+  void setCFlag(bool b=true) {b ? setFlag(uchar(CZ80Flag::C)) : resFlag(uchar(CZ80Flag::C));}
+  void setNFlag(bool b=true) {b ? setFlag(uchar(CZ80Flag::N)) : resFlag(uchar(CZ80Flag::N));}
+  void setPFlag(bool b=true) {b ? setFlag(uchar(CZ80Flag::P)) : resFlag(uchar(CZ80Flag::P));}
+  void setVFlag(bool b=true) {b ? setFlag(uchar(CZ80Flag::V)) : resFlag(uchar(CZ80Flag::V));}
+  void setXFlag(bool b=true) {b ? setFlag(uchar(CZ80Flag::X)) : resFlag(uchar(CZ80Flag::X));}
+  void setHFlag(bool b=true) {b ? setFlag(uchar(CZ80Flag::H)) : resFlag(uchar(CZ80Flag::H));}
+  void setYFlag(bool b=true) {b ? setFlag(uchar(CZ80Flag::Y)) : resFlag(uchar(CZ80Flag::Y));}
+  void setZFlag(bool b=true) {b ? setFlag(uchar(CZ80Flag::Z)) : resFlag(uchar(CZ80Flag::Z));}
+  void setSFlag(bool b=true) {b ? setFlag(uchar(CZ80Flag::S)) : resFlag(uchar(CZ80Flag::S));}
 
-  void resCFlag(bool b=true) {b ? resFlag(CZ80_FLAG_C) : setFlag(CZ80_FLAG_C);}
-  void resNFlag(bool b=true) {b ? resFlag(CZ80_FLAG_N) : setFlag(CZ80_FLAG_N);}
-  void resPFlag(bool b=true) {b ? resFlag(CZ80_FLAG_P) : setFlag(CZ80_FLAG_P);}
-  void resVFlag(bool b=true) {b ? resFlag(CZ80_FLAG_V) : setFlag(CZ80_FLAG_V);}
-  void resXFlag(bool b=true) {b ? resFlag(CZ80_FLAG_X) : setFlag(CZ80_FLAG_X);}
-  void resHFlag(bool b=true) {b ? resFlag(CZ80_FLAG_H) : setFlag(CZ80_FLAG_H);}
-  void resYFlag(bool b=true) {b ? resFlag(CZ80_FLAG_Y) : setFlag(CZ80_FLAG_Y);}
-  void resZFlag(bool b=true) {b ? resFlag(CZ80_FLAG_Z) : setFlag(CZ80_FLAG_Z);}
-  void resSFlag(bool b=true) {b ? resFlag(CZ80_FLAG_S) : setFlag(CZ80_FLAG_S);}
+  void resCFlag(bool b=true) {b ? resFlag(uchar(CZ80Flag::C)) : setFlag(uchar(CZ80Flag::C));}
+  void resNFlag(bool b=true) {b ? resFlag(uchar(CZ80Flag::N)) : setFlag(uchar(CZ80Flag::N));}
+  void resPFlag(bool b=true) {b ? resFlag(uchar(CZ80Flag::P)) : setFlag(uchar(CZ80Flag::P));}
+  void resVFlag(bool b=true) {b ? resFlag(uchar(CZ80Flag::V)) : setFlag(uchar(CZ80Flag::V));}
+  void resXFlag(bool b=true) {b ? resFlag(uchar(CZ80Flag::X)) : setFlag(uchar(CZ80Flag::X));}
+  void resHFlag(bool b=true) {b ? resFlag(uchar(CZ80Flag::H)) : setFlag(uchar(CZ80Flag::H));}
+  void resYFlag(bool b=true) {b ? resFlag(uchar(CZ80Flag::Y)) : setFlag(uchar(CZ80Flag::Y));}
+  void resZFlag(bool b=true) {b ? resFlag(uchar(CZ80Flag::Z)) : setFlag(uchar(CZ80Flag::Z));}
+  void resSFlag(bool b=true) {b ? resFlag(uchar(CZ80Flag::S)) : setFlag(uchar(CZ80Flag::S));}
 
-  uchar tstCFlag() { return tstFlag(CZ80_FLAG_C); }
-  uchar tstNFlag() { return tstFlag(CZ80_FLAG_N); }
-  uchar tstPFlag() { return tstFlag(CZ80_FLAG_P); }
-  uchar tstVFlag() { return tstFlag(CZ80_FLAG_V); }
-  uchar tstXFlag() { return tstFlag(CZ80_FLAG_X); }
-  uchar tstHFlag() { return tstFlag(CZ80_FLAG_H); }
-  uchar tstYFlag() { return tstFlag(CZ80_FLAG_Y); }
-  uchar tstZFlag() { return tstFlag(CZ80_FLAG_Z); }
-  uchar tstSFlag() { return tstFlag(CZ80_FLAG_S); }
+  uchar tstCFlag() { return tstFlag(uchar(CZ80Flag::C)); }
+  uchar tstNFlag() { return tstFlag(uchar(CZ80Flag::N)); }
+  uchar tstPFlag() { return tstFlag(uchar(CZ80Flag::P)); }
+  uchar tstVFlag() { return tstFlag(uchar(CZ80Flag::V)); }
+  uchar tstXFlag() { return tstFlag(uchar(CZ80Flag::X)); }
+  uchar tstHFlag() { return tstFlag(uchar(CZ80Flag::H)); }
+  uchar tstYFlag() { return tstFlag(uchar(CZ80Flag::Y)); }
+  uchar tstZFlag() { return tstFlag(uchar(CZ80Flag::Z)); }
+  uchar tstSFlag() { return tstFlag(uchar(CZ80Flag::S)); }
 
   void setR(uchar r) { registers_.r_ = r; }
 
@@ -529,9 +539,8 @@ class CZ80 {
   void decR(uchar d);
   void incR(uchar d);
 
-  void setT(ushort t) { t_ = t; }
-
-  ushort getT() const { return t_; }
+  ulong getT() const { return t_; }
+  void setT(ulong t) { t_ = t; }
 
   void decT(ushort d);
   void incT(ushort d);
@@ -545,24 +554,24 @@ class CZ80 {
   // CPU Memory
 
  public:
-  uchar  getByte () const;
-  uchar  getByte (ushort pos) const;
-  ushort getWord () const;
-  ushort getWord (ushort pos) const;
+  uchar  getByte() const;
+  uchar  getByte(ushort pos) const;
+  ushort getWord() const;
+  ushort getWord(ushort pos) const;
   char   getSByte() const { return (schar) getByte(); }
   char   getSByte(ushort pos) const { return (schar) getByte(pos); }
   short  getSWord() const { return (sshort) getWord(); }
   short  getSWord(ushort pos) const { return (sshort) getWord(pos); }
-  bool   getBit  (ushort pos, uchar bit) const;
+  bool   getBit(ushort pos, uchar bit) const;
   void   getBytes(uchar *c, ushort pos, ushort len) const;
 
   uchar getMemory(ushort pos) const;
 
-  void setByte (uchar c);
-  void setByte (ushort pos, uchar c);
-  void setWord (ushort c);
-  void setWord (ushort pos, ushort c);
-  void setBit  (ushort pos, uchar bit);
+  void setByte(uchar c);
+  void setByte(ushort pos, uchar c);
+  void setWord(ushort c);
+  void setWord(ushort pos, ushort c);
+  void setBit(ushort pos, uchar bit);
   void resetBit(ushort pos, uchar bit);
   void setBytes(uchar *c, ushort pos, ushort len);
 
@@ -665,6 +674,7 @@ class CZ80 {
   void decPOIX(schar o);
   void decPOIY(schar o);
 
+#ifndef GAMEBOY_Z80
   void sllA();
   void sllB();
   void sllC();
@@ -673,8 +683,20 @@ class CZ80 {
   void sllH();
   void sllL();
   void sllPHL();
+#else
+  void swapA();
+  void swapB();
+  void swapC();
+  void swapD();
+  void swapE();
+  void swapH();
+  void swapL();
+  void swapPHL();
+#endif
+#ifndef GAMEBOY_Z80
   void sllPOIX(schar o);
   void sllPOIY(schar o);
+#endif
 
   void srlA();
   void srlB();
@@ -854,7 +876,11 @@ class CZ80 {
   uchar inc(uchar r);
   uchar dec(uchar r);
 
+#ifndef GAMEBOY_Z80
   uchar sll(uchar r);
+#else
+  uchar swap(uchar r);
+#endif
   uchar srl(uchar r);
   uchar sla(uchar r);
   uchar sra(uchar r);
@@ -1914,6 +1940,7 @@ class CZ80 {
 
   // sll
 
+#ifndef GAMEBOY_Z80
   static CZ80OpProc f_sll_a;
   static CZ80OpProc f_sll_b;
   static CZ80OpProc f_sll_c;
@@ -1922,6 +1949,16 @@ class CZ80 {
   static CZ80OpProc f_sll_h;
   static CZ80OpProc f_sll_l;
   static CZ80OpProc f_sll_p_hl;
+#else
+  static CZ80OpProc f_swap_a;
+  static CZ80OpProc f_swap_b;
+  static CZ80OpProc f_swap_c;
+  static CZ80OpProc f_swap_d;
+  static CZ80OpProc f_swap_e;
+  static CZ80OpProc f_swap_h;
+  static CZ80OpProc f_swap_l;
+  static CZ80OpProc f_swap_p_hl;
+#endif
 #ifndef GAMEBOY_Z80
   static CZ80OpProc f_sll_po_ix;
   static CZ80OpProc f_sll_po_ix_a;
@@ -2110,7 +2147,7 @@ class CZ80 {
   double mhz_   { 4 };
   double htz_   { 50 };
   ushort ifreq_ { 1 };
-  ushort t_     { 0 };
+  ulong  t_     { 0 };
   ushort im0_   { 0x38 };
   ushort im2_   { 0xfe };
 
@@ -2233,7 +2270,10 @@ class CZ80ExecData {
   virtual void preStep () { }
   virtual void postStep() { }
 
-  virtual int timerOverflow() { return z80_.timerInterrupt(); }
+  virtual void decT(uchar) { }
+  virtual void incT(uchar) { }
+
+  virtual void overflowT() { }
 
  protected:
   CZ80 &z80_;
@@ -2315,9 +2355,7 @@ class CZ80StdRstData : public CZ80RstData {
    CZ80RstData(z80), newline_(true) {
   }
 
-  virtual ~CZ80StdRstData() { }
-
-  void rst(ushort id);
+  void rst(ushort id) override;
 
   virtual void rstFwd(ushort) { }
 

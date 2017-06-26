@@ -1,4 +1,5 @@
-#include <CQGameBoyGraphics.h>
+#include <CQGameBoyVideo.h>
+#include <CQGameBoyScreen.h>
 #include <CQGameBoy.h>
 #include <CQUtil.h>
 #include <QFrame>
@@ -15,7 +16,7 @@
 #include <iostream>
 
 CQGameBoyVideo::
-CQGameBoyVideo(CQGameBoy *gameboy) :
+CQGameBoyVideo(CQGameBoyScreen *gameboy) :
  CZ80Trace(*gameboy->gameboy()->getZ80()), gameboy_(gameboy)
 {
   setWindowTitle("GameBoy Video");
@@ -207,77 +208,14 @@ memChanged(ushort pos, ushort len)
 
 CQGameBoyVideoRegEdit::
 CQGameBoyVideoRegEdit(CQGameBoyVideo *video, const QString &name, ushort addr) :
- video_(video), name_(name), addr_(addr)
+ CQGameBoyAddrEdit(video->gameboy()->gameboy(), name, addr), video_(video)
 {
-  setObjectName(name);
-
-  connect(this, SIGNAL(editingFinished()), this, SLOT(valueSlot()));
-}
-
-void
-CQGameBoyVideoRegEdit::
-setFont(const QFont &font)
-{
-  QFontMetrics fm(font);
-
-  int w = fm.width("XXXX");
-
-  label_->setFixedWidth(w);
-
-  label_->setFont(font);
-}
-
-void
-CQGameBoyVideoRegEdit::
-update()
-{
-  CZ80 *z80 = video_->gameboy()->gameboy()->getZ80();
-
-  std::string text = CStrUtil::toHexString(z80->getMemory(addr_), 2);
-
-  setText(text.c_str());
-}
-
-void
-CQGameBoyVideoRegEdit::
-setValue(int value)
-{
-  int value1 = std::min(std::max(value, 0), 255);
-
-  std::string text = CStrUtil::toHexString(value1, 2);
-
-  QLineEdit::setText(text.c_str());
-}
-
-int
-CQGameBoyVideoRegEdit::
-value() const
-{
-  uint value;
-
-  if (! CStrUtil::decodeHexString(text().toStdString(), &value))
-    return 0;
-
-  return std::min(int(value), 0xff);
-}
-
-void
-CQGameBoyVideoRegEdit::
-valueSlot()
-{
-  int value = this->value();
-
-  CZ80 *z80 = video_->gameboy()->gameboy()->getZ80();
-
-  z80->setByte(addr_, value);
-
-  emit valueChanged(value);
 }
 
 //------
 
 CQGameBoyGraphics::
-CQGameBoyGraphics(CQGameBoy *gameboy) :
+CQGameBoyGraphics(CQGameBoyScreen *gameboy) :
  gameboy_(gameboy)
 {
   setObjectName("graphics");
@@ -488,8 +426,8 @@ drawSprites(QPainter *painter, int x, int y, int scale)
     if (sprite.x == 0 || sprite.x >= 168)
       continue;
 
-    sprite.x += 8;
-    sprite.y += 16;
+    sprite.x -= 8;
+    sprite.y -= 16;
 
     drawTile(painter, x + sprite.x*scale, y + sprite.y*scale,
              sprite.bankNum, sprite.t, sprite.xflip, sprite.yflip, scale);

@@ -74,12 +74,12 @@ class CQZ80Mem : public QWidget {
  private:
   typedef std::vector<CQZ80MemLine> LineList;
 
-  CQZ80Dbg* dbg_         { nullptr };
+  CQZ80Dbg* dbg_        { nullptr };
   LineList  lines_;
-  int       y_offset_    { 0 };
-  int       char_width_  { 8 };
-  int       char_height_ { 12 };
-  int       dx_          { 2 };
+  int       yOffset_    { 0 };
+  int       charWidth_  { 8 };
+  int       charHeight_ { 12 };
+  int       dx_         { 2 };
 };
 
 //------
@@ -114,6 +114,8 @@ class CQZ80Inst : public QWidget {
  public:
   CQZ80Inst(CQZ80Dbg *dbg);
 
+  void setVBar(QScrollBar *vbar) { vbar_ = vbar; }
+
   void setFont(const QFont &font);
 
   void clear();
@@ -121,10 +123,10 @@ class CQZ80Inst : public QWidget {
   void setLine(uint pc, const std::string &pcStr, const std::string &codeStr,
                const std::string &textStr);
 
-  uint getNumLines() const { return line_num_; }
+  uint getNumLines() const { return lineNum_; }
 
-  bool getLineForPC(uint pc, uint &line_num) const;
-  uint getPCForLine(uint line_num);
+  bool getLineForPC(uint pc, uint &lineNum) const;
+  uint getPCForLine(uint lineNum);
 
   void clearBreakpoints() { breakpoints_.clear(); }
 
@@ -134,10 +136,14 @@ class CQZ80Inst : public QWidget {
 
   void contextMenuEvent(QContextMenuEvent *event);
 
+  void reload();
+
  public slots:
   void sliderSlot(int y);
 
   void dumpSlot();
+
+  void reloadSlot();
 
  private:
   void paintEvent(QPaintEvent *);
@@ -147,13 +153,14 @@ class CQZ80Inst : public QWidget {
   typedef std::map<uint,uint>        PCLineMap;
   typedef std::set<uint>             BreakpointList;
 
-  CQZ80Dbg*      dbg_         { nullptr };
+  CQZ80Dbg*      dbg_        { nullptr };
+  QScrollBar*    vbar_       { nullptr };
   LineList       lines_;
-  int            y_offset_    { 0 };
-  int            char_height_ { 8 };
-  int            line_num_    { 0 };
-  PCLineMap      pc_line_map_;
-  PCLineMap      line_pc_map_;
+  int            yOffset_    { 0 };
+  int            charHeight_ { 8 };
+  int            lineNum_    { 0 };
+  PCLineMap      pcLineMap_;
+  PCLineMap      linePcMap_;
   BreakpointList breakpoints_;
 };
 
@@ -211,14 +218,14 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
 
   void regChanged(CZ80Reg reg) override;
 
-  const QFont &getFixedFont() const { return fixed_font_; }
+  const QFont &getFixedFont() const { return fixedFont_; }
   void setFixedFont(const QFont &font);
 
   int getNumMemoryLines() const { return numMemoryLines_; }
   void setNumMemoryLines(int i) { numMemoryLines_ = i; }
 
   bool isMemoryTrace() const { return memoryTrace_; }
-  void setMemoryTrace(bool b) { memoryTrace_ = b; }
+  void setMemoryTrace(bool b);
 
   bool isInstructionsTrace() const { return instructionsTrace_; }
   void setInstructionsTrace(bool b) { instructionsTrace_ = b; }
@@ -318,7 +325,7 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
 
  protected:
   CZ80  *z80_ { nullptr };
-  QFont  fixed_font_;
+  QFont  fixedFont_;
 
   int numMemoryLines_ { 20 };
 
@@ -331,6 +338,8 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
   bool flagsTrace_        { true };
   bool stackTrace_        { true };
   bool breakpointsTrace_  { true };
+
+  bool memoryDirty_ { false };
 
   QColor addrColor_       {   0,   0, 220 };
   QColor memDataColor_    {   0,   0,   0 };
@@ -346,25 +355,25 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
   QGroupBox  *instructionsGroup_ { nullptr };
   CQZ80Inst  *instructionsText_  { nullptr };
   QScrollBar *instructionsVBar_  { nullptr };
-  QLineEdit  *op_data_           { nullptr };
+  QLineEdit  *opData_            { nullptr };
 
   QGroupBox    *registersGroup_  { nullptr };
   QGridLayout  *registersLayout_ { nullptr };
-  CQZ80RegEdit *af_edit_         { nullptr };
-  CQZ80RegEdit *af1_edit_        { nullptr };
-  CQZ80RegEdit *bc_edit_         { nullptr };
-  CQZ80RegEdit *bc1_edit_        { nullptr };
-  CQZ80RegEdit *de_edit_         { nullptr };
-  CQZ80RegEdit *de1_edit_        { nullptr };
-  CQZ80RegEdit *hl_edit_         { nullptr };
-  CQZ80RegEdit *hl1_edit_        { nullptr };
-  CQZ80RegEdit *ix_edit_         { nullptr };
-  CQZ80RegEdit *i_edit_          { nullptr };
-  CQZ80RegEdit *iy_edit_         { nullptr };
-  CQZ80RegEdit *r_edit_          { nullptr };
-  CQZ80RegEdit *sp_edit_         { nullptr };
-  CQZ80RegEdit *iff_edit_        { nullptr };
-  CQZ80RegEdit *pc_edit_         { nullptr };
+  CQZ80RegEdit *afEdit_          { nullptr };
+  CQZ80RegEdit *af1Edit_         { nullptr };
+  CQZ80RegEdit *bcEdit_          { nullptr };
+  CQZ80RegEdit *bc1Edit_         { nullptr };
+  CQZ80RegEdit *deEdit_          { nullptr };
+  CQZ80RegEdit *de1Edit_         { nullptr };
+  CQZ80RegEdit *hlEdit_          { nullptr };
+  CQZ80RegEdit *hl1Edit_         { nullptr };
+  CQZ80RegEdit *ixEdit_          { nullptr };
+  CQZ80RegEdit *iEdit_           { nullptr };
+  CQZ80RegEdit *iyEdit_          { nullptr };
+  CQZ80RegEdit *rEdit_           { nullptr };
+  CQZ80RegEdit *spEdit_          { nullptr };
+  CQZ80RegEdit *iffEdit_         { nullptr };
+  CQZ80RegEdit *pcEdit_          { nullptr };
 
   QGroupBox   *flagsGroup_  { nullptr };
   QGridLayout *flagsLayout_ { nullptr };
@@ -383,6 +392,7 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
   QGroupBox   *breakpointsGroup_  { nullptr };
   QVBoxLayout *breakpointsLayout_ { nullptr };
   QTextEdit   *breakpointsText_   { nullptr };
+  QLineEdit   *breakpointsEdit_   { nullptr };
 
   QCheckBox   *traceCheck_ { nullptr };
 

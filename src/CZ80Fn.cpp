@@ -961,7 +961,7 @@ void
 CZ80::
 f_stop(CZ80OpData *)
 {
-  assert(false);
+  std::cerr << "STOP" << std::endl;
 }
 #endif
 
@@ -5585,6 +5585,7 @@ f_sla_po_iy_l(CZ80OpData *op_data)
 }
 #endif
 
+#ifndef GAMEBOY_Z80
 void
 CZ80::
 f_sll_a(CZ80OpData *op_data)
@@ -5640,6 +5641,63 @@ f_sll_p_hl(CZ80OpData *op_data)
 {
   op_data->z80->sllPHL();
 }
+#else
+void
+CZ80::
+f_swap_a(CZ80OpData *op_data)
+{
+  op_data->z80->swapA();
+}
+
+void
+CZ80::
+f_swap_b(CZ80OpData *op_data)
+{
+  op_data->z80->swapB();
+}
+
+void
+CZ80::
+f_swap_c(CZ80OpData *op_data)
+{
+  op_data->z80->swapC();
+}
+
+void
+CZ80::
+f_swap_d(CZ80OpData *op_data)
+{
+  op_data->z80->swapD();
+}
+
+void
+CZ80::
+f_swap_e(CZ80OpData *op_data)
+{
+  op_data->z80->swapE();
+}
+
+void
+CZ80::
+f_swap_h(CZ80OpData *op_data)
+{
+  op_data->z80->swapH();
+}
+
+void
+CZ80::
+f_swap_l(CZ80OpData *op_data)
+{
+  op_data->z80->swapL();
+}
+
+void
+CZ80::
+f_swap_p_hl(CZ80OpData *op_data)
+{
+  op_data->z80->swapPHL();
+}
+#endif
 
 #ifndef GAMEBOY_Z80
 void

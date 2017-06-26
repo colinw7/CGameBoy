@@ -1,7 +1,8 @@
-#include <CQGameBoy.h>
-#include <CQGameBoyGraphics.h>
+#include <CQGameBoyScreen.h>
+#include <CQGameBoyVideo.h>
+#include <CQGameBoyKeys.h>
 #include <CQGameBoyDbg.h>
-#include <CGameBoy.h>
+#include <CQGameBoy.h>
 #include <CArgs.h>
 #include <CQApp.h>
 
@@ -10,8 +11,6 @@ main(int argc, char **argv)
 {
   CQApp app(argc, argv);
 
-  CGameBoy *gameboy = new CGameBoy;
-
   CArgs cargs("-v:f                (verbose) "
               "-dump:f             (enable dump) "
               "-invert:f           (invert screen colors) "
@@ -19,6 +18,9 @@ main(int argc, char **argv)
               "-debug:f            (debug) "
               "-graphics:f         (show graphics) "
               "-graphics_scale:i=1 (graphics scale factor) "
+              "-keys:f             (show keys) "
+              "-asm:f              (load assembly) "
+              "-test:f             (add test support routines) "
               );
 
   cargs.parse(&argc, argv);
@@ -30,13 +32,16 @@ main(int argc, char **argv)
   bool debug          = cargs.getBooleanArg("-debug");
   bool graphics       = cargs.getBooleanArg("-graphics");
   int  graphics_scale = cargs.getIntegerArg("-graphics_scale");
+  bool keys           = cargs.getBooleanArg("-keys");
+  bool assembly       = cargs.getBooleanArg("-asm");
+  bool test           = cargs.getBooleanArg("-test");
+
+  CQGameBoy *gameboy = new CQGameBoy;
 
   CZ80 *z80 = gameboy->getZ80();
 
   z80->setVerbose(verbose);
   z80->setDump(dump);
-
-  //z80->setMemFlags(0xff44, 1, CZ80MemType::SCREEN);
 
   gameboy->setInvert(invert);
   gameboy->setScale (scale );
@@ -45,41 +50,54 @@ main(int argc, char **argv)
 
   QFont fixedFont("Courier New", 16);
 
+  gameboy->setFixedFont(fixedFont);
+
   //------
 
-  CQGameBoy *qgameboy = new CQGameBoy(gameboy);
+  CQGameBoyScreen *screen = new CQGameBoyScreen(gameboy);
+
+  //------
 
   if (graphics) {
-    CQGameBoyVideo *videoWindow = new CQGameBoyVideo(qgameboy);
+    CQGameBoyVideo *video = gameboy->addVideo();
 
-    videoWindow->setScale(graphics_scale);
-
-    videoWindow->setFixedFont(fixedFont);
-
-    videoWindow->show();
+    video->setScale(graphics_scale);
   }
 
   //------
 
-  for (int i = 1; i < argc; ++i)
-    gameboy->loadCartridge(argv[i]);
+  if (keys)
+    gameboy->addKeys();
 
-  z80->setScreen(qgameboy);
+  //------
 
-  qgameboy->show();
+  CZ80StdRstData rst_data(*z80);
 
-  if (debug) {
-    CQGameBoyDbg *dbg = new CQGameBoyDbg(qgameboy);
+  if (test)
+    z80->setRstData(&rst_data);
 
-    dbg->init();
+  //------
 
-    dbg->setFixedFont(fixedFont);
-
-    dbg->show();
+  for (int i = 1; i < argc; ++i) {
+    if (assembly)
+      gameboy->loadAsm(argv[i]);
+    else
+      gameboy->loadCartridge(argv[i]);
   }
 
+  z80->setScreen(screen);
+
+  screen->show();
+
+  //------
+
+  if (debug)
+    gameboy->addDebug();
+
+  //------
+
   if (! debug && ! graphics)
-    qgameboy->exec();
+    screen->exec();
 
   return app.exec();
 }

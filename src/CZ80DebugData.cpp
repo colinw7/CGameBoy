@@ -77,21 +77,21 @@ callPostStepProcs()
   TraceList::iterator pe = trace_list_.end  ();
 
   for ( ; ps != pe; ++ps) {
-    if (af_changed_  ) (*ps)->regChanged(CZ80_REG_AF);
-    if (bc_changed_  ) (*ps)->regChanged(CZ80_REG_BC);
-    if (de_changed_  ) (*ps)->regChanged(CZ80_REG_DE);
-    if (hl_changed_  ) (*ps)->regChanged(CZ80_REG_HL);
-    if (ix_changed_  ) (*ps)->regChanged(CZ80_REG_IX);
-    if (iy_changed_  ) (*ps)->regChanged(CZ80_REG_IY);
-    if (sp_changed_  ) (*ps)->regChanged(CZ80_REG_SP);
-    if (pc_changed_  ) (*ps)->regChanged(CZ80_REG_PC);
-    if (i_changed_   ) (*ps)->regChanged(CZ80_REG_I);
-    if (im_changed_  ) (*ps)->regChanged(CZ80_REG_IM);
-    if (iff_changed_ ) (*ps)->regChanged(CZ80_REG_IFF);
-    if (af_1_changed_) (*ps)->regChanged(CZ80_REG_AF1);
-    if (bc_1_changed_) (*ps)->regChanged(CZ80_REG_BC1);
-    if (de_1_changed_) (*ps)->regChanged(CZ80_REG_DE1);
-    if (hl_1_changed_) (*ps)->regChanged(CZ80_REG_HL1);
+    if (af_changed_  ) (*ps)->regChanged(CZ80Reg::AF);
+    if (bc_changed_  ) (*ps)->regChanged(CZ80Reg::BC);
+    if (de_changed_  ) (*ps)->regChanged(CZ80Reg::DE);
+    if (hl_changed_  ) (*ps)->regChanged(CZ80Reg::HL);
+    if (ix_changed_  ) (*ps)->regChanged(CZ80Reg::IX);
+    if (iy_changed_  ) (*ps)->regChanged(CZ80Reg::IY);
+    if (sp_changed_  ) (*ps)->regChanged(CZ80Reg::SP);
+    if (pc_changed_  ) (*ps)->regChanged(CZ80Reg::PC);
+    if (i_changed_   ) (*ps)->regChanged(CZ80Reg::I);
+    if (im_changed_  ) (*ps)->regChanged(CZ80Reg::IM);
+    if (iff_changed_ ) (*ps)->regChanged(CZ80Reg::IFF);
+    if (af_1_changed_) (*ps)->regChanged(CZ80Reg::AF1);
+    if (bc_1_changed_) (*ps)->regChanged(CZ80Reg::BC1);
+    if (de_1_changed_) (*ps)->regChanged(CZ80Reg::DE1);
+    if (hl_1_changed_) (*ps)->regChanged(CZ80Reg::HL1);
 
     if (mem_changed_)
       (*ps)->memChanged(mem_changed_pos1_, mem_changed_pos2_ - mem_changed_pos1_ + 1);
