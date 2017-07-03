@@ -1,4 +1,9 @@
 #include <CZ80Execute.h>
+#include <CZ80DebugData.h>
+#include <CZ80SpeedData.h>
+#include <CZ80ExecData.h>
+#include <CZ80Screen.h>
+#include <CZ80OpData.h>
 
 bool
 CZ80::
@@ -31,25 +36,37 @@ bool
 CZ80::
 next()
 {
-  ushort pc   = getPC();
-  bool   halt = getHalt();
+  ushort pc = getPC();
 
   CZ80OpData op_data;
 
-  readOpData(&op_data);
+  readOpData(pc, &op_data);
 
-  ushort pc1 = getPC();
+  ushort pc1 = pc + op_data.op->len;
 
-  setPC  (pc);
-  setHalt(halt);
-
+  // run until pc at following instruction
   addBreakpoint(pc1);
 
   cont();
 
-  removeBreakpoint(getPC());
+  removeBreakpoint(pc1);
 
   return true;
+}
+
+void
+CZ80::
+skip()
+{
+  ushort pc = getPC();
+
+  CZ80OpData op_data;
+
+  readOpData(pc, &op_data);
+
+  ushort pc1 = pc + op_data.op->len;
+
+  setPC(pc1);
 }
 
 bool
@@ -101,9 +118,15 @@ step1(bool notify)
   int t = 4;
 
   if (! getHalt()) {
+    ushort pc = getPC();
+
     CZ80OpData op_data;
 
-    readOpData(&op_data);
+    readOpData(pc, &op_data);
+
+    ushort pc1 = pc + op_data.op->len;
+
+    setPC(pc1);
 
     if (dump_)
       op_data.dump(dump_file_);

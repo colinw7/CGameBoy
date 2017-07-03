@@ -4,3 +4,10 @@
 . Show/Hide Graphics ...
 . Buttons for Keys
 . Graphical Border + Keys for Screen
+. Palette
+. Clip Sprite
+. More MBC Modes and debugging
+. Handle STOP if needed
+. Handle HALT correctly (continue after interrupt)
+. CStrUtil::toHexString -> CZ80::hexString
+. Use CBit namespace for bit flags

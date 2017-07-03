@@ -26,9 +26,9 @@ void
 CQGameBoyHexEdit::
 setValue(int value)
 {
-  int value1 = std::min(std::max(value, 0), 255);
+  uchar value1 = std::min(std::max(value, 0), 255);
 
-  std::string text = CStrUtil::toHexString(value1, 2);
+  std::string text = CZ80::hexString(value1);
 
   QLineEdit::setText(text.c_str());
 }
@@ -50,7 +50,11 @@ CQGameBoyAddrEdit(CQGameBoy *gameboy, const QString &name, ushort addr) :
 {
   setObjectName(name);
 
+  setToolTip(name + " : " + CZ80::hexString(addr).c_str());
+
   connect(this, SIGNAL(valueChanged(int)), this, SLOT(addrSlot(int)));
+
+  update();
 }
 
 void

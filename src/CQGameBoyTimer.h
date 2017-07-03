@@ -1,6 +1,7 @@
 #ifndef CQGameBoyTimer_H
 #define CQGameBoyTimer_H
 
+#include <CZ80Trace.h>
 #include <QWidget>
 #include <CZ80.h>
 

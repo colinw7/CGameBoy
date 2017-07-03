@@ -1,6 +1,7 @@
 #include <CQGameBoyInterrupt.h>
 #include <CQGameBoyHexEdit.h>
 #include <CQGameBoy.h>
+#include <CQZ80RegEdit.h>
 #include <CQUtil.h>
 #include <QCheckBox>
 #include <QLabel>
@@ -18,6 +19,8 @@ CQGameBoyInterrupt(CQGameBoy *gameboy) :
 
   setWindowTitle("GameBoy Interrupt");
 
+  CZ80 *z80 = gameboy->getZ80();
+
   QVBoxLayout *layout = new QVBoxLayout(this);
 
   QHBoxLayout *enabledLayout = new QHBoxLayout;
@@ -33,10 +36,9 @@ CQGameBoyInterrupt(CQGameBoy *gameboy) :
 
   QHBoxLayout *regLayout = new QHBoxLayout;
 
-  iffEdit_  = new CQGameBoyHexEdit;
+  iffEdit_  = new CQZ80RegEdit(z80, CZ80Reg::IFF);
   statEdit_ = new CQGameBoyHexEdit;
 
-  regLayout->addWidget(new QLabel("IFF"));
   regLayout->addWidget(iffEdit_);
   regLayout->addWidget(new QLabel("STAT"));
   regLayout->addWidget(statEdit_);
@@ -46,8 +48,6 @@ CQGameBoyInterrupt(CQGameBoy *gameboy) :
   canvas_ = new CQGameBoyInterruptCanvas(this);
 
   layout->addWidget(canvas_);
-
-  CZ80 *z80 = gameboy->getZ80();
 
   z80->addTrace(this);
 

@@ -1,4 +1,7 @@
 #include <CGameBoy.h>
+#include <CZ80ExecData.h>
+#include <CZ80MemData.h>
+#include <CZ80PortData.h>
 #include <CEvent.h>
 #include <CFile.h>
 
@@ -32,6 +35,9 @@ class CGameBoyExecData : public CZ80ExecData {
 
   void preStep () override;
   void postStep() override;
+
+  void setStop(bool b) override;
+  void setHalt(bool b) override;
 
  private:
   CGameBoy *gameboy_ { nullptr };
@@ -96,9 +102,11 @@ CGameBoy()
 {
   assert(sizeof(bios) == 256);
 
-  z80_.setExecData(execData_ = new CGameBoyExecData(this));
-  z80_.setMemData (memData_  = new CGameBoyMemData (this));
-  z80_.setPortData(portData_ = new CGameBoyPortData(this));
+  CZ80 *z80 = getZ80();
+
+  z80->setExecData(execData_ = new CGameBoyExecData(this));
+  z80->setMemData (memData_  = new CGameBoyMemData (this));
+  z80->setPortData(portData_ = new CGameBoyPortData(this));
 
   //---
 
@@ -108,9 +116,9 @@ CGameBoy()
 
   //---
 
-  z80_.setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+  z80->setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
                                    uint(CZ80MemType::WRITE_TRIGGER));
-  z80_.setMemFlags(0x8000, 0x2000, uint(CZ80MemType::SCREEN));
+  z80->setMemFlags(0x8000, 0x2000, uint(CZ80MemType::SCREEN));
 }
 
 CGameBoy::
@@ -172,12 +180,12 @@ loadCartridge(const std::string &filename)
 
   memData_->setEnabled(false);
 
-  z80_.resetMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+  z80->resetMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
                                      uint(CZ80MemType::WRITE_TRIGGER));
 
   z80->setBytes(cartridge_, 0, 0x8000);
 
-  z80_.setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+  z80->setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
                                    uint(CZ80MemType::WRITE_TRIGGER));
 
   memData_->setEnabled(true);
@@ -195,12 +203,12 @@ loadAsm(const std::string &filename)
 
   memData_->setEnabled(false);
 
-  z80_.resetMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+  z80->resetMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
                                      uint(CZ80MemType::WRITE_TRIGGER));
 
   bool rc = z80->load(filename);
 
-  z80_.setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+  z80->setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
                                    uint(CZ80MemType::WRITE_TRIGGER));
 
   memData_->setEnabled(true);
@@ -220,21 +228,59 @@ onScreen(ushort pos, ushort len)
   return false;
 }
 
-bool
+ushort
 CGameBoy::
-getScreenPos(ushort, int *x, int *y)
+getTileAddr(int bank, int tile) const
 {
-  *x = 0;
-  *y = 0;
+  ushort memStart;
 
-  return false;
+  if (bank == 0) {
+    if (tile <= 127)
+      memStart = 0x9000;
+    else
+      memStart = 0x8000;
+  }
+  else {
+    memStart = 0x8000;
+  }
+
+  return memStart + tile*16; // 16 bytes per tile
 }
 
 bool
 CGameBoy::
-getSprite(int i, CGameBoySprite &sprite)
+getLineSprites(int line, int height, std::vector<CGameBoySprite> &sprites) const
 {
-  CZ80 *z80 = getZ80();
+  sprites.clear();
+
+  CGameBoySprite sprite;
+
+  for (int i = 0; i < 40; ++i) {
+    getSprite(i, sprite);
+
+    int y1 = sprite.y - 16;
+    int y2 = y1 + height;
+
+    if (line < y1 || line >= y2)
+      continue;
+
+    int x1 = sprite.x - 8;
+    int x2 = x1 + 8;
+
+    if (x2 < 0 || x1 >= 144)
+      continue;
+
+    sprites.push_back(sprite);
+  }
+
+  return ! sprites.empty();
+}
+
+bool
+CGameBoy::
+getSprite(int i, CGameBoySprite &sprite) const
+{
+  const CZ80 *z80 = getZ80();
 
   ushort memStart = 0xfe00;
 
@@ -251,8 +297,10 @@ getSprite(int i, CGameBoySprite &sprite)
   sprite.yflip    = IS_BIT(f, 6);
   sprite.xflip    = IS_BIT(f, 5);
   sprite.palNum1  = IS_BIT(f, 4);
-  sprite.bankNum  = IS_BIT(f, 3);
-  sprite.palNum2  = (f & 0x7);
+//sprite.bankNum  = IS_BIT(f, 3);
+//sprite.palNum2  = (f & 0x7);
+  sprite.bankNum  = 0;
+  sprite.palNum2  = 0;
 
   return true;
 }
@@ -276,6 +324,8 @@ keyPress(CKeyType key)
   else if (key == bKey     ()) { RESET_BIT(keys_[0], 1); }
   else if (key == selectKey()) { RESET_BIT(keys_[0], 2); }
   else if (key == startKey ()) { RESET_BIT(keys_[0], 3); }
+
+  z80_.setBit(0xff0f, 4);
 }
 
 void
@@ -290,6 +340,8 @@ keyRelease(CKeyType key)
   else if (key == bKey     ()) { SET_BIT(keys_[0], 1); }
   else if (key == selectKey()) { SET_BIT(keys_[0], 2); }
   else if (key == startKey ()) { SET_BIT(keys_[0], 3); }
+
+  z80_.setBit(0xff0f, 4);
 }
 
 //----------
@@ -372,8 +424,9 @@ postStep()
     uchar tac_speed = (tac & 0x3);
 
     uchar tima = z80_.getByte(0xff05);
+    uchar tmod = z80_.getByte(0xff06);
 
-    uchar newTima;
+    ushort newTima;
 
     if      (tac_speed == 0) // M-clock / 64
       newTima = m_ >> 6;
@@ -384,14 +437,13 @@ postStep()
     else                     // M-clock / 1
       newTima = m_;
 
+    newTima += tmod;
+
     if (newTima != tima) {
       // check overflow
-      bool overflow = (newTima < tima);
+      bool overflow = (newTima > 0xff);
 
-      if (overflow)
-        newTima = z80_.getByte(0xff06); // set to Timer Modulo on overflow
-
-      z80_.setByte(0xff05, newTima);
+      z80_.setByte(0xff05, newTima & 0xff);
 
       // timer overflow interrupt
       if (overflow && z80_.getAllowInterrupts())
@@ -401,65 +453,82 @@ postStep()
 
   //------
 
-  uchar iflag = z80_.getByte(0xff0f);
-  uchar ie    = z80_.getByte(0xffff);
+  // handle interrupt flags if enabled
+  if (z80_.getIFF1()) {
+    uchar iflag = z80_.getByte(0xff0f);
+    uchar ie    = z80_.getByte(0xffff);
 
-  // vertical blank (LCD has drawn a frame)
-  if      (IS_BIT(iflag, 0)) {
-    z80_.resetBit(0xff0f, 0);
+    // vertical blank (LCD has drawn a frame)
+    if      (IS_BIT(iflag, 0)) {
+      z80_.resetBit(0xff0f, 0);
 
-    if (IS_BIT(ie, 0)) {
-      std::cerr << "vertical blank interrupt" << std::endl;
+      if (IS_BIT(ie, 0)) {
+        //std::cerr << "vertical blank interrupt" << std::endl;
 
-      z80_.setIM0(0x40);
-      z80_.interrupt();
+        z80_.setIM0(0x40);
+        z80_.interrupt();
+      }
+    }
+    // LCD controller changed
+    else if (IS_BIT(iflag, 1)) {
+      // TODO
+      z80_.resetBit(0xff0f, 1);
+
+      if (IS_BIT(ie, 1)) {
+        //std::cerr << "LCD controller interrupt" << std::endl;
+
+        z80_.setIM0(0x48);
+        z80_.interrupt();
+      }
+    }
+    // timer overflow
+    else if (IS_BIT(iflag, 2)) {
+      z80_.resetBit(0xff0f, 2);
+
+      if (IS_BIT(ie, 2)) {
+        //std::cerr << "timer interrupt" << std::endl;
+
+        z80_.setIM0(0x50);
+        z80_.interrupt();
+      }
+    }
+    // Serial I/O transfer end
+    else if (IS_BIT(iflag, 3)) {
+      z80_.resetBit(0xff0f, 3);
+
+      if (IS_BIT(ie, 3)) {
+        //std::cerr << "serial interrupt" << std::endl;
+
+        z80_.setIM0(0x58);
+        z80_.interrupt();
+      }
+    }
+    // Transition from High to Low of Pin number P10-P13 (key)
+    else if (IS_BIT(iflag, 4)) {
+      z80_.resetBit(0xff0f, 4);
+
+      if (IS_BIT(ie, 4)) {
+        //std::cerr << "key interrupt" << std::endl;
+
+        z80_.setIM0(0x60);
+        z80_.interrupt();
+      }
     }
   }
-  // LCD controller changed
-  else if (IS_BIT(iflag, 1)) {
-    // TODO
-    z80_.resetBit(0xff0f, 1);
+}
 
-    if (IS_BIT(ie, 1)) {
-      std::cerr << "LCD controller interrupt" << std::endl;
+void
+CGameBoyExecData::
+setStop(bool b)
+{
+  gameboy_->execStop(b);
+}
 
-      z80_.setIM0(0x48);
-      z80_.interrupt();
-    }
-  }
-  // timer overflow
-  else if (IS_BIT(iflag, 2)) {
-    z80_.resetBit(0xff0f, 2);
-
-    if (IS_BIT(ie, 2)) {
-      std::cerr << "timer interrupt" << std::endl;
-
-      z80_.setIM0(0x50);
-      z80_.interrupt();
-    }
-  }
-  // Serial I/O transfer end
-  else if (IS_BIT(iflag, 3)) {
-    z80_.resetBit(0xff0f, 3);
-
-    if (IS_BIT(ie, 3)) {
-      std::cerr << "serial interrupt" << std::endl;
-
-      z80_.setIM0(0x58);
-      z80_.interrupt();
-    }
-  }
-  // Transition from High to Low of Pin number P10-P13 (key)
-  else if (IS_BIT(iflag, 4)) {
-    z80_.resetBit(0xff0f, 4);
-
-    if (IS_BIT(ie, 4)) {
-      std::cerr << "key interrupt" << std::endl;
-
-      z80_.setIM0(0x60);
-      z80_.interrupt();
-    }
-  }
+void
+CGameBoyExecData::
+setHalt(bool b)
+{
+  gameboy_->execHalt(b);
 }
 
 //----------
@@ -509,10 +578,14 @@ memReadData(ushort pos, uchar *data)
   else if (pos < 0x4000) {
     *data = z80_.getMemory(pos);
   }
-  // 16kB switchable ROM bank
+  // 16kB switchable ROM bank (0x4000 - 0x7fff)
   else if (pos < 0x8000) {
-    if (gameboy()->cartridge())
-      *data = gameboy()->readCartridge(pos + gameboy()->romOffset());
+    if (gameboy()->cartridge()) {
+      //uint pos1 = pos - 0x4000;
+      uint pos1 = pos;
+
+      *data = gameboy()->readCartridge(pos1 + gameboy()->romOffset());
+    }
     else
       *data = z80_.getMemory(pos);
   }
@@ -522,7 +595,7 @@ memReadData(ushort pos, uchar *data)
   }
   // 8kB switchable RAM bank
   else if (pos < 0xc000) {
-    int pos1 = pos - 0xa000;
+    ushort pos1 = pos - 0xa000;
 
     *data = gameboy()->getRam(pos1 + gameboy()->ramOffset());
   }
@@ -534,7 +607,7 @@ memReadData(ushort pos, uchar *data)
   else if (pos < 0xfe00) {
     *data = z80_.getMemory(pos - 0x2000);
   }
-  // Sprite Attrib Memory (OAM)
+  // Sprite Attrib Memory (OAM)  (0xfe00 - 0xfeaf)
   else if (pos < 0xfea0) {
     *data = z80_.getMemory(pos);
   }
@@ -672,17 +745,22 @@ memWriteData(ushort pos, uchar data)
   if      (pos < 0x4000) {
     assert(false);
   }
-  // 16kB switchable ROM bank
+  // 16kB switchable ROM bank (0x4000 - 0x7fff)
   else if (pos < 0x8000) {
     assert(false);
   }
-  // 8kB Video RAM
+  // 8kB Video RAM (0x8000 - 0x9fff)
   else if (pos < 0xa000) {
     //std::cerr << "Write Video RAM " << std::hex << pos << std::hex << int(data) << std::endl;
+
+    if (pos < 0x9800)
+      gameboy()->updateTiles();
+    else
+      gameboy()->updateScreen();
   }
   // 8kB switchable RAM bank
   else if (pos < 0xc000) {
-    int pos1 = pos - 0xa000;
+    ushort pos1 = pos - 0xa000;
 
     gameboy()->setRam(pos1 + gameboy()->ramOffset(), data);
   }
@@ -694,9 +772,11 @@ memWriteData(ushort pos, uchar data)
   else if (pos < 0xfe00) {
     z80_.setByte(pos - 0x2000, data);
   }
-  // Sprite Data
+  // Sprite Attrib Memory (OAM)  (0xfe00 - 0xfeaf)
   else if (pos < 0xfea0) {
     //std::cerr << "Write Sprite data " << std::hex << pos << std::hex << int(data) << std::endl;
+
+    gameboy()->updateSprites();
   }
   // Empty but unusable for I/O
   else if (pos < 0xff00) {
@@ -715,6 +795,8 @@ memWriteData(ushort pos, uchar data)
     }
     // SC - Serial transfer control
     else if (pos == 0xff02) {
+      //std::cerr << "Serial transfer control " << int(data) << std::endl;
+
       bool transfer = TST_BIT(data, 7);
     //bool speed    = TST_BIT(data, 1);
     //bool shift    = TST_BIT(data, 0);
@@ -733,7 +815,9 @@ memWriteData(ushort pos, uchar data)
       //std::cerr << "Write Interrupt Flag" << int(data) << std::endl;
     }
     else if (pos == 0xff40) {
-      //std::cerr << "Write LCDC " << std::hex << int(data) << std::endl;
+      if (data != z80_.getMemory(pos)) {
+        //std::cerr << "Write LCDC " << std::hex << int(data) << std::endl;
+      }
     }
     // LCDC Status (STAT)
     else if (pos == 0xff41) {
@@ -751,24 +835,44 @@ memWriteData(ushort pos, uchar data)
     else if (pos == 0xff45) {
       //std::cerr << "Write LYC " << std::hex << int(data) << std::endl;
     }
+    // DMA Transfer and Start Address
     else if (pos == 0xff46) {
       ushort addr = (data << 8);
       ushort len  = 0xa0;
 
-      std::cerr << "Write DMA (0xa0 bytes) from " << std::hex << int(addr) << std::endl;
+      //std::cerr << "Write DMA (0xa0 bytes) from " << std::hex << int(addr) << std::endl;
 
       for (ushort i = 0; i < len; ++i) {
         z80_.setByte(0xFE00 + i, z80_.getByte(addr + i));
       }
+
+      // DMA takes 160 ms (runs in parallel with Z80)
+      //ushort cycles = z80_.msCycles(160);
     }
     else if (pos == 0xff47) {
       //std::cerr << "Write BGP " << std::hex << int(data) << std::endl;
+
+      gameboy()->updatePalette();
     }
     else if (pos == 0xff48) {
       //std::cerr << "Write OBP0 " << std::hex << int(data) << std::endl;
+
+      gameboy()->updatePalette();
     }
     else if (pos == 0xff49) {
       //std::cerr << "Write OBP1 " << std::hex << int(data) << std::endl;
+
+      gameboy()->updatePalette();
+    }
+    else if (pos == 0xff4a) {
+      if (data != z80_.getMemory(pos)) {
+        //std::cerr << "Write WY " << std::hex << int(data) << std::endl;
+      }
+    }
+    else if (pos == 0xff4b) {
+      if (data != z80_.getMemory(pos)) {
+        //std::cerr << "Write WX " << std::hex << int(data) << std::endl;
+      }
     }
   }
   // Empty but unusable for I/O
@@ -801,49 +905,144 @@ void
 CGameBoyMemData::
 memTriggerData(uchar data, ushort pos)
 {
-  if      (pos < 0x2000) {
-    // enable external ram
+  if (pos >= 0x8000)
+    return;
 
-    uchar enable = data & 0x0a;
+  //---
 
-    if (enable) {
-      //std::cerr << "Enable external RAM" << std::endl;
+  uchar type = z80_.getByte(0x147);
+
+  uchar mbc = 0;
+
+  if      (type == 1 || type == 2 || type == 3)
+    mbc = 1;
+  else if (type == 5 || type == 6)
+    mbc = 2;
+
+  //---
+
+  if      (mbc == 1) {
+    // write 0x0000 -> 0x1fff enable/disable ram
+    if      (pos < 0x2000) {
+      // enable external ram
+
+      bool enabled = ((data & 0xf) == 0x0a);
+
+      if (enabled != gameboy()->isRamEnabled()) {
+        gameboy()->setRamEnabled(enabled);
+
+        if (enabled) {
+          //std::cerr << "Enable external RAM" << std::endl;
+        }
+        else {
+          //std::cerr << "Disable external RAM" << std::endl;
+        }
+      }
+    }
+    // write 0x2000 -> 0x3fff select ROM bank:
+    else if (pos < 0x4000) {
+      // set rom bank
+
+      assert(type == 1 || type == 2 || type == 3);
+
+      uchar bank = data & 0x1f;
+
+      int maxBanks = gameboy()->cartridgeLen()/0x4000;
+
+      if (bank > maxBanks)
+        bank %= maxBanks;
+
+      if (bank < 1)
+        bank = 1;
+
+      if (bank != gameboy()->romBank()) {
+        gameboy()->setRomBank(bank);
+
+        gameboy()->setRomOffset((bank - 1)*0x4000);
+
+        //std::cerr << "MBC1: Set ROM bank (Low Bits) : " << std::hex << int(bank) <<
+        //             "  Offset : "     << std::hex << gameboy()->romOffset() << std::endl;
+      }
+    }
+    // write 0x4000 -> 0x5fff select RAM bank
+    else if (pos < 0x6000) {
+      // set ram bank
+
+      assert(type == 1 || type == 2 || type == 3);
+
+      if      (gameboy()->memoryModel() == 0) {
+        uchar bank1 = (data & 0x03) << 5;
+        uchar bank2 = (gameboy()->romBank() & 0x1f);
+
+        uchar bank = bank1 | bank2;
+
+        int maxBanks = gameboy()->cartridgeLen()/0x4000;
+
+        if (bank > maxBanks)
+          bank %= maxBanks;
+
+        if (bank < 1)
+          bank = 1;
+
+        if (bank != gameboy()->romBank()) {
+          gameboy()->setRomBank(bank);
+
+          gameboy()->setRomOffset((bank - 1)*0x4000);
+
+          // std::cerr << "MBC1: Set ROM bank (High Bits) : " << std::hex << int(bank) <<
+          //            "  Offset : "     << std::hex << gameboy()->romOffset() << std::endl;
+        }
+      }
+      else if (gameboy()->memoryModel() == 1) {
+        uchar bank = data & 0x03;
+
+        // TODO: check max ram banks
+
+        if (bank != gameboy()->ramBank()) {
+          gameboy()->setRamBank(bank);
+
+          gameboy()->setRamOffset(bank*0x2000);
+
+          // std::cerr << "MBC1: Set RAM bank : " << std::hex << int(bank) <<
+          //              "  Offset : "     << std::hex << gameboy()->ramOffset() << std::endl;
+        }
+      }
+    }
+    // write to 0x6000 -> 0x7ffff selects mode:
+    //   mode 0 : 16/8 mode : ROM mode (no RAM banks, uo to 2MB ROM)
+    //   mode 1 : 4/32 mode : RAM mode (4 RAM banks, up to 512kb ROM)
+    else if (pos < 0x8000) {
+      // set mode
+
+      uchar memoryModel = data & 0x01;
+
+      if (gameboy()->memoryModel() != memoryModel) {
+        //std::cerr << "Set Memory Model : " << int(memoryModel) << std::endl;
+
+        gameboy()->setMemoryModel(memoryModel);
+      }
     }
   }
-  else if (pos >= 0x2000 && pos < 0x4000) {
-    // set bank
+  else if (mbc == 2) {
+    if (pos >= 0x2100 && pos < 0x2200) {
+      // set rom bank
 
-    uchar bank = data & 0x1f;
+      uchar bank = data & 0x1f;
 
-    int maxBanks = gameboy()->cartridgeLen()/0x4000;
+      int maxBanks = gameboy()->cartridgeLen()/0x4000;
 
-    if (bank > maxBanks)
-      bank %= maxBanks;
+      if (bank > maxBanks)
+        bank %= maxBanks;
 
-    if (bank < 1)
-      bank = 1;
+      if (bank < 1)
+        bank = 1;
 
-    gameboy()->setRomBank(bank);
+      gameboy()->setRomBank(bank);
 
-    gameboy()->setRomOffset((bank - 1)*0x4000);
+      gameboy()->setRomOffset((bank - 1)*0x4000);
 
-    std::cerr << "Set ROM bank : " << std::hex << int(bank) <<
-                 "  Offset : "     << std::hex << gameboy()->romOffset() << std::endl;
-  }
-  else if (pos >= 0x4000 && pos < 0x6000) {
-    // set bank
-
-    uchar bank = data & 0x03;
-
-    gameboy()->setRamBank(bank);
-
-    gameboy()->setRamOffset(bank*0x2000);
-
-    std::cerr << "Set RAM bank : " << std::hex << int(bank) << std::endl;
-  }
-  else if (pos >= 0x6000 && pos < 0x8000) {
-    // set mode
-
-    std::cerr << "Set Mode : " << int(data) << std::endl;
+      // std::cerr << "MBC2: Set ROM bank : " << std::hex << int(bank) <<
+      //              "  Offset : "     << std::hex << gameboy()->romOffset() << std::endl;
+    }
   }
 }

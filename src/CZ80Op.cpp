@@ -1,5 +1,6 @@
 #include <CZ80.h>
 #include <CZ80Op.h>
+#include <CZ80OpData.h>
 #include <CStrUtil.h>
 
 const char *
@@ -18,7 +19,9 @@ dumpCount(std::ostream &os)
   while (count_str.size() < 8)
     count_str += " ";
 
-  std::string txt = toTxt();
+  ushort pc = 0; // TODO ?
+
+  std::string txt = toTxt(pc);
 
   os << count_str << " " << txt << std::endl;
 
@@ -27,7 +30,7 @@ dumpCount(std::ostream &os)
 
 std::string
 CZ80Op::
-toTxt()
+toTxt(ushort pc)
 {
   CZ80OpData op_data;
 
@@ -41,7 +44,7 @@ toTxt()
   op_data.values2[0]  = 0;
   op_data.values2[1]  = 0;
 
-  return op_data.getOpString();
+  return op_data.getOpString(pc);
 }
 
 std::string

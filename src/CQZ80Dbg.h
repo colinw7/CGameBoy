@@ -1,13 +1,17 @@
 #ifndef CQZ80_DBG_H
 #define CQZ80_DBG_H
 
-#include <QWidget>
+#include <CZ80Trace.h>
 #include <CZ80.h>
+#include <QWidget>
 
 #include <string>
 #include <set>
 
 class CQZ80Dbg;
+class CQZ80Stack;
+class CQZ80TraceBack;
+class CQZ80RegEdit;
 class CZ80;
 
 class QGroupBox;
@@ -166,29 +170,6 @@ class CQZ80Inst : public QWidget {
 
 //------
 
-class CQZ80RegEdit : public QWidget {
-  Q_OBJECT
-
- public:
-  CQZ80RegEdit(CQZ80Dbg *dbg, CZ80Reg reg);
-
-  void setFont(const QFont &font);
-
-  void setValue(uint value);
-  uint getValue() const;
-
- private slots:
-  void valueChangedSlot();
-
- private:
-  CQZ80Dbg  *dbg_   { nullptr };
-  CZ80Reg    reg_;
-  QLabel    *label_ { nullptr };
-  QLineEdit *edit_  { nullptr };
-};
-
-//------
-
 class CQZ80Dbg : public QWidget, public CZ80Trace {
   Q_OBJECT
 
@@ -199,6 +180,7 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
   Q_PROPERTY(bool   registersTrace    READ isRegistersTrace    WRITE setRegistersTrace)
   Q_PROPERTY(bool   flagsTrace        READ isFlagsTrace        WRITE setFlagsTrace)
   Q_PROPERTY(bool   stackTrace        READ isStackTrace        WRITE setStackTrace)
+  Q_PROPERTY(bool   traceBackTrace    READ isTraceBackTrace    WRITE setTraceBackTrace)
   Q_PROPERTY(bool   breakpointsTrace  READ isBreakpointsTrace  WRITE setBreakpointsTrace)
   Q_PROPERTY(QColor addrColor         READ addrColor           WRITE setAddrColor)
   Q_PROPERTY(QColor memDataColor      READ memDataColor        WRITE setMemDataColor)
@@ -239,6 +221,9 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
   bool isStackTrace() const { return stackTrace_; }
   void setStackTrace(bool b) { stackTrace_ = b; }
 
+  bool isTraceBackTrace() const { return traceBackTrace_; }
+  void setTraceBackTrace(bool b) { traceBackTrace_ = b; }
+
   bool isBreakpointsTrace() const { return breakpointsTrace_; }
   void setBreakpointsTrace(bool b) { breakpointsTrace_ = b; }
 
@@ -278,18 +263,20 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
 
   std::string getByteChar(uchar c);
 
-  void setInstructionsText();
+  void updateInstructions();
 
-  void setStackText();
+  void updateStack();
 
-  void setBreakpointText();
+  void updateTraceBack();
+
+  void updateBreakpoints();
 
   //QLineEdit *createRegisterEdit();
 
   //----
 
  protected:
-  void postStepProc();
+  void postStepProc() override;
 
   void regChangedI(CZ80Reg reg);
 
@@ -297,7 +284,12 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
 
   void memChangedI(ushort pos, ushort len);
 
-  void breakpointsChanged();
+  void breakpointsChanged() override;
+
+  void traceBackChanged() override;
+
+  void setStop(bool b) override;
+  void setHalt(bool b) override;
 
   void updateAll();
 
@@ -311,9 +303,11 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
   void registersTraceSlot();
   void flagsTraceSlot();
   void stackTraceSlot();
+  void traceBackTraceSlot();
   void breakpointsTraceSlot();
 
   void setTraceSlot();
+  void setHaltSlot();
 
   void runSlot();
   void nextSlot();
@@ -337,6 +331,7 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
   bool registersTrace_    { true };
   bool flagsTrace_        { true };
   bool stackTrace_        { true };
+  bool traceBackTrace_    { true };
   bool breakpointsTrace_  { true };
 
   bool memoryDirty_ { false };
@@ -387,7 +382,10 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
   QCheckBox   *cFlagCheck_  { nullptr };
 
   QGroupBox  *stackGroup_ { nullptr };
-  QTextEdit  *stackText_  { nullptr };
+  CQZ80Stack *stackText_  { nullptr };
+
+  QGroupBox      *traceBackGroup_ { nullptr };
+  CQZ80TraceBack *traceBack_      { nullptr };
 
   QGroupBox   *breakpointsGroup_  { nullptr };
   QVBoxLayout *breakpointsLayout_ { nullptr };
@@ -395,6 +393,7 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
   QLineEdit   *breakpointsEdit_   { nullptr };
 
   QCheckBox   *traceCheck_ { nullptr };
+  QCheckBox   *haltCheck_  { nullptr };
 
   QFrame      *buttonsToolbar_ { nullptr };
   QHBoxLayout *buttonsLayout_  { nullptr };

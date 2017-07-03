@@ -3,6 +3,7 @@
 #include <CQGameBoyKeys.h>
 #include <CQGameBoyDbg.h>
 #include <CQGameBoy.h>
+#include <CZ80RstData.h>
 #include <CArgs.h>
 #include <CQApp.h>
 
@@ -46,15 +47,13 @@ main(int argc, char **argv)
   gameboy->setInvert(invert);
   gameboy->setScale (scale );
 
+  gameboy->createScreen();
+
   //------
 
   QFont fixedFont("Courier New", 16);
 
   gameboy->setFixedFont(fixedFont);
-
-  //------
-
-  CQGameBoyScreen *screen = new CQGameBoyScreen(gameboy);
 
   //------
 
@@ -84,6 +83,8 @@ main(int argc, char **argv)
     else
       gameboy->loadCartridge(argv[i]);
   }
+
+  CQGameBoyScreen *screen = gameboy->screen();
 
   z80->setScreen(screen);
 

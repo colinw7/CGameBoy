@@ -4,12 +4,28 @@
 #include <CQGameBoyKeys.h>
 #include <CQGameBoyInterrupt.h>
 #include <CQGameBoyTimer.h>
+#include <CQGameBoyInfo.h>
 #include <CQGameBoyDbg.h>
 
 CQGameBoy::
 CQGameBoy() :
  CGameBoy()
 {
+}
+
+CQGameBoyScreen *
+CQGameBoy::
+screen() const
+{
+  return screen_;
+}
+
+void
+CQGameBoy::
+createScreen()
+{
+  assert(! screen_);
+
   screen_ = new CQGameBoyScreen(this);
 }
 
@@ -77,6 +93,22 @@ addTimer()
   return timer_;
 }
 
+CQGameBoyInfo *
+CQGameBoy::
+addInfo()
+{
+  if (! info_) {
+    info_ = new CQGameBoyInfo(this);
+
+    //info_->setFixedFont(fixedFont_);
+  }
+
+  info_->show();
+  info_->raise();
+
+  return info_;
+}
+
 CQGameBoyDbg *
 CQGameBoy::
 addDebug()
@@ -118,6 +150,38 @@ updateKeys()
 
 void
 CQGameBoy::
+updateTiles()
+{
+  if (video_)
+    video_->updateTiles();
+}
+
+void
+CQGameBoy::
+updateScreen()
+{
+  if (video_)
+    video_->updateScreen();
+}
+
+void
+CQGameBoy::
+updateSprites()
+{
+  if (video_)
+    video_->updateSprites();
+}
+
+void
+CQGameBoy::
+updatePalette()
+{
+  if (video_)
+    video_->updatePalette();
+}
+
+void
+CQGameBoy::
 keyPress(CKeyType key)
 {
   CGameBoy::keyPress(key);
@@ -134,4 +198,40 @@ keyRelease(CKeyType key)
 
   if (keys_)
     keys_->update();
+}
+
+void
+CQGameBoy::
+execStop(bool b)
+{
+  if (b)
+    screen_->stopTimer();
+}
+
+const QColor &
+CQGameBoy::
+mappedPaletteColor(uchar palette, uchar ind) const
+{
+  int ind1 = 0;
+
+  switch (ind) {
+    case 0: ind1 =  palette & 0x03      ; break;
+    case 1: ind1 = (palette & 0x0c) >> 2; break;
+    case 2: ind1 = (palette & 0x30) >> 4; break;
+    case 3: ind1 = (palette & 0xc0) >> 6; break;
+  }
+
+  return paletteColor(ind1);
+}
+
+const QColor &
+CQGameBoy::
+paletteColor(uchar ind) const
+{
+  static QColor colors[4] = { QColor(255, 255, 255),
+                              QColor(192, 192, 192),
+                              QColor( 96,  96,  96),
+                              QColor(  0,   0,   0) };
+
+  return colors[ind];
 }

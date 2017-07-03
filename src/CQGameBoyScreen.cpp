@@ -21,13 +21,16 @@ CQGameBoyScreen(CQGameBoy *gameboy) :
   int w = gameboy_->getScreenPixelWidth ()*s + 2*border_;
   int h = gameboy_->getScreenPixelHeight()*s + 2*border_;
 
-  resize(302, 383);
+  resize(s*302, s*383);
 
   image_ = new QImage(QSize(w, h), QImage::Format_ARGB32);
 
   image_->fill(0);
 
   pixmap_.loadFromData(GameboyShell_data, GAMEBOYSHELL_DATA_LEN);
+
+  if (s > 1)
+    pixmap_ = pixmap_.scaled(pixmap_.width()*s, pixmap_.height()*s);
 
   ipainter_ = new QPainter(image_);
 }
@@ -45,14 +48,30 @@ exec()
 
   connect(instTimer_, SIGNAL(timeout()), this, SLOT(instTimeOut()));
 
-  instTimer_->start(instTimerLen());
+  startTimer();
+}
+
+void
+CQGameBoyScreen::
+startTimer()
+{
+  if (instTimer_)
+    instTimer_->start(instTimerLen());
+}
+
+void
+CQGameBoyScreen::
+stopTimer()
+{
+  if (instTimer_)
+    instTimer_->stop();
 }
 
 void
 CQGameBoyScreen::
 screenMemChanged(ushort /*start*/, ushort /*len*/)
 {
-  //if (gameboy_->onScreen(start, len))
+  //if (gameboy()->onScreen(start, len))
 
   update();
 }
@@ -62,15 +81,18 @@ CQGameBoyScreen::
 screenStep(int t)
 {
   // scan line 456 clocks
-  //  80 (OAM) Mode 2, 172 (VRAM) Mode 3, 204 Horizontal Blank (Mode 0)
-  //  Vertical Blank is 10 lines (4560 clocks) Mode 1
+  //   80 (OAM) Mode 2
+  //  172 (VRAM) Mode 3
+  //  204 Horizontal Blank (Mode 0)
+  //
+  // Vertical Blank is 10 lines (4560 clocks) Mode 1
 
-  CZ80 *z80 = gameboy_->getZ80();
+  CZ80 *z80 = gameboy()->getZ80();
 
   screenScan_ += t;
 
   switch (screenMode_) {
-    case 2: { // OAM
+    case 2: { // OAM (Sprite DRAW)
       if (screenScan_ >= 80) {
         screenScan_ = 0;
 
@@ -84,6 +106,9 @@ screenStep(int t)
         screenScan_ = 0;
 
         setLCDMode(0); // Horizontal Blank
+
+        // draw scan line
+        drawScanLine(screenLine_);
       }
 
       break;
@@ -120,8 +145,8 @@ screenStep(int t)
 
           setLCDMode(2); // OAM
 
-          // double buffer switch ?
-          drawScreen();
+          // draw background
+          drawBackground();
 
           z80->callPostStepProcs();
         }
@@ -148,7 +173,7 @@ setLCDMode(int mode)
 
   screenMode_ = mode;
 
-  CZ80 *z80 = gameboy_->getZ80();
+  CZ80 *z80 = gameboy()->getZ80();
 
   uchar stat = z80->getByte(0xff41);
 
@@ -176,7 +201,7 @@ void
 CQGameBoyScreen::
 updateLCDLine()
 {
-  CZ80 *z80 = gameboy_->getZ80();
+  CZ80 *z80 = gameboy()->getZ80();
 
   z80->setByte(0xff44, screenLine_);
 
@@ -209,16 +234,23 @@ void
 CQGameBoyScreen::
 paintEvent(QPaintEvent *)
 {
+  int scale = gameboy()->getScale();
+
+  //---
+
   QPainter painter(this);
 
   painter.drawPixmap(0, 0, pixmap_);
 
-  painter.drawImage(QPoint(61, 30), *image_);
+  painter.drawImage(QPoint(scale*61, scale*30), *image_);
 
+  //---
+
+  // draw A/B buttons
   painter.setPen(Qt::NoPen);
 
-  arect_ = QRect(214, 231, 34, 34);
-  brect_ = QRect(171, 258, 34, 34);
+  arect_ = QRect(scale*214, scale*231, scale*34, scale*34);
+  brect_ = QRect(scale*171, scale*258, scale*34, scale*34);
 
   //painter.setPen(Qt::red);
   //painter.drawRect(arect_);
@@ -231,24 +263,27 @@ paintEvent(QPaintEvent *)
 
   QFont font;
 
-  font.setPointSizeF(18);
+  font.setPointSizeF(scale*18);
 
   painter.setFont(font);
 
   painter.drawText(arect_, Qt::AlignCenter, "A");
   painter.drawText(brect_, Qt::AlignCenter, "B");
 
-  selectRect_ = QRect( 97, 321, 26, 9);
-  startRect_  = QRect(140, 321, 26, 9);
+  //---
+
+  // draw Select/Start buttons
+  selectRect_ = QRect(scale* 97, scale*321, scale*26, scale*9);
+  startRect_  = QRect(scale*140, scale*321, scale*26, scale*9);
 
   //painter.setPen(Qt::red);
   //painter.drawRect(selectRect_);
   //painter.drawRect(startRect_);
 
-  QRect selectTextRect( 94, 333, 32, 9);
-  QRect startTextRect (137, 333, 32, 9);
+  QRect selectTextRect(scale* 94, scale*333, scale*32, scale*9);
+  QRect startTextRect (scale*137, scale*333, scale*32, scale*9);
 
-  font.setPointSizeF(6);
+  font.setPointSizeF(scale*6);
 
   painter.setPen(Qt::black);
 
@@ -257,12 +292,15 @@ paintEvent(QPaintEvent *)
   painter.drawText(selectTextRect, Qt::AlignCenter, "SELECT");
   painter.drawText(startTextRect , Qt::AlignCenter, "START" );
 
+  //---
+
+  // draw arrow buttons
   QPainterPath path;
 
-  upRect_    = QRect(67, 230, 18, 18);
-  leftRect_  = QRect(44, 252, 18, 18);
-  rightRect_ = QRect(90, 253, 18, 18);
-  downRect_  = QRect(67, 277, 18, 18);
+  upRect_    = QRect(scale*67, scale*230, scale*18, scale*18);
+  leftRect_  = QRect(scale*44, scale*252, scale*18, scale*18);
+  rightRect_ = QRect(scale*90, scale*253, scale*18, scale*18);
+  downRect_  = QRect(scale*67, scale*277, scale*18, scale*18);
 
   //painter.setPen(Qt::red);
   //painter.drawRect(leftRect_);
@@ -270,27 +308,27 @@ paintEvent(QPaintEvent *)
   //painter.drawRect(downRect_);
   //painter.drawRect(rightRect_);
 
-  path.moveTo(68, 248);
-  path.lineTo(76, 230);
-  path.lineTo(84, 248);
+  path.moveTo(scale*68, scale*248);
+  path.lineTo(scale*76, scale*230);
+  path.lineTo(scale*84, scale*248);
 
   path.closeSubpath();
 
-  path.moveTo(62, 253);
-  path.lineTo(44, 261);
-  path.lineTo(62, 269);
+  path.moveTo(scale*62, scale*253);
+  path.lineTo(scale*44, scale*261);
+  path.lineTo(scale*62, scale*269);
 
   path.closeSubpath();
 
-  path.moveTo( 91, 253);
-  path.lineTo(109, 261);
-  path.lineTo( 91, 269);
+  path.moveTo(scale* 91, scale*253);
+  path.lineTo(scale*109, scale*261);
+  path.lineTo(scale* 91, scale*269);
 
   path.closeSubpath();
 
-  path.moveTo(68, 277);
-  path.lineTo(76, 295);
-  path.lineTo(84, 277);
+  path.moveTo(scale*68, scale*277);
+  path.lineTo(scale*76, scale*295);
+  path.lineTo(scale*84, scale*277);
 
   path.closeSubpath();
 
@@ -305,35 +343,35 @@ mousePressEvent(QMouseEvent *e)
   mouseKey_   = CKEY_TYPE_NUL;
 
   if      (arect_.contains(e->pos())) {
-    mouseKey_ = gameboy_->aKey(); //std::cerr << "A" << std::endl;
+    mouseKey_ = gameboy()->aKey(); //std::cerr << "A" << std::endl;
   }
   else if (brect_.contains(e->pos())) {
-    mouseKey_ = gameboy_->bKey(); //std::cerr << "B" << std::endl;
+    mouseKey_ = gameboy()->bKey(); //std::cerr << "B" << std::endl;
   }
   else if (selectRect_.contains(e->pos())) {
-    mouseKey_ = gameboy_->selectKey(); //std::cerr << "SELECT" << std::endl;
+    mouseKey_ = gameboy()->selectKey(); //std::cerr << "SELECT" << std::endl;
   }
   else if (startRect_.contains(e->pos())) {
-    mouseKey_ = gameboy_->startKey(); //std::cerr << "START" << std::endl;
+    mouseKey_ = gameboy()->startKey(); //std::cerr << "START" << std::endl;
   }
   else if (leftRect_.contains(e->pos())) {
-    mouseKey_ = gameboy_->leftKey(); //std::cerr << "Left" << std::endl;
+    mouseKey_ = gameboy()->leftKey(); //std::cerr << "Left" << std::endl;
   }
   else if (rightRect_.contains(e->pos())) {
-    mouseKey_ = gameboy_->rightKey(); //std::cerr << "Right" << std::endl;
+    mouseKey_ = gameboy()->rightKey(); //std::cerr << "Right" << std::endl;
   }
   else if (upRect_.contains(e->pos())) {
-    mouseKey_ = gameboy_->upKey(); //std::cerr << "Up" << std::endl;
+    mouseKey_ = gameboy()->upKey(); //std::cerr << "Up" << std::endl;
   }
   else if (downRect_.contains(e->pos())) {
-    mouseKey_ = gameboy_->downKey(); //std::cerr << "Down" << std::endl;
+    mouseKey_ = gameboy()->downKey(); //std::cerr << "Down" << std::endl;
   }
   else {
     //std::cerr << e->x() << " " << e->y() << std::endl;
     return;
   }
 
-  gameboy_->keyPress(mouseKey_);
+  gameboy()->keyPress(mouseKey_);
 }
 
 void
@@ -341,7 +379,7 @@ CQGameBoyScreen::
 mouseReleaseEvent(QMouseEvent *)
 {
   if (mousePress_) {
-    gameboy_->keyRelease(mouseKey_);
+    gameboy()->keyRelease(mouseKey_);
 
     mousePress_ = false;
   }
@@ -358,6 +396,7 @@ contextMenuEvent(QContextMenuEvent *e)
   menu->addAction("Keys"     , this, SLOT(keysSlot     ()));
   menu->addAction("Interrupt", this, SLOT(interruptSlot()));
   menu->addAction("Timer"    , this, SLOT(timerSlot    ()));
+  menu->addAction("Info"     , this, SLOT(infoSlot     ()));
 
   menu->exec(e->globalPos());
 
@@ -368,101 +407,185 @@ void
 CQGameBoyScreen::
 videoSlot()
 {
-  gameboy_->addVideo();
+  gameboy()->addVideo();
 }
 
 void
 CQGameBoyScreen::
 debugSlot()
 {
-  gameboy_->addDebug();
+  gameboy()->addDebug();
 }
 
 void
 CQGameBoyScreen::
 keysSlot()
 {
-  gameboy_->addKeys();
+  gameboy()->addKeys();
 }
 
 void
 CQGameBoyScreen::
 interruptSlot()
 {
-  gameboy_->addInterrupt();
+  gameboy()->addInterrupt();
 }
 
 void
 CQGameBoyScreen::
 timerSlot()
 {
-  gameboy_->addTimer();
+  gameboy()->addTimer();
 }
 
 void
 CQGameBoyScreen::
-drawScreen()
+infoSlot()
 {
+  gameboy()->addInfo();
+}
+
+void
+CQGameBoyScreen::
+drawBackground()
+{
+  CZ80 *z80 = gameboy()->getZ80();
+
+  lcdc_ = z80->getByte(0xff40);
+
+  scy_ = z80->getByte(0xff42);
+  scx_ = z80->getByte(0xff43);
+
+  palette1_ = z80->getByte(0xff47);
+  palette2_ = palette1_;
+
   for (uint y = 0; y < 144; ++y) {
     for (uint x = 0; x < 160; ++x) {
-      drawScreenPixel(x, y);
+      drawBackgroundPixel(x, y);
     }
   }
 
-  CGameBoySprite sprite;
-
-  // 160 bytes: 40 sprites, 4 bytes each
-  for (int i = 0; i < 40; ++i) {
-    gameboy_->getSprite(i, sprite);
-
-    int x1 = sprite.x - 8;
-    int x2 = x1 + 8;
-
-    if (x2 < 0 || x1 >= 144)
-      continue;
-
-    int y1 = sprite.y - 16;
-    int y2 = y1 + 8;
-
-    if (y2 < 0 || y1 >= 160)
-      continue;
-
-    for (int y = 0; y < 8; ++y) {
-      for (int x = 0; x < 8; ++x) {
-        drawTilePixel(x1 + x, y1 + y, sprite.bankNum, sprite.t, x, y);
-      }
-    }
-  }
+  for (uint y = 0; y < 144; ++y)
+    drawScanLine(y);
 
   update();
 }
 
 void
 CQGameBoyScreen::
-drawScreenPixel(int pixel, int line)
+drawScanLine(int y)
 {
-  CZ80 *z80 = gameboy_->getZ80();
+  CZ80 *z80 = gameboy()->getZ80();
 
-  uchar lcdc = z80->getByte(0xff40);
+  lcdc_ = z80->getByte(0xff40);
 
-//bool lcdDisplay    = TST_BIT(lcdc, 7);
-//int  windowTile    = TST_BIT(lcdc, 6);
-//bool windowDisplay = TST_BIT(lcdc, 5);
-  int  bgWindowData  = TST_BIT(lcdc, 4);
-  int  bgTile        = TST_BIT(lcdc, 3);
-//int  spriteSize    = TST_BIT(lcdc, 2);
-//int  spriteDisplay = TST_BIT(lcdc, 1);
-//int  bgDisplay     = TST_BIT(lcdc, 0);
+  wy_ = z80->getByte(0xff4a);
+  wx_ = z80->getByte(0xff4b);
 
-  uchar scy = z80->getByte(0xff42);
-  uchar scx = z80->getByte(0xff43);
+  palette1_ = z80->getByte(0xff47);
+  palette2_ = palette1_;
 
-  int pixel1 = (pixel + scx) & 0xff;
-  int line1  = (line  + scy) & 0xff;
+  for (uint x = 0; x < 160; ++x)
+    drawScanPixel(x, y);
 
   //---
 
-  ushort memStart = (bgTile == 0 ? 0x9800 : 0x9C00);
+  palette1_ = z80->getByte(0xff48);
+  palette2_ = z80->getByte(0xff49);
+
+  drawLineSprites(y);
+
+  update();
+}
+
+void
+CQGameBoyScreen::
+drawSprites()
+{
+  CZ80 *z80 = gameboy()->getZ80();
+
+  lcdc_ = z80->getByte(0xff40);
+
+  palette1_ = z80->getByte(0xff48);
+  palette2_ = z80->getByte(0xff49);
+
+  for (uint y = 0; y < 144; ++y)
+    drawLineSprites(y);
+}
+
+void
+CQGameBoyScreen::
+drawLineSprites(int y)
+{
+  bool spriteDisplay = TST_BIT(lcdc_, 1);
+
+  if (! spriteDisplay)
+    return;
+
+  int spriteSize = (TST_BIT(lcdc_, 2) ? 16 : 8);
+
+  std::vector<CGameBoySprite> sprites;
+
+  if (! gameboy()->getLineSprites(y, spriteSize, sprites))
+    return;
+
+  int bank = 1; // bank always 1
+
+  for (const auto &sprite : sprites) {
+    // 160 bytes: 40 sprites, 4 bytes each
+    int x1 = sprite.x - 8;
+    int y1 = sprite.y - 16;
+
+    int yo  = y - y1;
+    int yof = (sprite.yflip ? spriteSize - 1 - yo : yo);
+
+    uchar palette = (sprite.palNum1 == 0 ? palette1_ : palette2_);
+
+    if (spriteSize == 8) {
+      for (int xo = 0; xo < 8; ++xo) {
+        int xof = (sprite.xflip ? 7 - xo : xo);
+
+        drawTilePixel(x1 + xo, y, bank, sprite.t, xof, yof, palette, true);
+      }
+    }
+    else {
+      int t1 = sprite.t & 0xFE;
+      int t2 = t1 + 1;
+
+      for (int xo = 0; xo < 8; ++xo) {
+        int xof = (sprite.xflip ? 7 - xo : xo);
+
+        if (yo < 8)
+          drawTilePixel(x1 + xo, y, bank, t1, xof, yof    , palette, true);
+        else
+          drawTilePixel(x1 + xo, y, bank, t2, xof, yof - 8, palette, true);
+      }
+    }
+  }
+}
+
+void
+CQGameBoyScreen::
+drawBackgroundPixel(int pixel, int line)
+{
+  bool lcdDisplay   = TST_BIT(lcdc_, 7); // Screen display on/off
+  int  bgWindowData = TST_BIT(lcdc_, 4); // Background Character Data
+  int  bgTile       = TST_BIT(lcdc_, 3); // Background Display Data
+  int  bgDisplay    = TST_BIT(lcdc_, 0); // Background display on/off
+
+  if (! lcdDisplay)
+    return;
+
+  if (! bgDisplay)
+    return;
+
+  int pixel1 = (pixel + scx_) & 0xff;
+  int line1  = (line  + scy_) & 0xff;
+
+  //---
+
+  // get tile at pixel/line
+  ushort tileMem = (bgTile == 0 ? 0x9800 : 0x9C00);
 
   int ty = line1 / 8;
   int tl = line1 % 8;
@@ -470,32 +593,65 @@ drawScreenPixel(int pixel, int line)
   int tx = pixel1 / 8;
   int tp = pixel1 % 8;
 
-  ushort p = memStart + ty*32 + tx; // 32 bytes per line, 1 bytes per tile
+  ushort p = tileMem + ty*32 + tx; // 32 bytes per line, 1 bytes per tile
+
+  CZ80 *z80 = gameboy()->getZ80();
 
   uchar tile = z80->getByte(p);
 
-  drawTilePixel(pixel, line, bgWindowData, tile, tp, tl);
+  // draw tile pixel
+  drawTilePixel(pixel, line, bgWindowData, tile, tp, tl, palette1_, false);
 }
 
 void
 CQGameBoyScreen::
-drawTilePixel(int x, int y, int bank, int tile, int pixel, int line)
+drawScanPixel(int pixel, int line)
 {
-  // colors : 0 transparent for sprites
-  static QColor colors[4] = { QColor(255, 255, 255),
-                              QColor(192, 192, 192),
-                              QColor( 96,  96,  96),
-                              QColor(  0,   0,   0) };
+  bool lcdDisplay    = TST_BIT(lcdc_, 7); // Screen display on/off
+  int  windowTile    = TST_BIT(lcdc_, 6); // Window Screen Display Data
+  bool windowDisplay = TST_BIT(lcdc_, 5); // Window Display On/Off
+  int  bgWindowData  = TST_BIT(lcdc_, 4); // Background Character Data
+
+  if (! lcdDisplay)
+    return;
+
+  if (! windowDisplay)
+    return;
+
+  if (pixel < wx_ - 7 || line < wy_)
+    return;
 
   //---
 
-  CZ80 *z80 = gameboy_->getZ80();
+  // get tile at pixel/line
+  ushort tileMem = (windowTile == 0 ? 0x9800 : 0x9C00);
 
-  int scale = gameboy_->getScale();
+  int ty = line / 8;
+  int tl = line % 8;
 
-  ushort memStart = (bank == 0 ? 0x8800 : 0x8000);
+  int tx = pixel / 8;
+  int tp = pixel % 8;
 
-  ushort p = memStart + tile*16; // 16 bytes per tile
+  ushort p = tileMem + ty*32 + tx; // 32 bytes per line, 1 bytes per tile
+
+  CZ80 *z80 = gameboy()->getZ80();
+
+  uchar tile = z80->getByte(p);
+
+  // draw tile pixel
+  drawTilePixel(pixel, line, bgWindowData, tile, tp, tl, palette1_, false);
+}
+
+void
+CQGameBoyScreen::
+drawTilePixel(int x, int y, int bank, int tile, int pixel, int line,
+              uchar palette, bool isSprite)
+{
+  CZ80 *z80 = gameboy()->getZ80();
+
+  int scale = gameboy()->getScale();
+
+  ushort p = gameboy()->getTileAddr(bank, tile);
 
   ushort pi = p + 2*line; // 2 bytes per line
 
@@ -504,20 +660,25 @@ drawTilePixel(int x, int y, int bank, int tile, int pixel, int line)
 
   int ipixel = 7 - pixel;
 
-  bool set1 = (b1 & (1 << ipixel));
-  bool set2 = (b2 & (1 << ipixel));
+  bool set1 = TST_BIT(b1, ipixel);
+  bool set2 = TST_BIT(b2, ipixel);
 
   int ind = (2*set2 + set1);
 
-  //if (ind == 0) continue;
+  // 0 transparent for sprites
+
+  if (ind == 0 && isSprite)
+    return;
+
+  const QColor &c = gameboy()->mappedPaletteColor(palette, ind);
 
   if (scale <= 1) {
-    ipainter_->setPen(colors[ind]);
+    ipainter_->setPen(c);
 
-    ipainter_->drawPoint(x*scale, y*scale);
+    ipainter_->drawPoint(x, y);
   }
   else {
-    ipainter_->fillRect(QRect(x*scale, y*scale, scale, scale), colors[ind]);
+    ipainter_->fillRect(QRect(x*scale, y*scale, scale, scale), c);
   }
 }
 
@@ -529,7 +690,7 @@ keyPressEvent(QKeyEvent *e)
 
   CKeyType type = kevent->getType();
 
-  CZ80 *z80 = gameboy_->getZ80();
+  CZ80 *z80 = gameboy()->getZ80();
 
   if      (type == CKEY_TYPE_Escape)
     exit(0);
@@ -552,7 +713,7 @@ keyReleaseEvent(QKeyEvent *e)
   if (type == CKEY_TYPE_Escape || type == CKEY_TYPE_F1 || type == CKEY_TYPE_F2)
     return;
 
-  CZ80 *z80 = gameboy_->getZ80();
+  CZ80 *z80 = gameboy()->getZ80();
 
   z80->keyRelease(*kevent);
 }
@@ -561,7 +722,7 @@ void
 CQGameBoyScreen::
 instTimeOut()
 {
-  CZ80 *z80 = gameboy_->getZ80();
+  CZ80 *z80 = gameboy()->getZ80();
 
   for (int i = 0; i < instSteps(); ++i)
     z80->step();
@@ -581,6 +742,6 @@ void
 CQGameBoyRenderer::
 clear(const CRGBA &bg)
 {
-  painter_->fillRect(qgameboy_->rect(), QBrush(CQUtil::rgbaToColor(bg)));
+  painter_->fillRect(qgameboy()->rect(), QBrush(CQUtil::rgbaToColor(bg)));
 }
 #endif

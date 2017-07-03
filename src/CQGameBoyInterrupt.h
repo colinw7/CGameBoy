@@ -1,12 +1,14 @@
 #ifndef CQGameBoyInterrupt_H
 #define CQGameBoyInterrupt_H
 
-#include <QWidget>
+#include <CZ80Trace.h>
 #include <CZ80.h>
+#include <QWidget>
 
 class CQGameBoy;
 class CQGameBoyHexEdit;
 class CQGameBoyInterruptCanvas;
+class CQZ80RegEdit;
 class QCheckBox;
 
 //---
@@ -31,7 +33,7 @@ class CQGameBoyInterrupt : public QWidget, public CZ80Trace {
  private:
   CQGameBoy*                gameboy_     { nullptr };
   QCheckBox*                enableCheck_ { nullptr };
-  CQGameBoyHexEdit*         iffEdit_     { nullptr };
+  CQZ80RegEdit*             iffEdit_     { nullptr };
   CQGameBoyHexEdit*         statEdit_    { nullptr };
   CQGameBoyInterruptCanvas* canvas_      { nullptr };
 };

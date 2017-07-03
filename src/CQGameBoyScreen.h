@@ -1,9 +1,10 @@
 #ifndef CQGameBoyScreen_H
 #define CQGameBoyScreen_H
 
-#include <QWidget>
+#include <CZ80Screen.h>
 #include <CZ80.h>
 #include <CEvent.h>
+#include <QWidget>
 
 class CQGameBoy;
 
@@ -34,6 +35,9 @@ class CQGameBoyScreen : public QWidget, public CZ80Screen {
 
   void exec();
 
+  void startTimer();
+  void stopTimer();
+
   void screenMemChanged(ushort pos, ushort len) override;
 
   void screenStep(int t) override;
@@ -51,12 +55,12 @@ class CQGameBoyScreen : public QWidget, public CZ80Screen {
   void contextMenuEvent(QContextMenuEvent *e);
 
   void drawScreen();
-  void drawScreenPixel(int pixel, int line);
 
-  void drawTilePixel(int x, int y, int bank, int tile, int pixel, int line);
+  void drawSprites();
 
-  void displaySprites();
+  void drawLineSprites(int y);
 
+ public:
   QSize sizeHint() const;
 
  public slots:
@@ -67,10 +71,23 @@ class CQGameBoyScreen : public QWidget, public CZ80Screen {
   void keysSlot();
   void interruptSlot();
   void timerSlot();
+  void infoSlot();
 
  private:
   void setLCDMode(int mode);
+
   void updateLCDLine();
+
+  void drawBackground();
+
+  void drawScanLine(int line);
+  void drawScanPixel(int pixel, int line);
+  void drawBackgroundPixel(int pixel, int line);
+
+  void drawTilePixel(int x, int y, int bank, int tile, int pixel, int line,
+                     uchar palette, bool isSprite);
+
+  void displaySprites();
 
  private:
   CQGameBoy *gameboy_      { nullptr };
@@ -94,25 +111,13 @@ class CQGameBoyScreen : public QWidget, public CZ80Screen {
   QRect      startRect_;
   bool       mousePress_ { false };
   CKeyType   mouseKey_   { CKEY_TYPE_NUL };
+  uchar      lcdc_       { 0 };
+  uchar      scy_        { 0 };
+  uchar      scx_        { 0 };
+  uchar      palette1_   { 0 };
+  uchar      palette2_   { 0 };
+  uchar      wy_         { 0 };
+  uchar      wx_         { 0 };
 };
-
-//---
-
-#if 0
-class CQGameBoyRenderer : public CGameBoyRenderer {
- public:
-  CQGameBoyRenderer(CQGameBoyScreen *qgameboy, QPainter *painter) :
-   qgameboy_(qgameboy), painter_(painter) {
-  }
-
-  void clear(const CRGBA &bg);
-
- private:
-  CQGameBoyScreen *qgameboy_ { nullptr };
-  QPainter  *painter_  { nullptr };
-};
-#endif
-
-//---
 
 #endif

@@ -1,4 +1,5 @@
 #include <CZ80Fn.h>
+#include <CZ80OpData.h>
 #include <cassert>
 
 //#define OP_DEBUG 1
@@ -534,6 +535,8 @@ void
 CZ80::
 f_call(CZ80OpData *op_data)
 {
+  op_data->tracePC(op_data->getUWord1());
+
   op_data->z80->call(op_data->getUWord1());
 }
 
@@ -542,6 +545,8 @@ CZ80::
 f_call_z(CZ80OpData *op_data)
 {
   if (op_data->z80->tstZFlag()) {
+    op_data->tracePC(op_data->getUWord2());
+
     op_data->z80->call(op_data->getUWord2());
 
     op_data->z80->incT(7);
@@ -553,6 +558,8 @@ CZ80::
 f_call_nz(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstZFlag()) {
+    op_data->tracePC(op_data->getUWord2());
+
     op_data->z80->call(op_data->getUWord2());
 
     op_data->z80->incT(7);
@@ -564,6 +571,8 @@ CZ80::
 f_call_c(CZ80OpData *op_data)
 {
   if (op_data->z80->tstCFlag()) {
+    op_data->tracePC(op_data->getUWord2());
+
     op_data->z80->call(op_data->getUWord2());
 
     op_data->z80->incT(7);
@@ -575,6 +584,8 @@ CZ80::
 f_call_nc(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstCFlag()) {
+    op_data->tracePC(op_data->getUWord2());
+
     op_data->z80->call(op_data->getUWord2());
 
     op_data->z80->incT(7);
@@ -586,6 +597,8 @@ CZ80::
 f_call_pe(CZ80OpData *op_data)
 {
   if (op_data->z80->tstPFlag()) {
+    op_data->tracePC(op_data->getUWord2());
+
     op_data->z80->call(op_data->getUWord2());
 
     op_data->z80->incT(7);
@@ -599,6 +612,8 @@ CZ80::
 f_call_po(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstPFlag()) {
+    op_data->tracePC(op_data->getUWord2());
+
     op_data->z80->call(op_data->getUWord2());
 
     op_data->z80->incT(7);
@@ -611,6 +626,8 @@ CZ80::
 f_call_p(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstSFlag()) {
+    op_data->tracePC(op_data->getUWord2());
+
     op_data->z80->call(op_data->getUWord2());
 
     op_data->z80->incT(7);
@@ -624,6 +641,8 @@ CZ80::
 f_call_m(CZ80OpData *op_data)
 {
   if (op_data->z80->tstSFlag()) {
+    op_data->tracePC(op_data->getUWord2());
+
     op_data->z80->call(op_data->getUWord2());
 
     op_data->z80->incT(7);
@@ -949,7 +968,7 @@ f_djnz(CZ80OpData *op_data)
   op_data->z80->decB();
 
   if (! op_data->z80->tstZFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getRPC1());
 
     op_data->z80->setPC(op_data->getRPC1());
 
@@ -961,6 +980,7 @@ void
 CZ80::
 f_stop(CZ80OpData *)
 {
+  // TODO: Halt gameboy processor until key pressed
   std::cerr << "STOP" << std::endl;
 }
 #endif
@@ -1036,6 +1056,8 @@ void
 CZ80::
 f_halt(CZ80OpData *op_data)
 {
+  //std::cerr << "HALT" << std::endl;
+
   op_data->z80->halt();
 }
 
@@ -1312,7 +1334,7 @@ void
 CZ80::
 f_jp(CZ80OpData *op_data)
 {
-  op_data->z80->tracePC();
+  op_data->tracePC(op_data->getUWord1());
 
   op_data->z80->setPC(op_data->getUWord1());
 }
@@ -1322,7 +1344,7 @@ CZ80::
 f_jp_z(CZ80OpData *op_data)
 {
   if (op_data->z80->tstZFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getUWord2());
 
     op_data->z80->setPC(op_data->getUWord2());
   }
@@ -1333,7 +1355,7 @@ CZ80::
 f_jp_nz(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstZFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getUWord2());
 
     op_data->z80->setPC(op_data->getUWord2());
   }
@@ -1344,7 +1366,7 @@ CZ80::
 f_jp_c(CZ80OpData *op_data)
 {
   if (op_data->z80->tstCFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getUWord2());
 
     op_data->z80->setPC(op_data->getUWord2());
   }
@@ -1355,7 +1377,7 @@ CZ80::
 f_jp_nc(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstCFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getUWord2());
 
     op_data->z80->setPC(op_data->getUWord2());
   }
@@ -1366,7 +1388,7 @@ CZ80::
 f_jp_pe(CZ80OpData *op_data)
 {
   if (op_data->z80->tstPFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getUWord2());
 
     op_data->z80->setPC(op_data->getUWord2());
   }
@@ -1379,7 +1401,7 @@ CZ80::
 f_jp_po(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstPFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getUWord2());
 
     op_data->z80->setPC(op_data->getUWord2());
   }
@@ -1400,7 +1422,7 @@ CZ80::
 f_jp_p(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstSFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getUWord2());
 
     op_data->z80->setPC(op_data->getUWord2());
   }
@@ -1421,7 +1443,7 @@ CZ80::
 f_jp_m(CZ80OpData *op_data)
 {
   if (op_data->z80->tstSFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getUWord2());
 
     op_data->z80->setPC(op_data->getUWord2());
   }
@@ -1439,7 +1461,7 @@ void
 CZ80::
 f_jp_hl(CZ80OpData *op_data)
 {
-  op_data->z80->tracePC();
+  op_data->tracePC(op_data->z80->getHL());
 
   op_data->z80->setPC(op_data->z80->getHL());
 }
@@ -1449,7 +1471,7 @@ void
 CZ80::
 f_jp_ix(CZ80OpData *op_data)
 {
-  op_data->z80->tracePC();
+  op_data->tracePC(op_data->z80->getIX());
 
   op_data->z80->setPC(op_data->z80->getIX());
 }
@@ -1458,7 +1480,7 @@ void
 CZ80::
 f_jp_iy(CZ80OpData *op_data)
 {
-  op_data->z80->tracePC();
+  op_data->tracePC(op_data->z80->getIY());
 
   op_data->z80->setPC(op_data->z80->getIY());
 }
@@ -1468,7 +1490,7 @@ void
 CZ80::
 f_jr(CZ80OpData *op_data)
 {
-  op_data->z80->tracePC();
+  op_data->tracePC(op_data->getRPC1());
 
   op_data->z80->setPC(op_data->getRPC1());
 }
@@ -1478,7 +1500,7 @@ CZ80::
 f_jr_z(CZ80OpData *op_data)
 {
   if (op_data->z80->tstZFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getRPC2());
 
     op_data->z80->setPC(op_data->getRPC2());
 
@@ -1491,7 +1513,7 @@ CZ80::
 f_jr_nz(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstZFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getRPC2());
 
     op_data->z80->setPC(op_data->getRPC2());
 
@@ -1504,7 +1526,7 @@ CZ80::
 f_jr_c(CZ80OpData *op_data)
 {
   if (op_data->z80->tstCFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getRPC2());
 
     op_data->z80->setPC(op_data->getRPC2());
 
@@ -1517,7 +1539,7 @@ CZ80::
 f_jr_nc(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstCFlag()) {
-    op_data->z80->tracePC();
+    op_data->tracePC(op_data->getRPC2());
 
     op_data->z80->setPC(op_data->getRPC2());
 
@@ -3626,6 +3648,8 @@ void
 CZ80::
 f_ret(CZ80OpData *op_data)
 {
+  op_data->tracePC(op_data->z80->peek());
+
   op_data->z80->popPC();
 }
 
@@ -3633,8 +3657,11 @@ void
 CZ80::
 f_ret_z(CZ80OpData *op_data)
 {
-  if (op_data->z80->tstZFlag())
+  if (op_data->z80->tstZFlag()) {
+    op_data->tracePC(op_data->z80->peek());
+
     op_data->z80->popPC();
+  }
 }
 
 void
@@ -3642,6 +3669,8 @@ CZ80::
 f_ret_nz(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstZFlag()) {
+    op_data->tracePC(op_data->z80->peek());
+
     op_data->z80->popPC();
 
     op_data->z80->incT(6);
@@ -3653,6 +3682,8 @@ CZ80::
 f_ret_c(CZ80OpData *op_data)
 {
   if (op_data->z80->tstCFlag()) {
+    op_data->tracePC(op_data->z80->peek());
+
     op_data->z80->popPC();
 
     op_data->z80->incT(6);
@@ -3664,6 +3695,8 @@ CZ80::
 f_ret_nc(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstCFlag()) {
+    op_data->tracePC(op_data->z80->peek());
+
     op_data->z80->popPC();
 
     op_data->z80->incT(6);
@@ -3677,6 +3710,8 @@ CZ80::
 f_ret_pe(CZ80OpData *op_data)
 {
   if (op_data->z80->tstPFlag()) {
+    op_data->tracePC(op_data->z80->peek());
+
     op_data->z80->popPC();
 
     op_data->z80->incT(6);
@@ -3698,6 +3733,8 @@ CZ80::
 f_ret_po(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstPFlag()) {
+    op_data->tracePC(op_data->z80->peek());
+
     op_data->z80->popPC();
 
     op_data->z80->incT(6);
@@ -3719,6 +3756,8 @@ CZ80::
 f_ret_p(CZ80OpData *op_data)
 {
   if (! op_data->z80->tstSFlag()) {
+    op_data->tracePC(op_data->z80->peek());
+
     op_data->z80->popPC();
 
     op_data->z80->incT(6);
@@ -3740,6 +3779,8 @@ CZ80::
 f_ret_m(CZ80OpData *op_data)
 {
   if (op_data->z80->tstSFlag()) {
+    op_data->tracePC(op_data->z80->peek());
+
     op_data->z80->popPC();
 
     op_data->z80->incT(6);

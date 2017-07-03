@@ -1,5 +1,10 @@
 #include <CQZ80Dbg.h>
+#include <CQZ80Stack.h>
+#include <CQZ80TraceBack.h>
+#include <CQZ80RegEdit.h>
 #include <CZ80.h>
+#include <CZ80Op.h>
+#include <CZ80OpData.h>
 #include <CStrUtil.h>
 
 #include <QApplication>
@@ -35,11 +40,13 @@ init()
 
   setMemoryText();
 
-  setInstructionsText();
+  updateInstructions();
 
-  setStackText();
+  updateStack();
 
-  setBreakpointText();
+  updateTraceBack();
+
+  updateBreakpoints();
 
   regChangedI(CZ80Reg::NONE);
 }
@@ -58,6 +65,7 @@ setFixedFont(const QFont &font)
   memoryText_      ->setFont(getFixedFont());
   instructionsText_->setFont(getFixedFont());
   stackText_       ->setFont(getFixedFont());
+  traceBack_       ->setFont(getFixedFont());
   breakpointsText_ ->setFont(getFixedFont());
 
   afEdit_ ->setFont(getFixedFont());
@@ -247,17 +255,32 @@ addWidgets()
 
   QVBoxLayout *stackLayout = new QVBoxLayout(stackGroup_);
 
-  stackText_ = new QTextEdit;
+  stackText_ = new CQZ80Stack(z80_);
 
-  stackText_->setObjectName("stackText");
-
-  stackText_->setReadOnly(true);
-
-  stackText_->setFont(getFixedFont());
+  stackText_->setFixedFont(getFixedFont());
 
   stackLayout->addWidget(stackText_);
 
   rightLayout->addWidget(stackGroup_);
+
+  //--
+
+  traceBackGroup_ = new QGroupBox("Trace Back");
+
+  traceBackGroup_->setObjectName("traceBackGroup");
+  traceBackGroup_->setCheckable(true);
+
+  connect(traceBackGroup_, SIGNAL(toggled(bool)), this, SLOT(traceBackTraceSlot()));
+
+  QVBoxLayout *traceBackLayout = new QVBoxLayout(traceBackGroup_);
+
+  traceBack_ = new CQZ80TraceBack(z80_);
+
+  traceBack_->setFixedFont(getFixedFont());
+
+  traceBackLayout->addWidget(traceBack_);
+
+  rightLayout->addWidget(traceBackGroup_);
 
   //--
 
@@ -282,6 +305,8 @@ addWidgets()
 
   QHBoxLayout *optionsLayout = new QHBoxLayout(optionsFrame);
 
+  //--
+
   traceCheck_ = new QCheckBox("Trace");
 
   traceCheck_->setObjectName("traceCheck");
@@ -291,15 +316,18 @@ addWidgets()
 
   optionsLayout->addWidget(traceCheck_);
 
-#if 0
-  QCheckBox *memTraceCheck = new QCheckBox("Mem Trace");
+  //--
 
-  memTraceCheck->setObjectName("memTraceCheck");
+  haltCheck_ = new QCheckBox("Halt");
 
-  connect(memTraceCheck, SIGNAL(stateChanged(int)), this, SLOT(setMemTraceSlot(int)));
+  haltCheck_->setObjectName("haltCheck");
+  haltCheck_->setChecked(false);
 
-  optionsLayout->addWidget(memTraceCheck);
-#endif
+  connect(haltCheck_, SIGNAL(stateChanged(int)), this, SLOT(setHaltSlot()));
+
+  optionsLayout->addWidget(haltCheck_);
+
+  //--
 
   optionsLayout->addStretch(1);
 
@@ -358,21 +386,21 @@ void
 CQZ80Dbg::
 addRegistersWidgets()
 {
-  afEdit_  = new CQZ80RegEdit(this, CZ80Reg::AF );
-  af1Edit_ = new CQZ80RegEdit(this, CZ80Reg::AF1);
-  bcEdit_  = new CQZ80RegEdit(this, CZ80Reg::BC );
-  bc1Edit_ = new CQZ80RegEdit(this, CZ80Reg::BC1);
-  deEdit_  = new CQZ80RegEdit(this, CZ80Reg::DE );
-  de1Edit_ = new CQZ80RegEdit(this, CZ80Reg::DE1);
-  hlEdit_  = new CQZ80RegEdit(this, CZ80Reg::HL );
-  hl1Edit_ = new CQZ80RegEdit(this, CZ80Reg::HL1);
-  ixEdit_  = new CQZ80RegEdit(this, CZ80Reg::IX );
-  iEdit_   = new CQZ80RegEdit(this, CZ80Reg::I  );
-  iyEdit_  = new CQZ80RegEdit(this, CZ80Reg::IY );
-  rEdit_   = new CQZ80RegEdit(this, CZ80Reg::R  );
-  spEdit_  = new CQZ80RegEdit(this, CZ80Reg::SP );
-  iffEdit_ = new CQZ80RegEdit(this, CZ80Reg::IFF);
-  pcEdit_  = new CQZ80RegEdit(this, CZ80Reg::PC );
+  afEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::AF );
+  af1Edit_ = new CQZ80RegEdit(z80_, CZ80Reg::AF1);
+  bcEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::BC );
+  bc1Edit_ = new CQZ80RegEdit(z80_, CZ80Reg::BC1);
+  deEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::DE );
+  de1Edit_ = new CQZ80RegEdit(z80_, CZ80Reg::DE1);
+  hlEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::HL );
+  hl1Edit_ = new CQZ80RegEdit(z80_, CZ80Reg::HL1);
+  ixEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::IX );
+  iEdit_   = new CQZ80RegEdit(z80_, CZ80Reg::I  );
+  iyEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::IY );
+  rEdit_   = new CQZ80RegEdit(z80_, CZ80Reg::R  );
+  spEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::SP );
+  iffEdit_ = new CQZ80RegEdit(z80_, CZ80Reg::IFF);
+  pcEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::PC );
 
   registersLayout_->addWidget(afEdit_ , 0, 0);
   registersLayout_->addWidget(af1Edit_, 0, 1);
@@ -559,46 +587,28 @@ getByteChar(uchar c)
 
 void
 CQZ80Dbg::
-setInstructionsText()
+updateInstructions()
 {
   instructionsText_->reload();
 }
 
 void
 CQZ80Dbg::
-setStackText()
+updateStack()
 {
-  stackText_->clear();
-
-  ushort sp = z80_->getSP();
-
-  ushort sp1 = sp - 4;
-
-  std::string str;
-
-  for (ushort i = 0; i < 16; ++i) {
-    ushort sp2 = sp1 + i;
-
-    str = "";
-
-    if (sp2 == sp)
-      str += "<b><font color=\"red\">&gt;</font></b>";
-    else
-      str += " ";
-
-    str += CStrUtil::toHexString(sp2, 4);
-
-    str += " ";
-
-    str += CStrUtil::toHexString(z80_->getByte(sp2), 2);
-
-    stackText_->append(str.c_str());
-  }
+  stackText_->update();
 }
 
 void
 CQZ80Dbg::
-setBreakpointText()
+updateTraceBack()
+{
+  traceBack_->update();
+}
+
+void
+CQZ80Dbg::
+updateBreakpoints()
 {
   breakpointsText_->clear();
 
@@ -686,7 +696,7 @@ regChangedI(CZ80Reg reg)
       spEdit_->setValue(z80_->getSP());
 
     if (reg == CZ80Reg::NONE || isStackTrace())
-      setStackText();
+      updateStack();
   }
 
   if (reg == CZ80Reg::PC || reg == CZ80Reg::NONE) {
@@ -719,24 +729,23 @@ regChangedI(CZ80Reg reg)
       uint lineNum;
 
       if (! instructionsText_->getLineForPC(pc, lineNum))
-        setInstructionsText();
+        updateInstructions();
 
       if (instructionsText_->getLineForPC(pc, lineNum))
         instructionsVBar_->setValue(lineNum);
 
       //----
 
+      // instruction at PC
       CZ80OpData opData;
 
-      z80_->readOpData(&opData);
+      z80_->readOpData(pc, &opData);
 
-      if (opData.op != NULL)
-        opData_->setText(opData.getOpString().c_str());
+      if (opData.op)
+        opData_->setText(opData.getOpString(pc).c_str());
       else
         opData_->setText("");
     }
-
-    z80_->setPC(pc);
   }
 
   if (reg == CZ80Reg::I   || reg == CZ80Reg::NONE) {
@@ -812,7 +821,28 @@ CQZ80Dbg::
 breakpointsChanged()
 {
   if (isBreakpointsTrace())
-    setBreakpointText();
+    updateBreakpoints();
+}
+
+void
+CQZ80Dbg::
+traceBackChanged()
+{
+  if (isTraceBackTrace())
+    updateTraceBack();
+}
+
+void
+CQZ80Dbg::
+setStop(bool)
+{
+}
+
+void
+CQZ80Dbg::
+setHalt(bool b)
+{
+  haltCheck_->setChecked(b);
 }
 
 #if 0
@@ -900,6 +930,19 @@ CQZ80Dbg::
 stackTraceSlot()
 {
   setStackTrace(stackGroup_->isChecked());
+
+  if (stackGroup_->isChecked())
+    updateStack();
+}
+
+void
+CQZ80Dbg::
+traceBackTraceSlot()
+{
+  setTraceBackTrace(traceBackGroup_->isChecked());
+
+  if (traceBackGroup_->isChecked())
+    updateTraceBack();
 }
 
 void
@@ -920,7 +963,15 @@ setTraceSlot()
   registersGroup_   ->setChecked(checked);
   flagsGroup_       ->setChecked(checked);
   stackGroup_       ->setChecked(checked);
+  traceBackGroup_   ->setChecked(checked);
   breakpointsGroup_ ->setChecked(checked);
+}
+
+void
+CQZ80Dbg::
+setHaltSlot()
+{
+  z80_->setHalt(haltCheck_->isChecked());
 }
 
 void
@@ -1028,6 +1079,8 @@ CQZ80Mem::
 setLine(uint pc, const std::string &pcStr, const std::string &memStr, const std::string &textStr)
 {
   uint lineNum = pc / 8;
+
+  assert(lineNum < lines_.size());
 
   lines_[lineNum] = CQZ80MemLine(pc, pcStr, memStr, textStr);
 }
@@ -1159,7 +1212,7 @@ mouseDoubleClickEvent(QMouseEvent *e)
 
   z80->setPC(pc);
 
-  dbg_->regChanged(CZ80Reg::PC);
+  z80->callRegChanged(CZ80Reg::PC);
 }
 
 void
@@ -1226,9 +1279,11 @@ void
 CQZ80Inst::
 setLine(uint pc, const std::string &pcStr, const std::string &codeStr, const std::string &textStr)
 {
+  assert(lineNum_ < int(lines_.size()));
+
   lines_[lineNum_] = CQZ80InstLine(pc, pcStr, codeStr, textStr);
 
-  pcLineMap_[pc       ] = lineNum_;
+  pcLineMap_[pc      ] = lineNum_;
   linePcMap_[lineNum_] = pc;
 
   ++lineNum_;
@@ -1238,7 +1293,7 @@ bool
 CQZ80Inst::
 getLineForPC(uint pc, uint &lineNum) const
 {
-  PCLineMap::const_iterator p = pcLineMap_.find(pc);
+  auto p = pcLineMap_.find(pc);
 
   if (p == pcLineMap_.end())
     return false;
@@ -1354,7 +1409,7 @@ mouseDoubleClickEvent(QMouseEvent *e)
 
   z80->setPC(getPCForLine(iy));
 
-  dbg_->regChanged(CZ80Reg::PC);
+  z80->callRegChanged(CZ80Reg::PC);
 }
 
 void
@@ -1402,8 +1457,6 @@ reload()
 {
   CZ80 *z80 = dbg_->getZ80();
 
-  uint initPc = z80->getPC();
-
   uint pos1 = 0;
   uint pos2 = 65536;
 
@@ -1413,8 +1466,9 @@ reload()
   bool pcFound = false;
 
   while (pc < pos2) {
-    if (! pcFound && pc >= initPc) {
-      pc      = initPc;
+    // resync to PC (should be legal instruction here)
+    if (! pcFound && pc >= z80->getPC()) {
+      pc      = z80->getPC();
       pcFound = true;
     }
 
@@ -1424,17 +1478,11 @@ reload()
 
     //-----
 
-    uint lastPc = pc;
-
-    z80->setPC(pc);
-
     CZ80OpData opData;
 
-    z80->readOpData(&opData);
+    z80->readOpData(pc, &opData);
 
-    pc = z80->getPC();
-
-    if (pc < lastPc) pc = pos2;
+    uint pc1 = pc + opData.op->len;
 
     //-----
 
@@ -1442,8 +1490,8 @@ reload()
 
     ushort len1 = 0;
 
-    for (uint i = lastPc; i < pc; ++i) {
-      if (i > lastPc) codeStr += " ";
+    for (uint i = pc; i < pc1; ++i) {
+      if (i > pc) codeStr += " ";
 
       codeStr += CStrUtil::toHexString(z80->getByte(i), 2);
 
@@ -1457,12 +1505,16 @@ reload()
 
     std::string textStr = "; ";
 
-    if (opData.op != NULL)
-      textStr += opData.getOpString();
+    if (opData.op)
+      textStr += opData.getOpString(pc1);
     else
       textStr += "??";
 
-    setLine(lastPc, pcStr, codeStr, textStr);
+    setLine(pc, pcStr, codeStr, textStr);
+
+    //------
+
+    pc = pc1;
   }
 
   uint numLines = getNumLines();
@@ -1471,117 +1523,5 @@ reload()
 
   vbar_->setValue(0);
 
-  z80->setPC(initPc);
-
   update();
-}
-
-//------
-
-CQZ80RegEdit::
-CQZ80RegEdit(CQZ80Dbg *dbg, CZ80Reg reg) :
- QWidget(nullptr), dbg_(dbg), reg_(reg)
-{
-  QHBoxLayout *layout = new QHBoxLayout(this);
-
-  layout->setMargin(2); layout->setMargin(2);
-
-  QString str;
-
-  switch (reg) {
-    case CZ80Reg::AF : str = "AF" ; break;
-    case CZ80Reg::AF1: str = "AF'"; break;
-    case CZ80Reg::BC : str = "BC" ; break;
-    case CZ80Reg::BC1: str = "BC'"; break;
-    case CZ80Reg::DE : str = "DE" ; break;
-    case CZ80Reg::DE1: str = "DE'"; break;
-    case CZ80Reg::HL : str = "HL" ; break;
-    case CZ80Reg::HL1: str = "HL'"; break;
-    case CZ80Reg::IX : str = "IX" ; break;
-    case CZ80Reg::I  : str = "I"  ; break;
-    case CZ80Reg::IY : str = "IY" ; break;
-    case CZ80Reg::R  : str = "R"  ; break;
-    case CZ80Reg::SP : str = "SP" ; break;
-    case CZ80Reg::PC : str = "PC" ; break;
-    case CZ80Reg::IFF: str = "IFF"; break;
-    default          : assert(false);
-  }
-
-  setObjectName(str);
-
-  label_ = new QLabel(str);
-
-  label_->setObjectName("label");
-
-  edit_ = new QLineEdit;
-
-  edit_->setObjectName("edit");
-
-  layout->addWidget(label_);
-  layout->addWidget(edit_);
-
-  connect(edit_, SIGNAL(returnPressed()), this, SLOT(valueChangedSlot()));
-
-  //---
-
-  setFont(dbg_->getFixedFont());
-}
-
-void
-CQZ80RegEdit::
-setFont(const QFont &font)
-{
-  QWidget::setFont(font);
-
-  label_->setFont(font);
-  edit_ ->setFont(font);
-
-  QFontMetrics fm(font);
-
-  label_->setFixedWidth(fm.width("XXX") + 4);
-  edit_ ->setFixedWidth(fm.width("0000") + 16);
-}
-
-void
-CQZ80RegEdit::
-setValue(uint value)
-{
-  int len = 4;
-
-  if (reg_ == CZ80Reg::I || reg_ == CZ80Reg::R || reg_ == CZ80Reg::IFF) len = 2;
-
-  edit_->setText(CStrUtil::toHexString(value, len).c_str());
-}
-
-void
-CQZ80RegEdit::
-valueChangedSlot()
-{
-  uint value;
-
-  if (! CStrUtil::decodeHexString(edit_->text().toStdString(), &value))
-    return;
-
-  CZ80 *z80 = dbg_->getZ80();
-
-  switch (reg_) {
-    case CZ80Reg::AF : z80->setAF (value); break;
-    case CZ80Reg::AF1: z80->setAF1(value); break;
-    case CZ80Reg::BC : z80->setBC (value); break;
-    case CZ80Reg::BC1: z80->setBC1(value); break;
-    case CZ80Reg::DE : z80->setDE (value); break;
-    case CZ80Reg::DE1: z80->setDE1(value); break;
-    case CZ80Reg::HL : z80->setHL (value); break;
-    case CZ80Reg::HL1: z80->setHL1(value); break;
-    case CZ80Reg::IX : z80->setIX (value); break;
-    case CZ80Reg::I  : z80->setI  (value); break;
-    case CZ80Reg::IY : z80->setIY (value); break;
-    case CZ80Reg::R  : z80->setR  (value); break;
-    case CZ80Reg::SP : z80->setSP (value); break;
-    case CZ80Reg::PC : z80->setPC (value); break;
-    case CZ80Reg::IFF: z80->setIFF(value); break;
-    default          : assert(false);
-  }
-
-  dbg_->regChanged(reg_);
 }

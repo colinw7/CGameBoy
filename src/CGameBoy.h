@@ -18,8 +18,8 @@ struct CGameBoySprite {
   bool priority { false };
   bool yflip    { false };
   bool xflip    { false };
-  bool palNum1  { false };
-  bool bankNum  { false };
+  int  palNum1  { false };
+  int  bankNum  { false };
   int  palNum2  { 0 };
 
   void print(std::ostream &os) const {
@@ -65,6 +65,8 @@ class CGameBoy {
   void setScale(int scale) { scale_ = scale; }
   int  getScale() const { return scale_; }
 
+  const CZ80 *getZ80() const { return &z80_; }
+
   CZ80 *getZ80() { return &z80_; }
 
   CGameBoyPortData *portData() const { return portData_; }
@@ -100,18 +102,21 @@ class CGameBoy {
 
   uchar *cartridge() const { return cartridge_; }
 
-  uchar readCartridge(ushort pos) const { return cartridge_[pos]; }
+  uchar readCartridge(uint pos) const { return cartridge_[pos]; }
 
   size_t cartridgeLen() const { return cartridgeLen_; }
 
-  const uchar &romBank() const { return romBank_; }
-  void setRomBank(const uchar &v) { romBank_ = v; }
+  uchar romBank() const { return romBank_; }
+  void setRomBank(uchar v) { romBank_ = v; }
 
-  ushort romOffset() const { return romOffset_; }
-  void setRomOffset(ushort s) { romOffset_ = s; }
+  uint romOffset() const { return romOffset_; }
+  void setRomOffset(uint s) { romOffset_ = s; }
 
-  const uchar &ramBank() const { return ramBank_; }
-  void setRamBank(const uchar &v) { ramBank_ = v; }
+  bool isRamEnabled() const { return ramEnabled_; }
+  void setRamEnabled(bool b) { ramEnabled_ = b; }
+
+  uchar ramBank() const { return ramBank_; }
+  void setRamBank(uchar v) { ramBank_ = v; }
 
   uchar *ram() const { return ram_; }
 
@@ -121,14 +126,19 @@ class CGameBoy {
   ushort ramOffset() const { return ramOffset_; }
   void setRamOffset(ushort s) { ramOffset_ = s; }
 
+  uchar memoryModel() const { return memoryModel_; }
+  void setMemoryModel(uchar v) { memoryModel_ = v; }
+
   bool loadCartridge(const std::string &fileName);
   bool loadAsm(const std::string &fileName);
 
   bool onScreen(ushort pos, ushort len);
 
-  bool getScreenPos(ushort pos, int *x, int *y);
+  ushort getTileAddr(int bank, int tile) const;
 
-  bool getSprite(int i, CGameBoySprite &sprite);
+  bool getLineSprites(int line, int height, std::vector<CGameBoySprite> &sprites) const;
+
+  bool getSprite(int i, CGameBoySprite &sprite) const;
 
   uchar interruptFlag  () const { return z80_.getMemory(0xff0f); }
   uchar interruptEnable() const { return z80_.getMemory(0xffff); }
@@ -138,10 +148,17 @@ class CGameBoy {
   uchar key0() const { return keys_[0] & 0x0F; }
   uchar key1() const { return keys_[1] & 0x0F; }
 
-  virtual void updateKeys() { }
+  virtual void updateKeys   () { }
+  virtual void updateTiles  () { }
+  virtual void updateScreen () { }
+  virtual void updateSprites() { }
+  virtual void updatePalette() { }
 
   virtual void keyPress  (CKeyType key);
   virtual void keyRelease(CKeyType key);
+
+  virtual void execStop(bool) { }
+  virtual void execHalt(bool) { }
 
   // Start : Home, Select : Return, A : A, B : B
   CKeyType aKey     () const { return CKEY_TYPE_A;      }
@@ -165,11 +182,13 @@ class CGameBoy {
   size_t            cartridgeLen_  { 0 };
   uchar             cartridgeType_ { 0 };
   uchar             romBank_       { 1 };
-  ushort            romOffset_     { 0x0000 };
+  uint              romOffset_     { 0x0000 };
   uchar             romMode_       { 0 }; // 0: 8k RAM, 1: 32k RAM
   uchar*            ram_           { nullptr };
   uchar             ramBank_       { 0 };
   ushort            ramOffset_     { 0x0000 };
+  bool              ramEnabled_    { true };
+  uchar             memoryModel_   { 0 };
   uchar             keys_[2]       { 0x0f, 0x0f };
 };
 

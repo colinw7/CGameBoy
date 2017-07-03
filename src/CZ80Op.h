@@ -1,3 +1,6 @@
+#ifndef CZ80Op_H
+#define CZ80Op_H
+
 enum CZ80ArgId {
   A_NONE    =0,
 
@@ -151,18 +154,28 @@ enum CZ80OpId {
   OP_XOR
 };
 
+class CZ80OpData;
+
 struct CZ80Op {
-  CZ80OpId    id;     // op id
-  CZ80OpProcP func;   // callback
-  ushort      arg1;   // first arg data
-  ushort      type1;  // first arg type
-  ushort      arg2;   // second arg data
-  ushort      type2;  // second arg type
-  uchar       r;      // register count
-  ushort      t;      // cycle count
-  ushort      ind;    // index (auto set)
-  ulong       count;  // execution count
-  uchar       edata;  // execution data
+  CZ80OpId    id    { OP_NOP }; // op id
+  CZ80OpProcP func  { 0 };      // callback
+  ushort      arg1  { 0 };      // first arg data
+  ushort      type1 { 0 };      // first arg type
+  ushort      arg2  { 0 };      // second arg data
+  ushort      type2 { 0 };      // second arg type
+  uchar       r     { 0 };      // register count
+  ushort      t     { 0 };      // cycle count
+  uchar       len   { 0 };      // instruction len
+  ushort      ind   { 0 };      // index (auto set)
+  ulong       count { 0 };      // execution count
+  uchar       edata { 0 };      // execution data
+
+  CZ80Op() { }
+
+  CZ80Op(CZ80OpId id, CZ80OpProcP func, ushort arg1, ushort type1, ushort arg2, ushort type2,
+         uchar r, ushort t) :
+   id(id), func(func), arg1(arg1), type1(type1), arg2(arg2), type2(type2), r(r), t(t) {
+  }
 
   const char *getName() const;
 
@@ -177,7 +190,7 @@ struct CZ80Op {
 
   void dumpCount(std::ostream &os);
 
-  std::string toTxt();
+  std::string toTxt(ushort pc);
 
   std::string getCode();
 
@@ -200,3 +213,5 @@ extern uint        cz80_num_flag_names;
 
 extern const char *cz80_register_names[];
 extern uint        cz80_num_register_names;
+
+#endif

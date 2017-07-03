@@ -1,0 +1,181 @@
+#include <CQGameBoyTile.h>
+#include <CQGameBoyVideo.h>
+#include <CQGameBoy.h>
+#include <CQUtil.h>
+
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QSpinBox>
+#include <QLabel>
+#include <QPainter>
+
+CQGameBoyTile::
+CQGameBoyTile(CQGameBoyVideo *video) :
+ video_(video)
+{
+  setObjectName("tile");
+
+  QVBoxLayout *vlayout = new QVBoxLayout(this);
+  vlayout->setMargin(0); vlayout->setSpacing(0);
+
+  //---
+
+  QHBoxLayout *controlLayout = new QHBoxLayout;
+  controlLayout->setMargin(2); controlLayout->setSpacing(2);
+
+  bankSpin_ = new QSpinBox;
+
+  bankSpin_->setValue(getBank());
+  bankSpin_->setToolTip("Scale");
+
+  connect(bankSpin_, SIGNAL(valueChanged(int)), this, SLOT(bankSlot()));
+
+  tileSpin_ = new QSpinBox;
+
+  tileSpin_->setValue(getTile());
+  tileSpin_->setToolTip("Tile");
+
+  connect(tileSpin_, SIGNAL(valueChanged(int)), this, SLOT(tileSlot()));
+
+  scaleSpin_ = new QSpinBox;
+
+  scaleSpin_->setValue(getScale());
+  scaleSpin_->setToolTip("Scale");
+
+  connect(scaleSpin_, SIGNAL(valueChanged(int)), this, SLOT(scaleSlot()));
+
+  controlLayout->addWidget (new QLabel("Bank"));
+  controlLayout->addWidget (bankSpin_);
+  controlLayout->addWidget (new QLabel("Tile"));
+  controlLayout->addWidget (tileSpin_);
+  controlLayout->addWidget (new QLabel("Scale"));
+  controlLayout->addWidget (scaleSpin_);
+  controlLayout->addStretch(1);
+
+  vlayout->addLayout(controlLayout);
+
+  //---
+
+  QHBoxLayout *canvasLayout = new QHBoxLayout;
+  canvasLayout->setMargin(2); canvasLayout->setSpacing(2);
+
+  canvas_ = new CQGameBoyTileCanvas(this);
+
+  canvasLayout->addWidget(canvas_);
+
+  vlayout->addLayout(canvasLayout);
+}
+
+CQGameBoyTile::
+~CQGameBoyTile()
+{
+}
+
+void
+CQGameBoyTile::
+bankSlot()
+{
+  setBank(bankSpin_->value());
+
+  canvas_->update();
+}
+
+void
+CQGameBoyTile::
+tileSlot()
+{
+  setTile(tileSpin_->value());
+
+  canvas_->update();
+}
+
+void
+CQGameBoyTile::
+scaleSlot()
+{
+  setScale(scaleSpin_->value());
+
+  canvas_->update();
+}
+
+void
+CQGameBoyTile::
+update()
+{
+  bankSpin_ ->setValue(getBank ());
+  tileSpin_ ->setValue(getTile ());
+  scaleSpin_->setValue(getScale());
+
+  canvas_->update();
+}
+
+//------
+
+CQGameBoyTileCanvas::
+CQGameBoyTileCanvas(CQGameBoyTile *tile) :
+ tile_(tile)
+{
+  setFocusPolicy(Qt::StrongFocus);
+}
+
+CQGameBoyTileCanvas::
+~CQGameBoyTileCanvas()
+{
+}
+
+void
+CQGameBoyTileCanvas::
+paintEvent(QPaintEvent *)
+{
+  QPainter painter(this);
+
+  painter.fillRect(rect(), Qt::white);
+
+  int scale = tile_->getScale();
+
+  uchar palette = 0xe4;
+
+  tile_->video()->drawTile(&painter, 2, 2, tile_->getBank(), tile_->getTile(),
+                           palette, false, false, scale);
+
+  QSize s = sizeHint();
+
+  painter.drawRect(QRect(0, 0, s.width(), s.height()));
+}
+
+void
+CQGameBoyTileCanvas::
+keyPressEvent(QKeyEvent *e)
+{
+  CKeyEvent *kevent = CQUtil::convertEvent(e);
+
+  CKeyType type = kevent->getType();
+
+  if      (type == CKEY_TYPE_Left) {
+    if (tile_->getTile() > 0)
+      tile_->setTile(tile_->getTile() - 1);
+  }
+  else if (type == CKEY_TYPE_Right) {
+    if (tile_->getTile() < 255)
+      tile_->setTile(tile_->getTile() + 1);
+  }
+  else if (type == CKEY_TYPE_Up) {
+    if (tile_->getBank() > 0)
+      tile_->setBank(tile_->getBank() - 1);
+  }
+  else if (type == CKEY_TYPE_Down) {
+    if (tile_->getBank() < 1)
+      tile_->setBank(tile_->getBank() + 1);
+  }
+
+  update();
+}
+
+QSize
+CQGameBoyTileCanvas::
+sizeHint() const
+{
+  int scale = tile_->getScale();
+
+  return QSize(8*scale + 4, 8*scale + 4);
+}
