@@ -42,6 +42,7 @@ class CQGameBoyGraphicsCanvas : public QFrame {
 
   Q_PROPERTY(int screen READ getScreen WRITE setScreen)
   Q_PROPERTY(int bank   READ getBank   WRITE setBank  )
+  Q_PROPERTY(int vbank  READ getVBank  WRITE setVBank )
 
  public:
   CQGameBoyGraphicsCanvas(CQGameBoyGraphics *graphics, int screen);
@@ -52,6 +53,9 @@ class CQGameBoyGraphicsCanvas : public QFrame {
   int getBank() const { return bank_; }
   void setBank(int i) { bank_ = i; update(); }
 
+  int getVBank() const { return vbank_; }
+  void setVBank(int i) { vbank_ = i; update(); }
+
   void paintEvent(QPaintEvent *);
 
   QSize sizeHint() const;
@@ -60,6 +64,7 @@ class CQGameBoyGraphicsCanvas : public QFrame {
   CQGameBoyGraphics* graphics_ { nullptr };
   int                screen_   { 0 };
   int                bank_     { 0 };
+  int                vbank_    { 0 };
 };
 
 #endif

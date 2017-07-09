@@ -1,6 +1,11 @@
 #ifndef CZ80PortData_H
 #define CZ80PortData_H
 
+#include <CZ80Types.h>
+
+class CZ80;
+class CKeyEvent;
+
 class CZ80PortData {
  public:
   CZ80PortData(CZ80 &z80_i) : z80(z80_i) { }

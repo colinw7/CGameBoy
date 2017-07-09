@@ -55,7 +55,8 @@ class CZ80DebugData {
 
   void setMemChanged(bool flag) { memChanged_ = flag; }
 
-  void memChanged(ushort pos, ushort len);
+  void memPreWrite (ushort pos, ushort len);
+  void memPostWrite(ushort pos, ushort len);
 
   void traceBackChanged();
 

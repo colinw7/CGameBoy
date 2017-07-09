@@ -32,19 +32,19 @@ std::string
 CZ80Op::
 toTxt(ushort pc)
 {
-  CZ80OpData op_data;
+  CZ80OpData opData;
 
-  op_data.z80 = NULL;
-  op_data.op  = this;
+  opData.z80 = nullptr;
+  opData.op  = this;
 
-  op_data.num_values1 = 2;
-  op_data.values1[0]  = 0;
-  op_data.values1[1]  = 0;
-  op_data.num_values2 = 2;
-  op_data.values2[0]  = 0;
-  op_data.values2[1]  = 0;
+  opData.num_values1 = 2;
+  opData.values1[0]  = 0;
+  opData.values1[1]  = 0;
+  opData.num_values2 = 2;
+  opData.values2[0]  = 0;
+  opData.values2[1]  = 0;
 
-  return op_data.getOpString(pc);
+  return opData.getOpString(pc);
 }
 
 std::string

@@ -1,6 +1,10 @@
 #ifndef CZ80ExecData_H
 #define CZ80ExecData_H
 
+#include <CZ80Types.h>
+
+class CZ80;
+
 // class to notify pre/post instruction step
 class CZ80ExecData {
  public:

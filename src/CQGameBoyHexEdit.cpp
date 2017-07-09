@@ -7,6 +7,8 @@ CQGameBoyHexEdit::
 CQGameBoyHexEdit(ushort value) :
  value_(value)
 {
+  setObjectName("edit");
+
   connect(this, SIGNAL(editingFinished()), this, SLOT(valueSlot()));
 }
 

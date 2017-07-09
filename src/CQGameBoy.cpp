@@ -11,6 +11,7 @@ CQGameBoy::
 CQGameBoy() :
  CGameBoy()
 {
+  setObjectName("gameBoy");
 }
 
 CQGameBoyScreen *
@@ -208,6 +209,28 @@ execStop(bool b)
     screen_->stopTimer();
 }
 
+QColor
+CQGameBoy::
+vramSpritePaletteColor(uchar palette, uchar ind) const
+{
+  uchar r, g, b;
+
+  spritePaletteColor(palette, ind, r, g, b);
+
+  return QColor(r, g, b);
+}
+
+QColor
+CQGameBoy::
+vramBgPaletteColor(uchar palette, uchar ind) const
+{
+  uchar r, g, b;
+
+  bgPaletteColor(palette, ind, r, g, b);
+
+  return QColor(r, g, b);
+}
+
 const QColor &
 CQGameBoy::
 mappedPaletteColor(uchar palette, uchar ind) const
@@ -228,10 +251,11 @@ const QColor &
 CQGameBoy::
 paletteColor(uchar ind) const
 {
-  static QColor colors[4] = { QColor(255, 255, 255),
-                              QColor(192, 192, 192),
-                              QColor( 96,  96,  96),
-                              QColor(  0,   0,   0) };
-
-  return colors[ind];
+  switch (ind) {
+    default: assert(false);
+    case 0: return color0();
+    case 1: return color1();
+    case 2: return color2();
+    case 3: return color3();
+  }
 }

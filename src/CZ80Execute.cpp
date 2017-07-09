@@ -38,11 +38,11 @@ next()
 {
   ushort pc = getPC();
 
-  CZ80OpData op_data;
+  CZ80OpData opData;
 
-  readOpData(pc, &op_data);
+  readOpData(pc, &opData);
 
-  ushort pc1 = pc + op_data.op->len;
+  ushort pc1 = pc + opData.op->len;
 
   // run until pc at following instruction
   addBreakpoint(pc1);
@@ -60,11 +60,11 @@ skip()
 {
   ushort pc = getPC();
 
-  CZ80OpData op_data;
+  CZ80OpData opData;
 
-  readOpData(pc, &op_data);
+  readOpData(pc, &opData);
 
-  ushort pc1 = pc + op_data.op->len;
+  ushort pc1 = pc + opData.op->len;
 
   setPC(pc1);
 }
@@ -120,21 +120,21 @@ step1(bool notify)
   if (! getHalt()) {
     ushort pc = getPC();
 
-    CZ80OpData op_data;
+    CZ80OpData opData;
 
-    readOpData(pc, &op_data);
+    readOpData(pc, &opData);
 
-    ushort pc1 = pc + op_data.op->len;
+    ushort pc1 = pc + opData.op->len;
 
     setPC(pc1);
 
     if (dump_)
-      op_data.dump(dump_file_);
+      opData.dump(dump_file_);
 
-    op_data.execute();
+    opData.execute();
 
-    r = op_data.op->r;
-    t = op_data.op->t;
+    r = opData.op->r;
+    t = opData.op->t;
   }
 
   incR(r);

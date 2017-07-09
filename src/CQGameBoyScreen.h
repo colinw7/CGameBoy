@@ -4,13 +4,13 @@
 #include <CZ80Screen.h>
 #include <CZ80.h>
 #include <CEvent.h>
-#include <QWidget>
+#include <QFrame>
 
 class CQGameBoy;
 
 //---
 
-class CQGameBoyScreen : public QWidget, public CZ80Screen {
+class CQGameBoyScreen : public QFrame, public CZ80Screen {
   Q_OBJECT
 
   Q_PROPERTY(int border       READ border       WRITE setBorder      )

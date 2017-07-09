@@ -1,11 +1,11 @@
 #include <CQZ80Dbg.h>
+#include <CQZ80Memory.h>
+#include <CQZ80Instructions.h>
 #include <CQZ80Stack.h>
 #include <CQZ80TraceBack.h>
 #include <CQZ80RegEdit.h>
 #include <CZ80.h>
-#include <CZ80Op.h>
 #include <CZ80OpData.h>
-#include <CStrUtil.h>
 
 #include <QApplication>
 #include <QVBoxLayout>
@@ -17,7 +17,6 @@
 #include <QLabel>
 #include <QPainter>
 #include <QScrollBar>
-#include <QMenu>
 #include <QMouseEvent>
 #include <cassert>
 
@@ -30,6 +29,11 @@ CQZ80Dbg(CZ80 *z80) :
   setWindowTitle("Z80 Emulator (Debug)");
 
   z80_->addTrace(this);
+}
+
+CQZ80Dbg::
+~CQZ80Dbg()
+{
 }
 
 void
@@ -48,12 +52,7 @@ init()
 
   updateBreakpoints();
 
-  regChangedI(CZ80Reg::NONE);
-}
-
-CQZ80Dbg::
-~CQZ80Dbg()
-{
+  regChanged(CZ80Reg::NONE);
 }
 
 void
@@ -443,9 +442,9 @@ addBreakpointWidgets()
 
   QFrame *breakpointEditFrame = new QFrame;
 
-  breakpointsLayout_->addWidget(breakpointEditFrame);
-
   breakpointEditFrame->setObjectName("breakpointEditFrame");
+
+  breakpointsLayout_->addWidget(breakpointEditFrame);
 
   QHBoxLayout *breakpointEditLayout = new QHBoxLayout(breakpointEditFrame);
   breakpointEditLayout->setMargin(0); breakpointEditLayout->setSpacing(0);
@@ -643,13 +642,6 @@ void
 CQZ80Dbg::
 regChanged(CZ80Reg reg)
 {
-  regChangedI(reg);
-}
-
-void
-CQZ80Dbg::
-regChangedI(CZ80Reg reg)
-{
   if (reg == CZ80Reg::AF || reg == CZ80Reg::NONE) {
     if (reg == CZ80Reg::NONE || isRegistersTrace())
       afEdit_->setValue(z80_->getAF());
@@ -748,14 +740,14 @@ regChangedI(CZ80Reg reg)
     }
   }
 
-  if (reg == CZ80Reg::I   || reg == CZ80Reg::NONE) {
+  if (reg == CZ80Reg::I || reg == CZ80Reg::NONE) {
     if (reg == CZ80Reg::NONE || isRegistersTrace())
-      iEdit_  ->setValue(z80_->getI  ());
+      iEdit_->setValue(z80_->getI  ());
   }
 
-  if (reg == CZ80Reg::R   || reg == CZ80Reg::NONE) {
+  if (reg == CZ80Reg::R || reg == CZ80Reg::NONE) {
     if (reg == CZ80Reg::NONE || isRegistersTrace())
-      rEdit_  ->setValue(z80_->getR  ());
+      rEdit_->setValue(z80_->getR  ());
   }
 
   if (reg == CZ80Reg::AF1 || reg == CZ80Reg::NONE) {
@@ -844,25 +836,6 @@ setHalt(bool b)
 {
   haltCheck_->setChecked(b);
 }
-
-#if 0
-QLineEdit *
-CQZ80Dbg::
-createRegisterEdit()
-{
-  QLineEdit *edit = new QLineEdit;
-
-  edit->setObjectName("edit");
-
-  edit->setFont(getFixedFont());
-
-  QFontMetrics fm(edit->font());
-
-  edit->setFixedWidth(fm.width("0000") + 16);
-
-  return edit;
-}
-#endif
 
 void
 CQZ80Dbg::
@@ -1041,487 +1014,9 @@ void
 CQZ80Dbg::
 updateAll()
 {
-  regChangedI(CZ80Reg::NONE);
+  regChanged(CZ80Reg::NONE);
 
   memChangedI(0, 65535);
-
-  update();
-}
-
-//-----------
-
-CQZ80Mem::
-CQZ80Mem(CQZ80Dbg *dbg) :
- QWidget(nullptr), dbg_(dbg)
-{
-  setObjectName("mem");
-
-  lines_.resize(8192);
-}
-
-void
-CQZ80Mem::
-setFont(const QFont &font)
-{
-  QWidget::setFont(font);
-
-  QFontMetrics fm(font);
-
-  int memoryWidth = fm.width("0000  00 00 00 00 00 00 00 00  XXXXXXXX");
-  int charHeight  = fm.height();
-
-  setFixedWidth (memoryWidth + 32);
-  setFixedHeight(charHeight*dbg_->getNumMemoryLines());
-}
-
-void
-CQZ80Mem::
-setLine(uint pc, const std::string &pcStr, const std::string &memStr, const std::string &textStr)
-{
-  uint lineNum = pc / 8;
-
-  assert(lineNum < lines_.size());
-
-  lines_[lineNum] = CQZ80MemLine(pc, pcStr, memStr, textStr);
-}
-
-void
-CQZ80Mem::
-contextMenuEvent(QContextMenuEvent *event)
-{
-  QMenu *menu = new QMenu;
-
-  QAction *action = menu->addAction("Dump");
-
-  connect(action, SIGNAL(triggered()), this, SLOT(dumpSlot()));
-
-  menu->exec(event->globalPos());
-
-  delete menu;
-}
-
-void
-CQZ80Mem::
-paintEvent(QPaintEvent *)
-{
-  CZ80 *z80 = dbg_->getZ80();
-
-  uint pc = z80->getPC();
-
-  QPainter p(this);
-
-  if (isEnabled())
-    p.fillRect(rect(), Qt::white);
-  else
-    p.fillRect(rect(), palette().window().color());
-
-  QFontMetrics fm(font());
-
-  charHeight_ = fm.height();
-  charWidth_  = fm.width(" ");
-
-  int charAscent = fm.ascent();
-
-  int w1 =  4*charWidth_; // address (4 digits)
-  int w2 =    charWidth_; // spacer (1 char)
-  int w3 = 23*charWidth_; // data (16 digits + 7 spaces)
-  int w4 =    charWidth_; // spacer (1 char)
-
-  int y  = -yOffset_*charHeight_;
-  int ya = y + charAscent;
-
-  int ymin = -charHeight_;
-  int ymax = height() + charHeight_;
-
-  if (! isEnabled())
-    p.setPen(palette().color(QPalette::Disabled, QPalette::WindowText));
-
-  for (const auto &line : lines_) {
-    if (y >= ymin && y <= ymax) {
-      int x = dx_;
-
-      uint pc1 = line.pc();
-      uint pc2 = pc1 + 8;
-
-      if (isEnabled()) {
-        if      (z80->isReadOnly(pc1, 8))
-          p.fillRect(QRect(x + w1 + w2, y, w3, charHeight_), dbg_->readOnlyBgColor());
-        else if (z80->isScreen(pc1, 8))
-          p.fillRect(QRect(x + w1 + w2, y, w3, charHeight_), dbg_->screenBgColor());
-      }
-
-      if (isEnabled())
-        p.setPen(dbg_->addrColor());
-
-      p.drawText(x, ya, line.pcStr().c_str());
-
-      x += w1 + w2;
-
-      if (isEnabled())
-        p.setPen(dbg_->memDataColor());
-
-      if (pc >= pc1 && pc < pc2) {
-        int i1 = 3*(pc - pc1);
-        int i2 = i1 + 2;
-
-        std::string lhs = line.memStr().substr(0, i1);
-        std::string mid = line.memStr().substr(i1, 2);
-        std::string rhs = line.memStr().substr(i2);
-
-        int w1 = fm.width(lhs.c_str());
-        int w2 = fm.width(mid.c_str());
-
-        p.drawText(x          , ya, lhs.c_str());
-        p.drawText(x + w1 + w2, ya, rhs.c_str());
-
-        if (isEnabled())
-          p.setPen(dbg_->currentColor());
-
-        p.drawText(x + w1, ya, mid.c_str());
-      }
-      else {
-        p.drawText(x, ya, line.memStr().c_str());
-      }
-
-      x += w3 + w4;
-
-      if (isEnabled())
-        p.setPen(dbg_->memCharsColor());
-
-      p.drawText(x, ya, line.textStr().c_str());
-    }
-
-    y  += charHeight_;
-    ya += charHeight_;
-  }
-}
-
-void
-CQZ80Mem::
-mouseDoubleClickEvent(QMouseEvent *e)
-{
-  int ix = (e->pos().x() - dx_                 )/charWidth_ ;
-  int iy = (e->pos().y() + yOffset_*charHeight_)/charHeight_;
-
-  if (ix < 4 || ix >= 28  ) return;
-  if (iy < 0 || iy >= 8192) return;
-
-  uint pc = int((ix - 4)/3) + iy*8;
-
-  CZ80 *z80 = dbg_->getZ80();
-
-  z80->setPC(pc);
-
-  z80->callRegChanged(CZ80Reg::PC);
-}
-
-void
-CQZ80Mem::
-sliderSlot(int y)
-{
-  yOffset_ = y;
-
-  update();
-}
-
-void
-CQZ80Mem::
-dumpSlot()
-{
-  FILE *fp = fopen("memory.txt", "w");
-  if (! fp) return;
-
-  for (const auto &line : lines_) {
-    fprintf(fp, "%s %s %s\n", line.pcStr().c_str(), line.memStr().c_str(),
-            line.textStr().c_str());
-  }
-
-  fclose(fp);
-}
-
-//-----------
-
-CQZ80Inst::
-CQZ80Inst(CQZ80Dbg *dbg) :
- QWidget(nullptr), dbg_(dbg)
-{
-  setObjectName("inst");
-
-  lines_.resize(65536);
-}
-
-void
-CQZ80Inst::
-setFont(const QFont &font)
-{
-  QWidget::setFont(font);
-
-  QFontMetrics fm(font);
-
-  int instructionsWidth = fm.width("0000  123456789012  AAAAAAAAAAAAAAAAAAAAAA");
-  int charHeight        = fm.height();
-
-  setFixedWidth (instructionsWidth + 32);
-  setFixedHeight(charHeight*dbg_->getNumMemoryLines());
-}
-
-void
-CQZ80Inst::
-clear()
-{
-  lineNum_ = 0;
-
-  pcLineMap_.clear();
-  linePcMap_.clear();
-}
-
-void
-CQZ80Inst::
-setLine(uint pc, const std::string &pcStr, const std::string &codeStr, const std::string &textStr)
-{
-  assert(lineNum_ < int(lines_.size()));
-
-  lines_[lineNum_] = CQZ80InstLine(pc, pcStr, codeStr, textStr);
-
-  pcLineMap_[pc      ] = lineNum_;
-  linePcMap_[lineNum_] = pc;
-
-  ++lineNum_;
-}
-
-bool
-CQZ80Inst::
-getLineForPC(uint pc, uint &lineNum) const
-{
-  auto p = pcLineMap_.find(pc);
-
-  if (p == pcLineMap_.end())
-    return false;
-
-  lineNum = (*p).second;
-
-  return true;
-}
-
-uint
-CQZ80Inst::
-getPCForLine(uint lineNum)
-{
-  return linePcMap_[lineNum];
-}
-
-void
-CQZ80Inst::
-contextMenuEvent(QContextMenuEvent *event)
-{
-  QMenu *menu = new QMenu;
-
-  QAction *dumpAction = menu->addAction("Dump");
-
-  connect(dumpAction, SIGNAL(triggered()), this, SLOT(dumpSlot()));
-
-  QAction *reloadAction = menu->addAction("Reload");
-
-  connect(reloadAction, SIGNAL(triggered()), this, SLOT(reloadSlot()));
-
-  menu->exec(event->globalPos());
-
-  delete menu;
-}
-
-void
-CQZ80Inst::
-paintEvent(QPaintEvent *)
-{
-  CZ80 *z80 = dbg_->getZ80();
-
-  uint pc = z80->getPC();
-
-  QPainter p(this);
-
-  if (isEnabled())
-    p.fillRect(rect(), Qt::white);
-  else
-    p.fillRect(rect(), palette().window().color());
-
-  QFontMetrics fm(font());
-
-  charHeight_ = fm.height();
-
-  int charWidth  = fm.width(" ");
-  int charAscent = fm.ascent();
-
-  int w1 =  4*charWidth;
-  int w2 = 12*charWidth;
-
-  int y = -yOffset_*charHeight_ + charAscent;
-
-  int ymin = -charHeight_;
-  int ymax = height() + charHeight_;
-
-  if (! isEnabled())
-    p.setPen(palette().color(QPalette::Disabled, QPalette::WindowText));
-
-  for (const auto &line : lines_) {
-    if (y >= ymin && y <= ymax) {
-      int x = 2;
-
-      if (line.pc() == pc) {
-        if (isEnabled())
-          p.setPen(dbg_->currentColor());
-
-        p.drawText(x, y, ">");
-      }
-
-      x += charWidth;
-
-      if (isEnabled())
-        p.setPen(dbg_->addrColor());
-
-      p.drawText(x, y, line.pcStr().c_str());
-
-      x += w1 + charWidth;
-
-      if (isEnabled())
-        p.setPen(dbg_->memDataColor());
-
-      p.drawText(x, y, line.codeStr().c_str());
-
-      x += w2 + charWidth;
-
-      if (isEnabled())
-        p.setPen(dbg_->memCharsColor());
-
-      p.drawText(x, y, line.textStr().c_str());
-    }
-
-    y += charHeight_;
-  }
-}
-
-void
-CQZ80Inst::
-mouseDoubleClickEvent(QMouseEvent *e)
-{
-  int iy = (e->pos().y() + yOffset_*charHeight_)/charHeight_;
-
-  CZ80 *z80 = dbg_->getZ80();
-
-  z80->setPC(getPCForLine(iy));
-
-  z80->callRegChanged(CZ80Reg::PC);
-}
-
-void
-CQZ80Inst::
-sliderSlot(int y)
-{
-  yOffset_ = y;
-
-  update();
-}
-
-void
-CQZ80Inst::
-dumpSlot()
-{
-  FILE *fp = fopen("inst.txt", "w");
-  if (! fp) return;
-
-  for (const auto &line : lines_) {
-    fprintf(fp, "%s %s %s\n", line.pcStr().c_str(), line.codeStr().c_str(),
-            line.textStr().c_str());
-  }
-
-  fclose(fp);
-}
-
-void
-CQZ80Inst::
-reloadSlot()
-{
-  reload();
-
-  CZ80 *z80 = dbg_->getZ80();
-
-  uint lineNum;
-
-  if (getLineForPC(z80->getPC(), lineNum))
-    vbar_->setValue(lineNum);
-
-}
-
-void
-CQZ80Inst::
-reload()
-{
-  CZ80 *z80 = dbg_->getZ80();
-
-  uint pos1 = 0;
-  uint pos2 = 65536;
-
-  clear();
-
-  uint pc      = pos1;
-  bool pcFound = false;
-
-  while (pc < pos2) {
-    // resync to PC (should be legal instruction here)
-    if (! pcFound && pc >= z80->getPC()) {
-      pc      = z80->getPC();
-      pcFound = true;
-    }
-
-    //-----
-
-    std::string pcStr = CStrUtil::toHexString(pc, 4);
-
-    //-----
-
-    CZ80OpData opData;
-
-    z80->readOpData(pc, &opData);
-
-    uint pc1 = pc + opData.op->len;
-
-    //-----
-
-    std::string codeStr;
-
-    ushort len1 = 0;
-
-    for (uint i = pc; i < pc1; ++i) {
-      if (i > pc) codeStr += " ";
-
-      codeStr += CStrUtil::toHexString(z80->getByte(i), 2);
-
-      len1 += 3;
-    }
-
-    for ( ; len1 < 12; ++len1)
-      codeStr += " ";
-
-    //-----
-
-    std::string textStr = "; ";
-
-    if (opData.op)
-      textStr += opData.getOpString(pc1);
-    else
-      textStr += "??";
-
-    setLine(pc, pcStr, codeStr, textStr);
-
-    //------
-
-    pc = pc1;
-  }
-
-  uint numLines = getNumLines();
-
-  vbar_->setRange(0, numLines - vbar_->pageStep());
-
-  vbar_->setValue(0);
 
   update();
 }

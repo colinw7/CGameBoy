@@ -1,6 +1,7 @@
 #include <CQGameBoyVReg.h>
 #include <CQGameBoyVideo.h>
 #include <CQGameBoyScreen.h>
+#include <CQGameBoy.h>
 #include <QCheckBox>
 #include <QLabel>
 #include <QVBoxLayout>
@@ -9,6 +10,12 @@ CQGameBoyVReg::
 CQGameBoyVReg(CQGameBoyVideo *video) :
  video_(video)
 {
+  CQGameBoy *gameboy = video->screen()->gameboy();
+
+  //---
+
+  setObjectName("vreg");
+
   QVBoxLayout *layout = new QVBoxLayout(this);
 
   traceCheck_ = new QCheckBox("Trace");
@@ -34,11 +41,21 @@ CQGameBoyVReg(CQGameBoyVideo *video) :
   registersLayout->addWidget(addRegisterWidget("LY"  , 0xff44));
   registersLayout->addWidget(addRegisterWidget("LYC" , 0xff45));
   registersLayout->addWidget(addRegisterWidget("DMA" , 0xff46));
-  registersLayout->addWidget(addRegisterWidget("BGP" , 0xff47));
-  registersLayout->addWidget(addRegisterWidget("OBP0", 0xff48));
-  registersLayout->addWidget(addRegisterWidget("OBP1", 0xff49));
   registersLayout->addWidget(addRegisterWidget("WY"  , 0xff4a));
   registersLayout->addWidget(addRegisterWidget("WX"  , 0xff4b));
+
+  if (! gameboy->isGBC()) {
+    registersLayout->addWidget(addRegisterWidget("BGP" , 0xff47));
+    registersLayout->addWidget(addRegisterWidget("OBP0", 0xff48));
+    registersLayout->addWidget(addRegisterWidget("OBP1", 0xff49));
+  }
+  else {
+    registersLayout->addWidget(addRegisterWidget("VBK"      , 0xff4f));
+    registersLayout->addWidget(addRegisterWidget("BCPS/BGPI", 0xff68));
+    registersLayout->addWidget(addRegisterWidget("BCPD/BGPD", 0xff69));
+    registersLayout->addWidget(addRegisterWidget("OCPS/OBPI", 0xff6a));
+    registersLayout->addWidget(addRegisterWidget("OCPD/OBPD", 0xff6b));
+  }
 
   //---
 

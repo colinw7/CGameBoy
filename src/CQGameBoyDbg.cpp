@@ -7,6 +7,8 @@ CQGameBoyDbg::
 CQGameBoyDbg(CQGameBoy *gameboy) :
  CQZ80Dbg(gameboy->getZ80()), gameboy_(gameboy)
 {
+  setObjectName("dbg");
+
   setWindowTitle("GameBoy CPU Debugger");
 }
 
@@ -26,6 +28,10 @@ CQGameBoyDbg::
 bootSlot()
 {
   CZ80 *z80 = gameboy_->getZ80();
+
+  gameboy_->setBiosEnabled(true);
+
+  z80->setPC(0);
 
   z80->addBreakpoint(0x0100);
 

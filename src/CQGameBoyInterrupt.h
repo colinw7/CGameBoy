@@ -3,7 +3,7 @@
 
 #include <CZ80Trace.h>
 #include <CZ80.h>
-#include <QWidget>
+#include <QFrame>
 
 class CQGameBoy;
 class CQGameBoyHexEdit;
@@ -13,7 +13,7 @@ class QCheckBox;
 
 //---
 
-class CQGameBoyInterrupt : public QWidget, public CZ80Trace {
+class CQGameBoyInterrupt : public QFrame, public CZ80Trace {
   Q_OBJECT
 
  public:
@@ -40,7 +40,7 @@ class CQGameBoyInterrupt : public QWidget, public CZ80Trace {
 
 //---
 
-class CQGameBoyInterruptCanvas : public QWidget {
+class CQGameBoyInterruptCanvas : public QFrame {
   Q_OBJECT
 
  public:

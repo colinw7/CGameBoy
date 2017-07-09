@@ -179,13 +179,13 @@ struct CZ80Op {
 
   const char *getName() const;
 
-  void execute(CZ80OpData *op_data) {
+  void execute(CZ80OpData *opData) {
 #ifdef CZ80_COUNT_CALLS
     ++count;
 #endif
 
     if (func)
-      (*func)(op_data);
+      (*func)(opData);
   }
 
   void dumpCount(std::ostream &os);

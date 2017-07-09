@@ -2,7 +2,7 @@
 #define CQGameBoyTimer_H
 
 #include <CZ80Trace.h>
-#include <QWidget>
+#include <QFrame>
 #include <CZ80.h>
 
 class CQGameBoy;
@@ -10,7 +10,7 @@ class CQGameBoyAddrEdit;
 
 //---
 
-class CQGameBoyTimer : public QWidget, public CZ80Trace {
+class CQGameBoyTimer : public QFrame, public CZ80Trace {
   Q_OBJECT
 
  public:

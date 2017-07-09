@@ -66,7 +66,12 @@ SOURCES       = CQGameBoyMain.cpp \
 		CQGameBoyInfo.cpp \
 		CQGameBoyHexEdit.cpp \
 		CGameBoy.cpp \
+		CGameBoyExecData.cpp \
+		CGameBoyMemData.cpp \
+		CGameBoyPortData.cpp \
 		CQZ80Dbg.cpp \
+		CQZ80Memory.cpp \
+		CQZ80Instructions.cpp \
 		CQZ80Stack.cpp \
 		CQZ80TraceBack.cpp \
 		CQZ80RegEdit.cpp \
@@ -78,12 +83,14 @@ SOURCES       = CQGameBoyMain.cpp \
 		CZ80Fn.cpp \
 		CZ80LabelData.cpp \
 		CZ80Load.cpp \
+		CZ80MemData.cpp \
 		CZ80Op.cpp \
 		CZ80OpData.cpp \
 		CZ80Rst.cpp \
 		CZ80Snapshot.cpp \
 		CZ80SpeedData.cpp .moc/moc_CQGameBoyDbg.cpp \
 		.moc/moc_CQGameBoyGraphics.cpp \
+		.moc/moc_CQGameBoy.cpp \
 		.moc/moc_CQGameBoyHexEdit.cpp \
 		.moc/moc_CQGameBoyInfo.cpp \
 		.moc/moc_CQGameBoyInterrupt.cpp \
@@ -98,6 +105,8 @@ SOURCES       = CQGameBoyMain.cpp \
 		.moc/moc_CQGameBoyVideo.cpp \
 		.moc/moc_CQGameBoyVReg.cpp \
 		.moc/moc_CQZ80Dbg.cpp \
+		.moc/moc_CQZ80Memory.cpp \
+		.moc/moc_CQZ80Instructions.cpp \
 		.moc/moc_CQZ80RegEdit.cpp
 OBJECTS       = ../obj/CQGameBoyMain.o \
 		../obj/CQGameBoy.o \
@@ -117,7 +126,12 @@ OBJECTS       = ../obj/CQGameBoyMain.o \
 		../obj/CQGameBoyInfo.o \
 		../obj/CQGameBoyHexEdit.o \
 		../obj/CGameBoy.o \
+		../obj/CGameBoyExecData.o \
+		../obj/CGameBoyMemData.o \
+		../obj/CGameBoyPortData.o \
 		../obj/CQZ80Dbg.o \
+		../obj/CQZ80Memory.o \
+		../obj/CQZ80Instructions.o \
 		../obj/CQZ80Stack.o \
 		../obj/CQZ80TraceBack.o \
 		../obj/CQZ80RegEdit.o \
@@ -129,6 +143,7 @@ OBJECTS       = ../obj/CQGameBoyMain.o \
 		../obj/CZ80Fn.o \
 		../obj/CZ80LabelData.o \
 		../obj/CZ80Load.o \
+		../obj/CZ80MemData.o \
 		../obj/CZ80Op.o \
 		../obj/CZ80OpData.o \
 		../obj/CZ80Rst.o \
@@ -136,6 +151,7 @@ OBJECTS       = ../obj/CQGameBoyMain.o \
 		../obj/CZ80SpeedData.o \
 		../obj/moc_CQGameBoyDbg.o \
 		../obj/moc_CQGameBoyGraphics.o \
+		../obj/moc_CQGameBoy.o \
 		../obj/moc_CQGameBoyHexEdit.o \
 		../obj/moc_CQGameBoyInfo.o \
 		../obj/moc_CQGameBoyInterrupt.o \
@@ -150,6 +166,8 @@ OBJECTS       = ../obj/CQGameBoyMain.o \
 		../obj/moc_CQGameBoyVideo.o \
 		../obj/moc_CQGameBoyVReg.o \
 		../obj/moc_CQZ80Dbg.o \
+		../obj/moc_CQZ80Memory.o \
+		../obj/moc_CQZ80Instructions.o \
 		../obj/moc_CQZ80RegEdit.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
@@ -232,10 +250,15 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		CQGameBoyVideo.h \
 		CQGameBoyVReg.h \
 		CGameBoy.h \
+		CGameBoyExecData.h \
+		CGameBoyMemData.h \
+		CGameBoyPortData.h \
 		CQZ80Dbg.h \
-		CQZ80RegEdit.h \
+		CQZ80Memory.h \
+		CQZ80Instructions.h \
 		CQZ80Stack.h \
 		CQZ80TraceBack.h \
+		CQZ80RegEdit.h \
 		CZ80AssembleData.h \
 		CZ80Assemble.h \
 		CZ80DebugData.h \
@@ -278,7 +301,12 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		CQGameBoyInfo.cpp \
 		CQGameBoyHexEdit.cpp \
 		CGameBoy.cpp \
+		CGameBoyExecData.cpp \
+		CGameBoyMemData.cpp \
+		CGameBoyPortData.cpp \
 		CQZ80Dbg.cpp \
+		CQZ80Memory.cpp \
+		CQZ80Instructions.cpp \
 		CQZ80Stack.cpp \
 		CQZ80TraceBack.cpp \
 		CQZ80RegEdit.cpp \
@@ -290,6 +318,7 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		CZ80Fn.cpp \
 		CZ80LabelData.cpp \
 		CZ80Load.cpp \
+		CZ80MemData.cpp \
 		CZ80Op.cpp \
 		CZ80OpData.cpp \
 		CZ80Rst.cpp \
@@ -477,8 +506,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents CQGameBoyDbg.h CQGameBoyGraphics.h CQGameBoy.h CQGameBoyHexEdit.h CQGameBoyInfo.h CQGameBoyInterrupt.h CQGameBoyKeys.h CQGameBoyPalette.h CQGameBoyScreen.h CQGameBoySpriteList.h CQGameBoySprites.h CQGameBoyTile.h CQGameBoyTiles.h CQGameBoyTimer.h CQGameBoyVideo.h CQGameBoyVReg.h CGameBoy.h CQZ80Dbg.h CQZ80RegEdit.h CQZ80Stack.h CQZ80TraceBack.h CZ80AssembleData.h CZ80Assemble.h CZ80DebugData.h CZ80Disassemble.h CZ80ExecData.h CZ80Execute.h CZ80Fn.h CZ80.h CZ80LabelData.h CZ80Load.h CZ80Macro.h CZ80MemData.h CZ80OpData.h CZ80Op.h CZ80OpP.h CZ80PortData.h CZ80Reg.h CZ80Registers.h CZ80RstData.h CZ80Rst.h CZ80Screen.h CZ80Snapshot.h CZ80SpeedData.h CZ80Trace.h CZ80Types.h $(DISTDIR)/
-	$(COPY_FILE) --parents CQGameBoyMain.cpp CQGameBoy.cpp CQGameBoyScreen.cpp CQGameBoyVideo.cpp CQGameBoyGraphics.cpp CQGameBoyTiles.cpp CQGameBoyTile.cpp CQGameBoySprites.cpp CQGameBoySpriteList.cpp CQGameBoyPalette.cpp CQGameBoyVReg.cpp CQGameBoyKeys.cpp CQGameBoyInterrupt.cpp CQGameBoyTimer.cpp CQGameBoyDbg.cpp CQGameBoyInfo.cpp CQGameBoyHexEdit.cpp CGameBoy.cpp CQZ80Dbg.cpp CQZ80Stack.cpp CQZ80TraceBack.cpp CQZ80RegEdit.cpp CZ80.cpp CZ80Assemble.cpp CZ80DebugData.cpp CZ80Disassemble.cpp CZ80Execute.cpp CZ80Fn.cpp CZ80LabelData.cpp CZ80Load.cpp CZ80Op.cpp CZ80OpData.cpp CZ80Rst.cpp CZ80Snapshot.cpp CZ80SpeedData.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents CQGameBoyDbg.h CQGameBoyGraphics.h CQGameBoy.h CQGameBoyHexEdit.h CQGameBoyInfo.h CQGameBoyInterrupt.h CQGameBoyKeys.h CQGameBoyPalette.h CQGameBoyScreen.h CQGameBoySpriteList.h CQGameBoySprites.h CQGameBoyTile.h CQGameBoyTiles.h CQGameBoyTimer.h CQGameBoyVideo.h CQGameBoyVReg.h CGameBoy.h CGameBoyExecData.h CGameBoyMemData.h CGameBoyPortData.h CQZ80Dbg.h CQZ80Memory.h CQZ80Instructions.h CQZ80Stack.h CQZ80TraceBack.h CQZ80RegEdit.h CZ80AssembleData.h CZ80Assemble.h CZ80DebugData.h CZ80Disassemble.h CZ80ExecData.h CZ80Execute.h CZ80Fn.h CZ80.h CZ80LabelData.h CZ80Load.h CZ80Macro.h CZ80MemData.h CZ80OpData.h CZ80Op.h CZ80OpP.h CZ80PortData.h CZ80Reg.h CZ80Registers.h CZ80RstData.h CZ80Rst.h CZ80Screen.h CZ80Snapshot.h CZ80SpeedData.h CZ80Trace.h CZ80Types.h $(DISTDIR)/
+	$(COPY_FILE) --parents CQGameBoyMain.cpp CQGameBoy.cpp CQGameBoyScreen.cpp CQGameBoyVideo.cpp CQGameBoyGraphics.cpp CQGameBoyTiles.cpp CQGameBoyTile.cpp CQGameBoySprites.cpp CQGameBoySpriteList.cpp CQGameBoyPalette.cpp CQGameBoyVReg.cpp CQGameBoyKeys.cpp CQGameBoyInterrupt.cpp CQGameBoyTimer.cpp CQGameBoyDbg.cpp CQGameBoyInfo.cpp CQGameBoyHexEdit.cpp CGameBoy.cpp CGameBoyExecData.cpp CGameBoyMemData.cpp CGameBoyPortData.cpp CQZ80Dbg.cpp CQZ80Memory.cpp CQZ80Instructions.cpp CQZ80Stack.cpp CQZ80TraceBack.cpp CQZ80RegEdit.cpp CZ80.cpp CZ80Assemble.cpp CZ80DebugData.cpp CZ80Disassemble.cpp CZ80Execute.cpp CZ80Fn.cpp CZ80LabelData.cpp CZ80Load.cpp CZ80MemData.cpp CZ80Op.cpp CZ80OpData.cpp CZ80Rst.cpp CZ80Snapshot.cpp CZ80SpeedData.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -501,9 +530,9 @@ check: first
 
 compiler_rcc_make_all:
 compiler_rcc_clean:
-compiler_moc_header_make_all: .moc/moc_CQGameBoyDbg.cpp .moc/moc_CQGameBoyGraphics.cpp .moc/moc_CQGameBoyHexEdit.cpp .moc/moc_CQGameBoyInfo.cpp .moc/moc_CQGameBoyInterrupt.cpp .moc/moc_CQGameBoyKeys.cpp .moc/moc_CQGameBoyPalette.cpp .moc/moc_CQGameBoyScreen.cpp .moc/moc_CQGameBoySpriteList.cpp .moc/moc_CQGameBoySprites.cpp .moc/moc_CQGameBoyTile.cpp .moc/moc_CQGameBoyTiles.cpp .moc/moc_CQGameBoyTimer.cpp .moc/moc_CQGameBoyVideo.cpp .moc/moc_CQGameBoyVReg.cpp .moc/moc_CQZ80Dbg.cpp .moc/moc_CQZ80RegEdit.cpp
+compiler_moc_header_make_all: .moc/moc_CQGameBoyDbg.cpp .moc/moc_CQGameBoyGraphics.cpp .moc/moc_CQGameBoy.cpp .moc/moc_CQGameBoyHexEdit.cpp .moc/moc_CQGameBoyInfo.cpp .moc/moc_CQGameBoyInterrupt.cpp .moc/moc_CQGameBoyKeys.cpp .moc/moc_CQGameBoyPalette.cpp .moc/moc_CQGameBoyScreen.cpp .moc/moc_CQGameBoySpriteList.cpp .moc/moc_CQGameBoySprites.cpp .moc/moc_CQGameBoyTile.cpp .moc/moc_CQGameBoyTiles.cpp .moc/moc_CQGameBoyTimer.cpp .moc/moc_CQGameBoyVideo.cpp .moc/moc_CQGameBoyVReg.cpp .moc/moc_CQZ80Dbg.cpp .moc/moc_CQZ80Memory.cpp .moc/moc_CQZ80Instructions.cpp .moc/moc_CQZ80RegEdit.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) .moc/moc_CQGameBoyDbg.cpp .moc/moc_CQGameBoyGraphics.cpp .moc/moc_CQGameBoyHexEdit.cpp .moc/moc_CQGameBoyInfo.cpp .moc/moc_CQGameBoyInterrupt.cpp .moc/moc_CQGameBoyKeys.cpp .moc/moc_CQGameBoyPalette.cpp .moc/moc_CQGameBoyScreen.cpp .moc/moc_CQGameBoySpriteList.cpp .moc/moc_CQGameBoySprites.cpp .moc/moc_CQGameBoyTile.cpp .moc/moc_CQGameBoyTiles.cpp .moc/moc_CQGameBoyTimer.cpp .moc/moc_CQGameBoyVideo.cpp .moc/moc_CQGameBoyVReg.cpp .moc/moc_CQZ80Dbg.cpp .moc/moc_CQZ80RegEdit.cpp
+	-$(DEL_FILE) .moc/moc_CQGameBoyDbg.cpp .moc/moc_CQGameBoyGraphics.cpp .moc/moc_CQGameBoy.cpp .moc/moc_CQGameBoyHexEdit.cpp .moc/moc_CQGameBoyInfo.cpp .moc/moc_CQGameBoyInterrupt.cpp .moc/moc_CQGameBoyKeys.cpp .moc/moc_CQGameBoyPalette.cpp .moc/moc_CQGameBoyScreen.cpp .moc/moc_CQGameBoySpriteList.cpp .moc/moc_CQGameBoySprites.cpp .moc/moc_CQGameBoyTile.cpp .moc/moc_CQGameBoyTiles.cpp .moc/moc_CQGameBoyTimer.cpp .moc/moc_CQGameBoyVideo.cpp .moc/moc_CQGameBoyVReg.cpp .moc/moc_CQZ80Dbg.cpp .moc/moc_CQZ80Memory.cpp .moc/moc_CQZ80Instructions.cpp .moc/moc_CQZ80RegEdit.cpp
 .moc/moc_CQGameBoyDbg.cpp: CQZ80Dbg.h \
 		CZ80Trace.h \
 		CZ80Reg.h \
@@ -520,6 +549,33 @@ compiler_moc_header_clean:
 
 .moc/moc_CQGameBoyGraphics.cpp: CQGameBoyGraphics.h
 	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyGraphics.h -o .moc/moc_CQGameBoyGraphics.cpp
+
+.moc/moc_CQGameBoy.cpp: CGameBoy.h \
+		CZ80.h \
+		../../CUtil/include/CBits.h \
+		../../CStrUtil/include/CStrUtil.h \
+		CZ80Types.h \
+		CZ80Registers.h \
+		CZ80AssembleData.h \
+		CZ80LabelData.h \
+		CZ80Macro.h \
+		CZ80Reg.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CColorComponent.h \
+		../../CUtil/include/CEvent.h \
+		../../CUtil/include/CKeyType.h \
+		CQGameBoy.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoy.h -o .moc/moc_CQGameBoy.cpp
 
 .moc/moc_CQGameBoyHexEdit.cpp: CQGameBoyHexEdit.h
 	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQGameBoyHexEdit.h -o .moc/moc_CQGameBoyHexEdit.cpp
@@ -618,6 +674,12 @@ compiler_moc_header_clean:
 		CZ80Macro.h \
 		CQZ80Dbg.h
 	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQZ80Dbg.h -o .moc/moc_CQZ80Dbg.cpp
+
+.moc/moc_CQZ80Memory.cpp: CQZ80Memory.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQZ80Memory.h -o .moc/moc_CQZ80Memory.cpp
+
+.moc/moc_CQZ80Instructions.cpp: CQZ80Instructions.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CGameBoy/src -I/home/colinw/git/CGameBoy/include -I/home/colinw/git/CQUtil/include -I/home/colinw/git/CCeil/include -I/home/colinw/git/CArgs/include -I/home/colinw/git/CFont/include -I/home/colinw/git/CImageLib/include -I/home/colinw/git/CFile/include -I/home/colinw/git/CMath/include -I/home/colinw/git/CGlob/include -I/home/colinw/git/CStrUtil/include -I/home/colinw/git/COS/include -I/home/colinw/git/CUtil/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include CQZ80Instructions.h -o .moc/moc_CQZ80Instructions.cpp
 
 .moc/moc_CQZ80RegEdit.cpp: CZ80.h \
 		../../CUtil/include/CBits.h \
@@ -865,8 +927,8 @@ compiler_clean: compiler_moc_header_clean
 		CZ80Trace.h \
 		CZ80Reg.h \
 		CZ80Types.h \
-		CQGameBoy.h \
-		CGameBoy.h \
+		CQGameBoyScreen.h \
+		CZ80Screen.h \
 		CZ80.h \
 		../../CUtil/include/CBits.h \
 		../../CStrUtil/include/CStrUtil.h \
@@ -874,6 +936,11 @@ compiler_clean: compiler_moc_header_clean
 		CZ80AssembleData.h \
 		CZ80LabelData.h \
 		CZ80Macro.h \
+		../../CUtil/include/CEvent.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CKeyType.h \
+		CQGameBoy.h \
+		CGameBoy.h \
 		../../CUtil/include/CRGBA.h \
 		../../CUtil/include/CRGB.h \
 		../../CUtil/include/CRGBUtil.h \
@@ -884,10 +951,7 @@ compiler_clean: compiler_moc_header_clean
 		../../CUtil/include/CHSI.h \
 		../../CMath/include/CMathGen.h \
 		../../COS/include/NaN.h \
-		../../CMath/include/CIPoint2D.h \
-		../../CUtil/include/CColorComponent.h \
-		../../CUtil/include/CEvent.h \
-		../../CUtil/include/CKeyType.h
+		../../CUtil/include/CColorComponent.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyTiles.o CQGameBoyTiles.cpp
 
 ../obj/CQGameBoyTile.o: CQGameBoyTile.cpp CQGameBoyTile.h \
@@ -1075,7 +1139,20 @@ compiler_clean: compiler_moc_header_clean
 		CZ80Macro.h \
 		../../CUtil/include/CEvent.h \
 		../../CMath/include/CIPoint2D.h \
-		../../CUtil/include/CKeyType.h
+		../../CUtil/include/CKeyType.h \
+		CQGameBoy.h \
+		CGameBoy.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CUtil/include/CColorComponent.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQGameBoyVReg.o CQGameBoyVReg.cpp
 
 ../obj/CQGameBoyKeys.o: CQGameBoyKeys.cpp CQGameBoyKeys.h \
@@ -1399,13 +1476,101 @@ compiler_clean: compiler_moc_header_clean
 		../../CUtil/include/CColorComponent.h \
 		../../CUtil/include/CEvent.h \
 		../../CUtil/include/CKeyType.h \
+		CGameBoyExecData.h \
 		CZ80ExecData.h \
+		CGameBoyMemData.h \
 		CZ80MemData.h \
+		CGameBoyPortData.h \
 		CZ80PortData.h \
 		../../CFile/include/CFile.h \
 		../../CFile/include/CFileBase.h \
 		../../CFile/include/CFileType.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CGameBoy.o CGameBoy.cpp
+
+../obj/CGameBoyExecData.o: CGameBoyExecData.cpp CGameBoyExecData.h \
+		CZ80ExecData.h \
+		CZ80Types.h \
+		CGameBoy.h \
+		CZ80.h \
+		../../CUtil/include/CBits.h \
+		../../CStrUtil/include/CStrUtil.h \
+		CZ80Registers.h \
+		CZ80AssembleData.h \
+		CZ80LabelData.h \
+		CZ80Macro.h \
+		CZ80Reg.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CColorComponent.h \
+		../../CUtil/include/CEvent.h \
+		../../CUtil/include/CKeyType.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CGameBoyExecData.o CGameBoyExecData.cpp
+
+../obj/CGameBoyMemData.o: CGameBoyMemData.cpp CGameBoyMemData.h \
+		CZ80MemData.h \
+		CZ80Types.h \
+		CGameBoy.h \
+		CZ80.h \
+		../../CUtil/include/CBits.h \
+		../../CStrUtil/include/CStrUtil.h \
+		CZ80Registers.h \
+		CZ80AssembleData.h \
+		CZ80LabelData.h \
+		CZ80Macro.h \
+		CZ80Reg.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CColorComponent.h \
+		../../CUtil/include/CEvent.h \
+		../../CUtil/include/CKeyType.h \
+		CGameBoyBios.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CGameBoyMemData.o CGameBoyMemData.cpp
+
+../obj/CGameBoyPortData.o: CGameBoyPortData.cpp CGameBoyPortData.h \
+		CZ80PortData.h \
+		CZ80Types.h \
+		CGameBoy.h \
+		CZ80.h \
+		../../CUtil/include/CBits.h \
+		../../CStrUtil/include/CStrUtil.h \
+		CZ80Registers.h \
+		CZ80AssembleData.h \
+		CZ80LabelData.h \
+		CZ80Macro.h \
+		CZ80Reg.h \
+		../../CUtil/include/CRGBA.h \
+		../../CUtil/include/CRGB.h \
+		../../CUtil/include/CRGBUtil.h \
+		../../CUtil/include/CCMYK.h \
+		../../CUtil/include/CHSL.h \
+		../../CUtil/include/CHSV.h \
+		../../CUtil/include/CHSB.h \
+		../../CUtil/include/CHSI.h \
+		../../CMath/include/CMathGen.h \
+		../../COS/include/NaN.h \
+		../../CMath/include/CIPoint2D.h \
+		../../CUtil/include/CColorComponent.h \
+		../../CUtil/include/CEvent.h \
+		../../CUtil/include/CKeyType.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CGameBoyPortData.o CGameBoyPortData.cpp
 
 ../obj/CQZ80Dbg.o: CQZ80Dbg.cpp CQZ80Dbg.h \
 		CZ80Trace.h \
@@ -1418,12 +1583,44 @@ compiler_clean: compiler_moc_header_clean
 		CZ80AssembleData.h \
 		CZ80LabelData.h \
 		CZ80Macro.h \
+		CQZ80Memory.h \
+		CQZ80Instructions.h \
 		CQZ80Stack.h \
 		CQZ80TraceBack.h \
 		CQZ80RegEdit.h \
-		CZ80Op.h \
-		CZ80OpData.h
+		CZ80OpData.h \
+		CZ80Op.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQZ80Dbg.o CQZ80Dbg.cpp
+
+../obj/CQZ80Memory.o: CQZ80Memory.cpp CQZ80Memory.h \
+		CQZ80Dbg.h \
+		CZ80Trace.h \
+		CZ80Reg.h \
+		CZ80Types.h \
+		CZ80.h \
+		../../CUtil/include/CBits.h \
+		../../CStrUtil/include/CStrUtil.h \
+		CZ80Registers.h \
+		CZ80AssembleData.h \
+		CZ80LabelData.h \
+		CZ80Macro.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQZ80Memory.o CQZ80Memory.cpp
+
+../obj/CQZ80Instructions.o: CQZ80Instructions.cpp CQZ80Instructions.h \
+		CQZ80Dbg.h \
+		CZ80Trace.h \
+		CZ80Reg.h \
+		CZ80Types.h \
+		CZ80.h \
+		../../CUtil/include/CBits.h \
+		../../CStrUtil/include/CStrUtil.h \
+		CZ80Registers.h \
+		CZ80AssembleData.h \
+		CZ80LabelData.h \
+		CZ80Macro.h \
+		CZ80OpData.h \
+		CZ80Op.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQZ80Instructions.o CQZ80Instructions.cpp
 
 ../obj/CQZ80Stack.o: CQZ80Stack.cpp CQZ80Stack.h \
 		CZ80.h \
@@ -1458,9 +1655,7 @@ compiler_clean: compiler_moc_header_clean
 		CZ80AssembleData.h \
 		CZ80LabelData.h \
 		CZ80Macro.h \
-		CZ80Reg.h \
-		CQZ80Dbg.h \
-		CZ80Trace.h
+		CZ80Reg.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CQZ80RegEdit.o CQZ80RegEdit.cpp
 
 ../obj/CZ80.o: CZ80.cpp CZ80.h \
@@ -1686,6 +1881,10 @@ compiler_clean: compiler_moc_header_clean
 		../../CFile/include/CFileType.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CZ80Load.o CZ80Load.cpp
 
+../obj/CZ80MemData.o: CZ80MemData.cpp CZ80MemData.h \
+		CZ80Types.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/CZ80MemData.o CZ80MemData.cpp
+
 ../obj/CZ80Op.o: CZ80Op.cpp CZ80.h \
 		../../CUtil/include/CBits.h \
 		../../CStrUtil/include/CStrUtil.h \
@@ -1766,6 +1965,9 @@ compiler_clean: compiler_moc_header_clean
 ../obj/moc_CQGameBoyGraphics.o: .moc/moc_CQGameBoyGraphics.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyGraphics.o .moc/moc_CQGameBoyGraphics.cpp
 
+../obj/moc_CQGameBoy.o: .moc/moc_CQGameBoy.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoy.o .moc/moc_CQGameBoy.cpp
+
 ../obj/moc_CQGameBoyHexEdit.o: .moc/moc_CQGameBoyHexEdit.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQGameBoyHexEdit.o .moc/moc_CQGameBoyHexEdit.cpp
 
@@ -1807,6 +2009,12 @@ compiler_clean: compiler_moc_header_clean
 
 ../obj/moc_CQZ80Dbg.o: .moc/moc_CQZ80Dbg.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQZ80Dbg.o .moc/moc_CQZ80Dbg.cpp
+
+../obj/moc_CQZ80Memory.o: .moc/moc_CQZ80Memory.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQZ80Memory.o .moc/moc_CQZ80Memory.cpp
+
+../obj/moc_CQZ80Instructions.o: .moc/moc_CQZ80Instructions.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQZ80Instructions.o .moc/moc_CQZ80Instructions.cpp
 
 ../obj/moc_CQZ80RegEdit.o: .moc/moc_CQZ80RegEdit.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../obj/moc_CQZ80RegEdit.o .moc/moc_CQZ80RegEdit.cpp

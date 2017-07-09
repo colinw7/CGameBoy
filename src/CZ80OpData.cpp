@@ -46,7 +46,7 @@ undump(CFile *file)
 
   op = CZ80::getIndOp(s);
 
-  if (op == NULL)
+  if (! op)
     return false;
 
   file->read((uchar *) &b, sizeof(b));

@@ -3,12 +3,14 @@
 
 #include <CZ80Trace.h>
 #include <CZ80.h>
-#include <QWidget>
+#include <QFrame>
 
 #include <string>
 #include <set>
 
 class CQZ80Dbg;
+class CQZ80Mem;
+class CQZ80Inst;
 class CQZ80Stack;
 class CQZ80TraceBack;
 class CQZ80RegEdit;
@@ -28,149 +30,7 @@ class QGridLayout;
 
 //------
 
-class CQZ80MemLine {
- public:
-  CQZ80MemLine(ushort pc=0, const std::string &pcStr="", const std::string &memStr="",
-               const std::string textStr="") :
-   pc_(pc), pcStr_(pcStr), memStr_(memStr), textStr_(textStr) {
-  }
-
-  ushort pc() const { return pc_; }
-
-  uint num() const { return pc_ / 8; }
-
-  const std::string &pcStr  () const { return pcStr_  ; }
-  const std::string &memStr () const { return memStr_ ; }
-  const std::string &textStr() const { return textStr_; }
-
- private:
-  ushort      pc_ { 0 };
-  std::string pcStr_;
-  std::string memStr_;
-  std::string textStr_;
-};
-
-//------
-
-class CQZ80Mem : public QWidget {
-  Q_OBJECT
-
- public:
-  CQZ80Mem(CQZ80Dbg *dbg);
-
-  void setFont(const QFont &font);
-
-  void setLine(uint i, const std::string &pcStr, const std::string &memStr,
-               const std::string &textStr);
-
-  void contextMenuEvent(QContextMenuEvent *event);
-
- public slots:
-  void sliderSlot(int y);
-
-  void dumpSlot();
-
- private:
-  void paintEvent(QPaintEvent *);
-
-  void mouseDoubleClickEvent(QMouseEvent *e);
-
- private:
-  typedef std::vector<CQZ80MemLine> LineList;
-
-  CQZ80Dbg* dbg_        { nullptr };
-  LineList  lines_;
-  int       yOffset_    { 0 };
-  int       charWidth_  { 8 };
-  int       charHeight_ { 12 };
-  int       dx_         { 2 };
-};
-
-//------
-
-class CQZ80InstLine {
- public:
-  CQZ80InstLine(uint pc=0, const std::string &pcStr="", const std::string &codeStr="",
-                const std::string textStr="") :
-   pc_(pc), pcStr_(pcStr), codeStr_(codeStr), textStr_(textStr) {
-  }
-
-  ushort pc() const { return pc_; }
-
-  uint num() const { return pc_ / 8; }
-
-  const std::string &pcStr  () const { return pcStr_  ; }
-  const std::string &codeStr() const { return codeStr_; }
-  const std::string &textStr() const { return textStr_; }
-
- private:
-  uint        pc_ { 0 };
-  std::string pcStr_;
-  std::string codeStr_;
-  std::string textStr_;
-};
-
-//------
-
-class CQZ80Inst : public QWidget {
-  Q_OBJECT
-
- public:
-  CQZ80Inst(CQZ80Dbg *dbg);
-
-  void setVBar(QScrollBar *vbar) { vbar_ = vbar; }
-
-  void setFont(const QFont &font);
-
-  void clear();
-
-  void setLine(uint pc, const std::string &pcStr, const std::string &codeStr,
-               const std::string &textStr);
-
-  uint getNumLines() const { return lineNum_; }
-
-  bool getLineForPC(uint pc, uint &lineNum) const;
-  uint getPCForLine(uint lineNum);
-
-  void clearBreakpoints() { breakpoints_.clear(); }
-
-  void addBreakPoint(uint pc) { breakpoints_.insert(pc); }
-
-  void mouseDoubleClickEvent(QMouseEvent *e);
-
-  void contextMenuEvent(QContextMenuEvent *event);
-
-  void reload();
-
- public slots:
-  void sliderSlot(int y);
-
-  void dumpSlot();
-
-  void reloadSlot();
-
- private:
-  void paintEvent(QPaintEvent *);
-
- private:
-  typedef std::vector<CQZ80InstLine> LineList;
-  typedef std::map<uint,uint>        PCLineMap;
-  typedef std::set<uint>             BreakpointList;
-
-  CQZ80Dbg*      dbg_        { nullptr };
-  QScrollBar*    vbar_       { nullptr };
-  LineList       lines_;
-  int            yOffset_    { 0 };
-  int            charHeight_ { 8 };
-  int            lineNum_    { 0 };
-  PCLineMap      pcLineMap_;
-  PCLineMap      linePcMap_;
-  BreakpointList breakpoints_;
-};
-
-//------
-
-class CQZ80Dbg : public QWidget, public CZ80Trace {
+class CQZ80Dbg : public QFrame, public CZ80Trace {
   Q_OBJECT
 
   Q_PROPERTY(QFont  fixedFont         READ getFixedFont        WRITE setFixedFont)
@@ -278,15 +138,13 @@ class CQZ80Dbg : public QWidget, public CZ80Trace {
  protected:
   void postStepProc() override;
 
-  void regChangedI(CZ80Reg reg);
-
   void memChanged(ushort pos, ushort len) override;
 
   void memChangedI(ushort pos, ushort len);
 
-  void breakpointsChanged() override;
-
   void traceBackChanged() override;
+
+  void breakpointsChanged() override;
 
   void setStop(bool b) override;
   void setHalt(bool b) override;

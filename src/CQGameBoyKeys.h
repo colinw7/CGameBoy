@@ -1,13 +1,13 @@
 #ifndef CQGameBoyKeys_H
 #define CQGameBoyKeys_H
 
-#include <QWidget>
+#include <QFrame>
 
 class CQGameBoy;
 
 //---
 
-class CQGameBoyKeys : public QWidget {
+class CQGameBoyKeys : public QFrame {
   Q_OBJECT
 
  public:

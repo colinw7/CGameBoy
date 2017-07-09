@@ -432,6 +432,7 @@ class CZ80 {
   void   getBytes(uchar *c, ushort pos, ushort len) const;
 
   uchar getMemory(ushort pos) const;
+  void  setMemory(ushort pos, uchar data);
 
   void setByte(uchar c);
   void setByte(ushort pos, uchar c);
@@ -727,7 +728,7 @@ class CZ80 {
   bool loadBin(const std::string &file);
   bool loadBin(CFile *file);
   bool loadBin(CFile *file, ushort *pos, ushort *len);
-  void loadBin(const uchar *data, size_t dataLen);
+  void loadBin(const uchar *data, size_t len);
 
  private:
   uchar addR(uchar r, uchar a);
@@ -2013,7 +2014,13 @@ class CZ80 {
   // ------
 
  public:
-  int msCycles(ulong ms) { return ms*1000/mhz_; }
+  ulong getCPUHz() const { return cpuHz_; }
+  void setCPUHz(ulong v) { cpuHz_ = v; }
+
+  ulong getScreenHz() const { return screenHtz_; }
+  void setScreenHz(ulong v) { screenHtz_ = v; }
+
+  int msCycles(ulong ms) { return ms*1000/getCPUHz(); }
 
  private:
   typedef std::map<std::string,CZ80Macro> MacroMap;
@@ -2029,12 +2036,12 @@ class CZ80 {
 
   PCBuffer pcBuffer_;
 
-  ulong  mhz_   { 4194304 };
-  ushort htz_   { 50 };
-  ushort ifreq_ { 1 };
-  ulong  t_     { 0 };
-  ushort im0_   { 0x38 };
-  ushort im2_   { 0xfe };
+  ulong  cpuHz_     { 4194304 };
+  ushort screenHtz_ { 50 };
+  ushort ifreq_     { 1 };
+  ulong  t_         { 0 };
+  ushort im0_       { 0x38 };
+  ushort im2_       { 0xfe };
 
   ushort load_pos_ { 0 };
   uint   load_len_ { 65536 };

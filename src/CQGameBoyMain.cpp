@@ -16,6 +16,7 @@ main(int argc, char **argv)
               "-dump:f             (enable dump) "
               "-invert:f           (invert screen colors) "
               "-scale:i=1          (scale factor) "
+              "-gbc:f              (enable GameBoy Color) "
               "-debug:f            (debug) "
               "-graphics:f         (show graphics) "
               "-graphics_scale:i=1 (graphics scale factor) "
@@ -29,6 +30,7 @@ main(int argc, char **argv)
   bool verbose        = cargs.getBooleanArg("-v");
   bool dump           = cargs.getBooleanArg("-dump");
   bool invert         = cargs.getBooleanArg("-invert");
+  bool gbc            = cargs.getBooleanArg("-gbc");
   int  scale          = cargs.getIntegerArg("-scale");
   bool debug          = cargs.getBooleanArg("-debug");
   bool graphics       = cargs.getBooleanArg("-graphics");
@@ -43,6 +45,8 @@ main(int argc, char **argv)
 
   z80->setVerbose(verbose);
   z80->setDump(dump);
+
+  gameboy->setGBC(gbc);
 
   gameboy->setInvert(invert);
   gameboy->setScale (scale );

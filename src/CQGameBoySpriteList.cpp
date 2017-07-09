@@ -65,6 +65,8 @@ CQGameBoySpriteList::
 CQGameBoySpriteList(CQGameBoyVideo *video) :
  QListWidget(), video_(video)
 {
+  setObjectName("spriteList");
+
   setItemDelegate(new CQGameBoySpriteDelegate(this));
 
   for (int i = 0; i < 40; ++i) {

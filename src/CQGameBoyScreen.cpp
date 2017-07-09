@@ -12,6 +12,8 @@ CQGameBoyScreen::
 CQGameBoyScreen(CQGameBoy *gameboy) :
  CZ80Screen(*gameboy->getZ80()), gameboy_(gameboy)
 {
+  setObjectName("screen");
+
   setFocusPolicy(Qt::StrongFocus);
 
   int s = gameboy->getScale();
@@ -210,13 +212,13 @@ updateLCDLine()
   uchar lyc = z80->getByte(0xff45); // LYC
 
   if (lyc == screenLine_) {
-    z80->setBit(0xff41, 2); // update conicidence in STAT
+    z80->setBit(0xff41, 2); // set conicidence in STAT
 
     if (TST_BIT(stat, 6))
       z80->setBit(0xff0f, 1); // enable interrupt if STAT bit set
   }
   else {
-    z80->resetBit(0xff41, 2); // update conicidence in STAT
+    z80->resetBit(0xff41, 2); // reset conicidence in STAT
 
     if (TST_BIT(stat, 6))
       z80->resetBit(0xff0f, 0); // disable interrupt if STAT bit set
@@ -456,14 +458,35 @@ drawBackground()
   scy_ = z80->getByte(0xff42);
   scx_ = z80->getByte(0xff43);
 
-  palette1_ = z80->getByte(0xff47);
-  palette2_ = palette1_;
+  if (! gameboy()->isGBC()) {
+    palette1_ = z80->getByte(0xff47);
+    palette2_ = palette1_;
+  }
+  else {
+    palette1_ = 0;
+    palette2_ = 0;
+  }
 
-  for (uint y = 0; y < 144; ++y) {
-    for (uint x = 0; x < 160; ++x) {
-      drawBackgroundPixel(x, y);
+  bool lcdDisplay = TST_BIT(lcdc_, 7); // Screen display on/off
+  bool bgDisplay  = true;
+
+  if (! gameboy()->isGBC())
+    bgDisplay = TST_BIT(lcdc_, 0); // Background display on/off (GB), Sprite Priority (CGB)
+
+  if (lcdDisplay && bgDisplay) {
+    for (uint y = 0; y < 144; ++y) {
+      for (uint x = 0; x < 160; ++x) {
+        drawBackgroundPixel(x, y);
+      }
     }
   }
+  else {
+    const QColor &c = gameboy()->mappedPaletteColor(palette1_, 0);
+
+    ipainter_->fillRect(QRect(0, 0, image_->width(), image_->height()), c);
+  }
+
+  //---
 
   for (uint y = 0; y < 144; ++y)
     drawScanLine(y);
@@ -482,16 +505,28 @@ drawScanLine(int y)
   wy_ = z80->getByte(0xff4a);
   wx_ = z80->getByte(0xff4b);
 
-  palette1_ = z80->getByte(0xff47);
-  palette2_ = palette1_;
+  if (! gameboy()->isGBC()) {
+    palette1_ = z80->getByte(0xff47);
+    palette2_ = palette1_;
+  }
+  else {
+    palette1_ = 0;
+    palette2_ = 0;
+  }
 
   for (uint x = 0; x < 160; ++x)
     drawScanPixel(x, y);
 
   //---
 
-  palette1_ = z80->getByte(0xff48);
-  palette2_ = z80->getByte(0xff49);
+  if (! gameboy()->isGBC()) {
+    palette1_ = z80->getByte(0xff48);
+    palette2_ = z80->getByte(0xff49);
+  }
+  else {
+    palette1_ = 0;
+    palette2_ = 0;
+  }
 
   drawLineSprites(y);
 
@@ -506,8 +541,14 @@ drawSprites()
 
   lcdc_ = z80->getByte(0xff40);
 
-  palette1_ = z80->getByte(0xff48);
-  palette2_ = z80->getByte(0xff49);
+  if (! gameboy()->isGBC()) {
+    palette1_ = z80->getByte(0xff48);
+    palette2_ = z80->getByte(0xff49);
+  }
+  else {
+    palette1_ = 0;
+    palette2_ = 0;
+  }
 
   for (uint y = 0; y < 144; ++y)
     drawLineSprites(y);
@@ -539,7 +580,14 @@ drawLineSprites(int y)
     int yo  = y - y1;
     int yof = (sprite.yflip ? spriteSize - 1 - yo : yo);
 
-    uchar palette = (sprite.palNum1 == 0 ? palette1_ : palette2_);
+    uchar palette;
+
+    if (gameboy()->isGBC()) {
+      palette = sprite.palNum;
+    }
+    else {
+      palette = (sprite.palNum == 0 ? palette1_ : palette2_);
+    }
 
     if (spriteSize == 8) {
       for (int xo = 0; xo < 8; ++xo) {
@@ -568,16 +616,22 @@ void
 CQGameBoyScreen::
 drawBackgroundPixel(int pixel, int line)
 {
-  bool lcdDisplay   = TST_BIT(lcdc_, 7); // Screen display on/off
-  int  bgWindowData = TST_BIT(lcdc_, 4); // Background Character Data
-  int  bgTile       = TST_BIT(lcdc_, 3); // Background Display Data
-  int  bgDisplay    = TST_BIT(lcdc_, 0); // Background display on/off
+  bool lcdDisplay = TST_BIT(lcdc_, 7); // Screen display on/off
 
   if (! lcdDisplay)
     return;
 
-  if (! bgDisplay)
-    return;
+  if (! gameboy()->isGBC()) {
+    bool bgDisplay = TST_BIT(lcdc_, 0); // Background display on/off
+
+    if (! bgDisplay)
+      return;
+  }
+
+  int bgWindowData = TST_BIT(lcdc_, 4); // Background Character Data
+  int bgTile       = TST_BIT(lcdc_, 3); // Background Display Data
+
+  CZ80 *z80 = gameboy()->getZ80();
 
   int pixel1 = (pixel + scx_) & 0xff;
   int line1  = (line  + scy_) & 0xff;
@@ -585,35 +639,69 @@ drawBackgroundPixel(int pixel, int line)
   //---
 
   // get tile at pixel/line
-  ushort tileMem = (bgTile == 0 ? 0x9800 : 0x9C00);
-
   int ty = line1 / 8;
-  int tl = line1 % 8;
-
   int tx = pixel1 / 8;
+
+  ushort tileInd = ty*32 + tx; // 32 bytes per line, 1 byte per tile
+
+  ushort tileMem = (bgTile == 0 ? 0x9800 : 0x9C00) + tileInd;
+
+  // get tile internal pixel coord
+  int tl = line1 % 8;
   int tp = pixel1 % 8;
 
-  ushort p = tileMem + ty*32 + tx; // 32 bytes per line, 1 bytes per tile
+  uchar tile = z80->getByte(tileMem);
 
-  CZ80 *z80 = gameboy()->getZ80();
+  if (gameboy()->isGBC()) {
+    // get color attributes for tile (from VRAM 1)
+    uchar cp = gameboy()->getVRam(1, tileMem - 0x8000);
 
-  uchar tile = z80->getByte(p);
+    // Bit 0-2  Background Palette number  (BGP0-7)
+    // Bit 3    Tile VRAM Bank number      (0=Bank 0, 1=Bank 1)
+    // Bit 4    Not used
+    // Bit 5    Horizontal Flip            (0=Normal, 1=Mirror horizontally)
+    // Bit 6    Vertical Flip              (0=Normal, 1=Mirror vertically)
+    // Bit 7    BG-to-OAM Priority         (0=Use OAM priority bit, 1=BG Priority)
 
-  // draw tile pixel
-  drawTilePixel(pixel, line, bgWindowData, tile, tp, tl, palette1_, false);
+    int pnum = cp & 0x7;
+    int bank = TST_BIT(cp, 3);
+
+    // flip internal pixel if needed
+    int hflip = TST_BIT(cp, 5);
+    int vflip = TST_BIT(cp, 6);
+
+    int tp1 = (hflip ? 7 - tp : tp);
+    int tl1 = (vflip ? 7 - tl : tl);
+
+  //int priority = TST_BIT(cp, 7);
+
+    //---
+
+    int oldBank = gameboy_->vramBank();
+
+    gameboy_->setVRamBank(bank);
+
+    // draw tile pixel
+    drawTilePixel(pixel, line, bgWindowData, tile, tp1, tl1, pnum, false);
+
+    gameboy_->setVRamBank(oldBank);
+  }
+  else {
+    // draw tile pixel
+    drawTilePixel(pixel, line, bgWindowData, tile, tp, tl, palette1_, false);
+  }
 }
 
 void
 CQGameBoyScreen::
 drawScanPixel(int pixel, int line)
 {
-  bool lcdDisplay    = TST_BIT(lcdc_, 7); // Screen display on/off
-  int  windowTile    = TST_BIT(lcdc_, 6); // Window Screen Display Data
-  bool windowDisplay = TST_BIT(lcdc_, 5); // Window Display On/Off
-  int  bgWindowData  = TST_BIT(lcdc_, 4); // Background Character Data
+  bool lcdDisplay = TST_BIT(lcdc_, 7); // Screen display on/off
 
   if (! lcdDisplay)
     return;
+
+  bool windowDisplay = TST_BIT(lcdc_, 5); // Window Display On/Off
 
   if (! windowDisplay)
     return;
@@ -623,23 +711,65 @@ drawScanPixel(int pixel, int line)
 
   //---
 
-  // get tile at pixel/line
-  ushort tileMem = (windowTile == 0 ? 0x9800 : 0x9C00);
-
-  int ty = line / 8;
-  int tl = line % 8;
-
-  int tx = pixel / 8;
-  int tp = pixel % 8;
-
-  ushort p = tileMem + ty*32 + tx; // 32 bytes per line, 1 bytes per tile
+  int bgWindowData = TST_BIT(lcdc_, 4); // Background Character Data
+  int windowTile   = TST_BIT(lcdc_, 6); // Window Screen Display Data
 
   CZ80 *z80 = gameboy()->getZ80();
 
-  uchar tile = z80->getByte(p);
+  //---
 
-  // draw tile pixel
-  drawTilePixel(pixel, line, bgWindowData, tile, tp, tl, palette1_, false);
+  // get tile at pixel/line
+  int ty = line / 8;
+  int tx = pixel / 8;
+
+  ushort tileInd = ty*32 + tx; // 32 bytes per line, 1 byte per tile
+
+  ushort tileMem = (windowTile == 0 ? 0x9800 : 0x9C00) + tileInd;
+
+  // get tile internal pixel coord
+  int tl = line % 8;
+  int tp = pixel % 8;
+
+  uchar tile = z80->getByte(tileMem);
+
+  if (gameboy()->isGBC()) {
+    // get color attributes for tile (from VRAM 1)
+    uchar cp = gameboy()->getVRam(1, tileMem - 0x8000);
+
+    // Bit 0-2  Background Palette number  (BGP0-7)
+    // Bit 3    Tile VRAM Bank number      (0=Bank 0, 1=Bank 1)
+    // Bit 4    Not used
+    // Bit 5    Horizontal Flip            (0=Normal, 1=Mirror horizontally)
+    // Bit 6    Vertical Flip              (0=Normal, 1=Mirror vertically)
+    // Bit 7    BG-to-OAM Priority         (0=Use OAM priority bit, 1=BG Priority)
+
+    int pnum = cp & 0x7;
+    int bank = TST_BIT(cp, 3);
+
+    // flip internal pixel if needed
+    int hflip = TST_BIT(cp, 5);
+    int vflip = TST_BIT(cp, 6);
+
+    int tp1 = (hflip ? 7 - tp : tp);
+    int tl1 = (vflip ? 7 - tl : tl);
+
+  //int priority = TST_BIT(cp, 7);
+
+    //---
+
+    int oldBank = gameboy_->vramBank();
+
+    gameboy_->setVRamBank(bank);
+
+    // draw tile pixel
+    drawTilePixel(pixel, line, bgWindowData, tile, tp1, tl1, pnum, false);
+
+    gameboy_->setVRamBank(oldBank);
+  }
+  else {
+    // draw tile pixel
+    drawTilePixel(pixel, line, bgWindowData, tile, tp, tl, palette1_, false);
+  }
 }
 
 void
@@ -670,7 +800,17 @@ drawTilePixel(int x, int y, int bank, int tile, int pixel, int line,
   if (ind == 0 && isSprite)
     return;
 
-  const QColor &c = gameboy()->mappedPaletteColor(palette, ind);
+  QColor c;
+
+  if (gameboy()->isGBC()) {
+    if (isSprite)
+      c = gameboy()->vramSpritePaletteColor(palette, ind);
+    else
+      c = gameboy()->vramBgPaletteColor(palette, ind);
+  }
+  else {
+    c = gameboy()->mappedPaletteColor(palette, ind);
+  }
 
   if (scale <= 1) {
     ipainter_->setPen(c);

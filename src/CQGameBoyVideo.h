@@ -37,11 +37,11 @@ class CQGameBoyVideo : public QFrame, public CZ80Trace {
 
   void drawScreen(QPainter *painter, int x, int y, int screen, int bank, int scale);
 
-  void drawTile(QPainter *painter, int x, int y, int bank, int tile,
-                uchar palette, bool xflip, bool yflip, int scale);
+  void drawTile(QPainter *painter, int x, int y, int vbank, int bank, int tile,
+                uchar palette, bool xflip, bool yflip, bool isSprite, int scale);
 
-  void drawTileLine(QPainter *painter, int x, int y, int bank, int tile, int line,
-                    uchar palette, bool xflip, bool yflip, int scale);
+  void drawTileLine(QPainter *painter, int x, int y, int vbank, int bank, int tile, int line,
+                    uchar palette, bool xflip, bool yflip, bool isSprite, int scale);
 
  private:
   CQGameBoyScreen*   screen_   { nullptr };

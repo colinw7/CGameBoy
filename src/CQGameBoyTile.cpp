@@ -132,11 +132,13 @@ paintEvent(QPaintEvent *)
   painter.fillRect(rect(), Qt::white);
 
   int scale = tile_->getScale();
+  int bank  = tile_->getBank();
+  int vbank = tile_->getVBank();
 
-  uchar palette = 0xe4;
+  uchar palette = 0xe4; // standard, 0, 1, 2, 3 (R->L) (11100100)
 
-  tile_->video()->drawTile(&painter, 2, 2, tile_->getBank(), tile_->getTile(),
-                           palette, false, false, scale);
+  tile_->video()->drawTile(&painter, 2, 2, vbank, bank, tile_->getTile(), palette,
+                           /*xflip*/ false, /*yflip*/false, /*isSprite*/false, scale);
 
   QSize s = sizeHint();
 

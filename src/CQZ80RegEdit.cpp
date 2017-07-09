@@ -1,13 +1,14 @@
 #include <CQZ80RegEdit.h>
-#include <CQZ80Dbg.h>
+#include <CZ80.h>
 #include <CStrUtil.h>
+
 #include <QLabel>
 #include <QLineEdit>
 #include <QHBoxLayout>
 
 CQZ80RegEdit::
 CQZ80RegEdit(CZ80 *z80, CZ80Reg reg) :
- QWidget(nullptr), z80_(z80), reg_(reg)
+ QFrame(nullptr), z80_(z80), reg_(reg)
 {
   QHBoxLayout *layout = new QHBoxLayout(this);
 

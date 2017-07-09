@@ -18,9 +18,8 @@ struct CGameBoySprite {
   bool priority { false };
   bool yflip    { false };
   bool xflip    { false };
-  int  palNum1  { false };
-  int  bankNum  { false };
-  int  palNum2  { 0 };
+  int  bankNum  { 0 };
+  int  palNum   { 0 };
 
   void print(std::ostream &os) const {
     os << "Sprite " << i << ":";
@@ -29,31 +28,45 @@ struct CGameBoySprite {
     os << " priority=" << priority;
     os << " yflip=" << yflip;
     os << " xflip=" << xflip;
-    os << " palNum1=" << palNum1;
     os << " bankNum=" << bankNum;
-    os << " palNum2=" << palNum2;
+    os << " palNum=" << palNum;
   }
 };
 
-struct CGameBoyInterruptFlag {
-  uchar pad   :3;
-  uchar key   :1;
-  uchar serial:1;
-  uchar timer :1;
-  uchar lcdc  :1;
-  uchar vblank:1;
-};
-
-struct CGameBoyInterruptEnable {
-  uchar pad   :3;
-  uchar key   :1;
-  uchar serial:1;
-  uchar timer :1;
-  uchar lcdc  :1;
-  uchar vblank:1;
-};
-
 class CGameBoy {
+ public:
+  // LCDC - LCD Control (0xff40) (Bits Low to High 0-7)
+  struct LCDC {
+    uchar bgDisplay:1;         // Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
+    uchar spriteDispEnable:1;  // Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
+    uchar spriteSize:1;        // Bit 2 - OBJ (Sprite) Size              (0=8x8, 1=8x16)
+    uchar bgTileMapDispSel:1;  // Bit 3 - BG Tile Map Display Select     (0=9800-9BFF, 1=9C00-9FFF)
+    uchar bgWinTileDataSel:1;  // Bit 4 - BG & Window Tile Data Select   (0=8800-97FF, 1=8000-8FFF)
+    uchar winDispEnable:1;     // Bit 5 - Window Display Enable          (0=Off, 1=On)
+    uchar winTileMapDispSel:1; // Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+    uchar lcdDispEnable:1;     // Bit 7 - LCD Display Enable             (0=Off, 1=On)
+  };
+
+  // IF - Interrupt Flag (0xffff)
+  struct InterruptFlag {
+    uchar vblank:1;
+    uchar lcdc  :1;
+    uchar timer :1;
+    uchar serial:1;
+    uchar key   :1;
+    uchar pad   :3;
+  };
+
+  // IE - Interrupt Enable (0xffff)
+  struct InterruptEnable {
+    uchar vblank:1;
+    uchar lcdc  :1;
+    uchar timer :1;
+    uchar serial:1;
+    uchar key   :1;
+    uchar pad   :3;
+  };
+
  public:
   CGameBoy();
 
@@ -100,6 +113,8 @@ class CGameBoy {
   bool isBiosEnabled() const { return biosEnabled_; }
   void setBiosEnabled(bool b) { biosEnabled_ = b; }
 
+  //---
+
   uchar *cartridge() const { return cartridge_; }
 
   uchar readCartridge(uint pos) const { return cartridge_[pos]; }
@@ -111,6 +126,8 @@ class CGameBoy {
 
   uint romOffset() const { return romOffset_; }
   void setRomOffset(uint s) { romOffset_ = s; }
+
+  //---
 
   bool isRamEnabled() const { return ramEnabled_; }
   void setRamEnabled(bool b) { ramEnabled_ = b; }
@@ -126,8 +143,42 @@ class CGameBoy {
   ushort ramOffset() const { return ramOffset_; }
   void setRamOffset(ushort s) { ramOffset_ = s; }
 
+  //---
+
+  uchar vramBank() const { return vramBank_; }
+  void setVRamBank(uchar i) { vramBank_ = i; }
+
+  uchar *vram() const { return vram_; }
+
+  uchar getVRam(uchar bank, ushort pos) const {
+    assert(bank < 2 && pos < 0x2000);
+    return (bank == 0 ? vram_[pos] : vram_[pos + 0x2000]);
+  }
+  void setVRam(uchar bank, ushort pos, uchar data) {
+    assert(bank < 2 && pos < 0x2000);
+    uchar *p = (bank == 0 ? &vram_[pos] : &vram_[pos + 0x2000]);
+    *p = data;
+  }
+
+  //---
+
+  uchar wramBank() const { return wramBank_; }
+  void setWRamBank(uchar i) { wramBank_ = i; }
+
+  uchar *wram() const { return wram_; }
+
+  uchar getWRam(ushort pos) const { assert(pos < 0x8000); return wram_[pos]; }
+  void setWRam(ushort pos, uchar data) { assert(pos < 0x8000); wram_[pos] = data; }
+
+  //---
+
   uchar memoryModel() const { return memoryModel_; }
   void setMemoryModel(uchar v) { memoryModel_ = v; }
+
+  bool isDoubleSpeed() const { return doubleSpeed_; }
+  void setDoubleSpeed(bool b);
+
+  //---
 
   bool loadCartridge(const std::string &fileName);
   bool loadAsm(const std::string &fileName);
@@ -142,6 +193,9 @@ class CGameBoy {
 
   uchar interruptFlag  () const { return z80_.getMemory(0xff0f); }
   uchar interruptEnable() const { return z80_.getMemory(0xffff); }
+
+  bool isGBC() const { return gbc_; }
+  void setGBC(bool b);
 
   uchar keySel() const;
 
@@ -170,12 +224,58 @@ class CGameBoy {
   CKeyType selectKey() const { return CKEY_TYPE_Return; }
   CKeyType startKey () const { return CKEY_TYPE_Home;   }
 
+  //---
+
+  void setBgPaleteData(uchar ind, uchar data) {
+    bgPalette_.setData(ind, data);
+  }
+
+  void setSpritePaleteData(uchar ind, uchar data) {
+    spritePalette_.setData(ind, data);
+  }
+
+  void bgPaletteColor(uchar palette, uchar color, uchar &r, uchar &g, uchar &b) const {
+    bgPalette_.paletteColor(palette, color, r, g, b);
+  }
+
+  void spritePaletteColor(uchar palette, uchar color, uchar &r, uchar &g, uchar &b) const {
+    spritePalette_.paletteColor(palette, color, r, g, b);
+  }
+
+  //---
+
+ private:
+  struct ColorPalette {
+    // 8 palettes, 4 colors per palette, 2 bytes per color
+    uchar c[64];
+
+    uchar getData(uchar ind) const {
+      assert(ind < 64); return c[ind];
+    }
+
+    void setData(uchar ind, uchar data) {
+      assert(ind < 64); c[ind] = data;
+    }
+
+    void paletteColor(uchar palette, uchar color, uchar &r, uchar &g, uchar &b) const {
+      uchar c1 = getData(palette*8 + color*2 + 0);
+      uchar c2 = getData(palette*8 + color*2 + 1);
+
+      r = (( c1 & 0x1f      )                  ) << 3;
+      g = (((c1 & 0xe0) >> 5) | (c2 & 0x3 << 3)) << 3;
+      b = (((c2 & 0x7c) >> 2)                  ) << 3;
+    }
+  };
+
+  //---
+
  private:
   CZ80              z80_;
   CGameBoyExecData *execData_      { nullptr };
   CGameBoyMemData  *memData_       { nullptr };
   CGameBoyPortData *portData_      { nullptr }; // needed ?
   bool              invert_        { false };
+  bool              gbc_           { false };
   int               scale_         { 1 };
   bool              biosEnabled_   { true };
   uchar*            cartridge_     { nullptr };
@@ -188,8 +288,15 @@ class CGameBoy {
   uchar             ramBank_       { 0 };
   ushort            ramOffset_     { 0x0000 };
   bool              ramEnabled_    { true };
+  uchar             vramBank_      { 0 };
+  uchar*            vram_          { nullptr };
+  uchar             wramBank_      { 1 };
+  uchar*            wram_          { nullptr };
   uchar             memoryModel_   { 0 };
+  bool              doubleSpeed_   { false };
   uchar             keys_[2]       { 0x0f, 0x0f };
+  ColorPalette      bgPalette_;
+  ColorPalette      spritePalette_;
 };
 
 #endif

@@ -130,10 +130,16 @@ drawSprites(QPainter *painter, int x, int y, int scale)
 
   CZ80 *z80 = gameboy->getZ80();
 
-  uchar palette1 = z80->getByte(0xff48);
-  uchar palette2 = z80->getByte(0xff49);
+  uchar palette1 = 0;
+  uchar palette2 = 0;
 
-  int bank = 1; // bank always 1
+  if (! gameboy->isGBC()) {
+    palette1 = z80->getByte(0xff48);
+    palette2 = z80->getByte(0xff49);
+  }
+
+  int bank  = 1; // bank always 1
+  int vbank = 0; // VRAM bank (TODO)
 
   // 160 bytes: 40 sprites, 4 bytes each
   CGameBoySprite sprite;
@@ -154,10 +160,17 @@ drawSprites(QPainter *painter, int x, int y, int scale)
       if (y2 < 0 || y1 >= 160)
         continue;
 
-      uchar palette = (sprite.palNum1 == 0 ? palette1 : palette2);
+      uchar palette;
 
-      video->drawTile(painter, x + x1*scale, y + y1*scale, bank, sprite.t,
-                      palette, sprite.xflip, sprite.yflip, scale);
+      if (gameboy->isGBC()) {
+        palette = sprite.palNum;
+      }
+      else {
+        palette = (sprite.palNum == 0 ? palette1 : palette2);
+      }
+
+      video->drawTile(painter, x + x1*scale, y + y1*scale, vbank, bank, sprite.t,
+                      palette, sprite.xflip, sprite.yflip, /*isSprite*/true, scale);
     }
   }
   else {
@@ -179,13 +192,20 @@ drawSprites(QPainter *painter, int x, int y, int scale)
       int t1 = sprite.t & 0xFE;
       int t2 = t1 + 1;
 
-      uchar palette = (sprite.palNum1 == 0 ? palette1 : palette2);
+      uchar palette;
 
-      video->drawTile(painter, x + x1*scale, y + y1*scale, bank, t1,
-                      palette, sprite.xflip, sprite.yflip, scale);
+      if (gameboy->isGBC()) {
+        palette = sprite.palNum;
+      }
+      else {
+        palette = (sprite.palNum == 0 ? palette1 : palette2);
+      }
 
-      video->drawTile(painter, x + x1*scale, y + (y1 + 8)*scale, bank, t2,
-                      palette, sprite.xflip, sprite.yflip, scale);
+      video->drawTile(painter, x + x1*scale, y + y1*scale, vbank, bank, t1,
+                      palette, sprite.xflip, sprite.yflip, /*isSprite*/true, scale);
+
+      video->drawTile(painter, x + x1*scale, y + (y1 + 8)*scale, vbank, bank, t2,
+                      palette, sprite.xflip, sprite.yflip, /*isSprite*/true, scale);
     }
   }
 

@@ -33,9 +33,15 @@ CQGameBoyTimer.cpp \
 CQGameBoyDbg.cpp \
 CQGameBoyInfo.cpp \
 CQGameBoyHexEdit.cpp \
+\
 CGameBoy.cpp \
+CGameBoyExecData.cpp \
+CGameBoyMemData.cpp \
+CGameBoyPortData.cpp \
 \
 CQZ80Dbg.cpp \
+CQZ80Memory.cpp \
+CQZ80Instructions.cpp \
 CQZ80Stack.cpp \
 CQZ80TraceBack.cpp \
 CQZ80RegEdit.cpp \
@@ -48,6 +54,7 @@ CZ80Execute.cpp \
 CZ80Fn.cpp \
 CZ80LabelData.cpp \
 CZ80Load.cpp \
+CZ80MemData.cpp \
 CZ80Op.cpp \
 CZ80OpData.cpp \
 CZ80Rst.cpp \
@@ -71,12 +78,18 @@ CQGameBoyTiles.h \
 CQGameBoyTimer.h \
 CQGameBoyVideo.h \
 CQGameBoyVReg.h \
+\
 CGameBoy.h \
+CGameBoyExecData.h \
+CGameBoyMemData.h \
+CGameBoyPortData.h \
 \
 CQZ80Dbg.h \
-CQZ80RegEdit.h \
+CQZ80Memory.h \
+CQZ80Instructions.h \
 CQZ80Stack.h \
 CQZ80TraceBack.h \
+CQZ80RegEdit.h \
 \
 CZ80AssembleData.h \
 CZ80Assemble.h \

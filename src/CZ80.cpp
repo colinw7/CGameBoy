@@ -25,16 +25,16 @@ CZ80()
   memset(memory_, 0, 65536);
   memset(flags_ , 0, 65536);
 
-  mhz_ = 4194304; // 4,194,304Hz for gameboy
-  htz_ = 50;
-  t_   = 0;
+  cpuHz_     = 4*1024*1024; // 4Mhz
+  screenHtz_ = 50;
+  t_         = 0;
 
   allowInterrupts_ = true;
 
   im0_ = 0x38;
   im2_ = 0xfe;
 
-  ifreq_ = int(mhz_/htz_); // cycles per second
+  ifreq_ = int(getCPUHz()/getScreenHz()); // cycles per second
 
   setWord(0x0000, 0x76);
   setWord(0x0008, 0x76);
@@ -927,19 +927,26 @@ setBytes(uchar *c, ushort pos, ushort len)
     return;
   }
 
-  // set memory
+  //----
 
-  memcpy(&memory_[pos], c, len);
-
-  // debugger hook
+  // pre write notify
+  if (memData_)
+    memData_->memPreWrite(c, pos, len);
 
   if (debugData_)
-    debugData_->memChanged(pos, len);
+    debugData_->memPreWrite(pos, len);
 
-  // mem notify
+  // set memory
+  memcpy(&memory_[pos], c, len);
+
+  // post write notify
+  if (debugData_)
+    debugData_->memPostWrite(pos, len);
 
   if (memData_)
-    memData_->memWrite(c, pos, len);
+    memData_->memPostWrite(c, pos, len);
+
+  //----
 
   // update screen
 
@@ -1001,11 +1008,20 @@ getBytes(uchar *c, ushort pos, ushort len) const
     memcpy(c, &memory_[pos], len);
 }
 
+//---------
+
 uchar
 CZ80::
 getMemory(ushort pos) const
 {
   return memory_[pos];
+}
+
+void
+CZ80::
+setMemory(ushort pos, uchar data)
+{
+  memory_[pos] = data;
 }
 
 //---------
@@ -3633,10 +3649,6 @@ readOp(ushort pc)
           op->edata = c2;
         }
       }
-#else
-      op->len = len;
-
-      return op;
 #endif
     }
     else if (c == 0xED) {
@@ -3663,10 +3675,6 @@ readOp(ushort pc)
           op->edata = c2;
         }
       }
-#else
-      op->len = len;
-
-      return op;
 #endif
     }
   }
@@ -3919,7 +3927,7 @@ printRegValue16AndPtr(std::ostream &os, uint reg)
   ushort r  = getRegValue16(reg);
   ushort pr = getPRegValue16(reg);
 
-  os << getRegisterName(reg) << " " << hexString("Ox", r) << "(" << hexString("0x", pr) << ") ";
+  os << getRegisterName(reg) << " " << hexString("0x", r) << "(" << hexString("0x", pr) << ") ";
 }
 
 /*----------*/
@@ -4143,26 +4151,4 @@ CZ80::
 traceBack()
 {
   pcBuffer_.printValues(std::cout);
-}
-
-//-------
-
-bool
-CZ80MemData::
-memRead(uchar *, ushort, ushort)
-{
-  return false;
-}
-
-void
-CZ80MemData::
-memWrite(const uchar *, ushort, ushort)
-{
-}
-
-bool
-CZ80MemData::
-memTrigger(const uchar *, ushort, ushort)
-{
-  return false;
 }

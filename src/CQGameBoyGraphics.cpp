@@ -112,10 +112,12 @@ paintEvent(QPaintEvent *)
 
   // 384 tiles (8 rows of 2 bytes)
 
-  int scale = graphics_->getScale();
+  int scale  = graphics_->getScale();
+  int screen = getScreen();
+  int bank   = getBank();
 
   // draw screen tiles
-  graphics_->video()->drawScreen(&painter, 2, 2, getScreen(), getBank(), scale);
+  graphics_->video()->drawScreen(&painter, 2, 2, screen, bank, scale);
 
   QSize s = sizeHint();
 

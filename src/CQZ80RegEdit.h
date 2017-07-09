@@ -1,13 +1,13 @@
 #ifndef CQZ80RegEdit_H
 #define CQZ80RegEdit_H
 
-#include <QWidget>
+#include <QFrame>
 #include <CZ80.h>
 
 class QLabel;
 class QLineEdit;
 
-class CQZ80RegEdit : public QWidget {
+class CQZ80RegEdit : public QFrame {
   Q_OBJECT
 
  public:

@@ -11,6 +11,7 @@ class CQGameBoyTiles : public QFrame {
   Q_OBJECT
 
   Q_PROPERTY(int scale READ getScale WRITE setScale)
+  Q_PROPERTY(int vbank READ getVBank WRITE setVBank)
 
  public:
   CQGameBoyTiles(CQGameBoyVideo *video);
@@ -22,13 +23,19 @@ class CQGameBoyTiles : public QFrame {
   int getScale() const { return scale_; }
   void setScale(int i) { scale_ = i; }
 
+  int getVBank() const { return vbank_; }
+  void setVBank(int i) { vbank_ = i; update(); }
+
  private slots:
   void scaleSlot();
+  void vbankSlot();
 
  private:
   CQGameBoyVideo*       video_     { nullptr };
   int                   scale_     { 1 };
+  int                   vbank_     { 0 };
   QSpinBox*             scaleSpin_ { nullptr };
+  QSpinBox*             vbankSpin_ { nullptr };
   CQGameBoyTilesCanvas* canvas1_   { nullptr };
   CQGameBoyTilesCanvas* canvas2_   { nullptr };
 };

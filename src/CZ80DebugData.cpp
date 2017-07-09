@@ -166,12 +166,18 @@ getBreakpoints(std::vector<ushort> &addrs)
 
 void
 CZ80DebugData::
-memChanged(ushort pos, ushort len)
+memPreWrite(ushort /*pos*/, ushort /*len*/)
+{
+}
+
+void
+CZ80DebugData::
+memPostWrite(ushort pos, ushort len)
 {
   ushort pos2 = pos + len - 1;
 
   if (! memChanged_) {
-    memChanged_      = true;
+    memChanged_     = true;
     memChangedPos1_ = pos;
     memChangedPos2_ = pos2;
   }

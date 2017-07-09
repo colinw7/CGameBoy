@@ -7,3 +7,5 @@
  + improve halt code
  + update instruction timing
  + decode instruction is independent of current PC
+### 7/9/2017
+ + Add gameboy color support

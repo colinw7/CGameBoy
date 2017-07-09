@@ -4,6 +4,7 @@
 #include <QFrame>
 
 class CQGameBoyVideo;
+class CQGameBoyColorPalette;
 class CQGameBoyPaletteSet;
 
 class CQGameBoyPalette : public QFrame {
@@ -19,10 +20,31 @@ class CQGameBoyPalette : public QFrame {
   void update();
 
  private:
-  CQGameBoyVideo*      video_ { nullptr };
-  CQGameBoyPaletteSet* set1_  { nullptr };
-  CQGameBoyPaletteSet* set2_  { nullptr };
-  CQGameBoyPaletteSet* set3_  { nullptr };
+  typedef std::vector<CQGameBoyColorPalette *> Palettes;
+  typedef std::vector<CQGameBoyPaletteSet *>   Sets;
+
+  CQGameBoyVideo* video_ { nullptr };
+  Palettes        palettes_;
+  Sets            sets_;
+};
+
+//------
+
+class CQGameBoyColorPalette : public QFrame {
+  Q_OBJECT
+
+ public:
+  CQGameBoyColorPalette(CQGameBoyPalette *sprites, uchar ind);
+
+  void paintEvent(QPaintEvent *);
+
+  QSize sizeHint() const;
+
+ private:
+  CQGameBoyPalette *palette_ { nullptr };
+  uchar             ind_     { 0 };
+  uint              size_    { 16 };
+  QColor            bg_      { 255, 255, 255 };
 };
 
 //------

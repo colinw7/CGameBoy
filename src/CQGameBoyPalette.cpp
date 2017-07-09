@@ -16,16 +16,27 @@ CQGameBoyPalette(CQGameBoyVideo *video) :
 {
   setObjectName("palette");
 
+  CQGameBoy *gameboy = video->screen()->gameboy();
+
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setMargin(0); layout->setSpacing(0);
 
-  set1_ = new CQGameBoyPaletteSet(this, "BGP" , 0xff47);
-  set2_ = new CQGameBoyPaletteSet(this, "OBP0", 0xff48);
-  set3_ = new CQGameBoyPaletteSet(this, "OBP1", 0xff49);
+  if (gameboy->isGBC()) {
+    for (int i = 0; i < 8; ++i) {
+      palettes_.push_back(new CQGameBoyColorPalette(this, i));
+    }
 
-  layout->addWidget(set1_);
-  layout->addWidget(set2_);
-  layout->addWidget(set3_);
+    for (auto &palette : palettes_)
+      layout->addWidget(palette);
+  }
+  else {
+    sets_.push_back(new CQGameBoyPaletteSet(this, "BGP" , 0xff47));
+    sets_.push_back(new CQGameBoyPaletteSet(this, "OBP0", 0xff48));
+    sets_.push_back(new CQGameBoyPaletteSet(this, "OBP1", 0xff49));
+
+    for (auto &set : sets_)
+      layout->addWidget(set);
+  }
 
   layout->addStretch(1);
 }
@@ -39,9 +50,57 @@ void
 CQGameBoyPalette::
 update()
 {
-  set1_->update();
-  set2_->update();
-  set3_->update();
+  CQGameBoy *gameboy = video_->screen()->gameboy();
+
+  if (gameboy->isGBC()) {
+    for (auto &palette : palettes_)
+      palette->update();
+  }
+  else {
+    for (auto &set : sets_)
+      set->update();
+  }
+}
+
+//------
+
+CQGameBoyColorPalette::
+CQGameBoyColorPalette(CQGameBoyPalette *palette, uchar ind) :
+ palette_(palette), ind_(ind)
+{
+}
+
+void
+CQGameBoyColorPalette::
+paintEvent(QPaintEvent *)
+{
+  CQGameBoy *gameboy = palette_->video()->screen()->gameboy();
+
+  QPainter painter(this);
+
+  painter.fillRect(rect(), bg_);
+
+  uchar r, g, b;
+
+  gameboy->bgPaletteColor(ind_, 0, r, b, g); QColor c1 = QColor(r, g, b);
+  gameboy->bgPaletteColor(ind_, 1, r, b, g); QColor c2 = QColor(r, g, b);
+  gameboy->bgPaletteColor(ind_, 2, r, b, g); QColor c3 = QColor(r, g, b);
+  gameboy->bgPaletteColor(ind_, 3, r, b, g); QColor c4 = QColor(r, g, b);
+
+  int x = 0;
+  int y = 0;
+
+  painter.fillRect(QRect(x, y, size_, size_), c1); x += size_;
+  painter.fillRect(QRect(x, y, size_, size_), c2); x += size_;
+  painter.fillRect(QRect(x, y, size_, size_), c3); x += size_;
+  painter.fillRect(QRect(x, y, size_, size_), c4);
+}
+
+QSize
+CQGameBoyColorPalette::
+sizeHint() const
+{
+  return QSize(size_*4, size_);
 }
 
 //------

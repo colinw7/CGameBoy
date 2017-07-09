@@ -1,7 +1,7 @@
 #ifndef CQGameBoyInfo_H
 #define CQGameBoyInfo_H
 
-#include <QWidget>
+#include <QFrame>
 #include <CZ80.h>
 
 class CQGameBoy;
@@ -10,7 +10,7 @@ class QGridLayout;
 
 //---
 
-class CQGameBoyInfo : public QWidget {
+class CQGameBoyInfo : public QFrame {
   Q_OBJECT
 
  public:
@@ -26,6 +26,8 @@ class CQGameBoyInfo : public QWidget {
  private:
   CQGameBoy* gameboy_      { nullptr };
   QLabel*    titleLabel_   { nullptr };
+  QLabel*    gbTypeLabel_  { nullptr };
+  QLabel*    sgbLabel_     { nullptr };
   QLabel*    typeLabel_    { nullptr };
   QLabel*    romLabel_     { nullptr };
   QLabel*    ramLabel_     { nullptr };

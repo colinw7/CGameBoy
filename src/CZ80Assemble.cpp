@@ -444,7 +444,7 @@ assembleParseOp(CFileParse *parse, std::string &op_str, uint pass, bool *continu
       }
 
       if (pass == 2 && assembleData_.isStream()) {
-        assembleData_.addValue(getPC()   ,  LO_WORD(i));
+        assembleData_.addValue(getPC()    , LO_WORD(i));
         assembleData_.addValue(getPC() + 1, HI_WORD(i));
       }
 
