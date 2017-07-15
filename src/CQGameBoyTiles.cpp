@@ -52,7 +52,7 @@ CQGameBoyTiles(CQGameBoyVideo *video) :
 
     connect(vbankSpin_, SIGNAL(valueChanged(int)), this, SLOT(vbankSlot()));
 
-    controlLayout->addWidget(new QLabel("Bank"));
+    controlLayout->addWidget(new QLabel("VBank"));
     controlLayout->addWidget(vbankSpin_);
   }
 
@@ -67,17 +67,17 @@ CQGameBoyTiles(CQGameBoyVideo *video) :
   QHBoxLayout *groupLayout = new QHBoxLayout;
   groupLayout->setMargin(2); groupLayout->setSpacing(2);
 
-  QGroupBox *canvas1Group = new QGroupBox("Bank 1");
-  QGroupBox *canvas2Group = new QGroupBox("Bank 2");
+  QGroupBox *canvas1Group = new QGroupBox("Tile Data 1");
+  QGroupBox *canvas2Group = new QGroupBox("Tile Data 2");
 
   canvas1Group->setObjectName("canvas1Group1");
   canvas2Group->setObjectName("canvas1Group2");
 
   QHBoxLayout *canvas1Layout = new QHBoxLayout(canvas1Group);
-  canvas1Layout->setMargin(0); canvas1Layout->setSpacing(0);
+  canvas1Layout->setMargin(2); canvas1Layout->setSpacing(2);
 
   QHBoxLayout *canvas2Layout = new QHBoxLayout(canvas2Group);
-  canvas2Layout->setMargin(0); canvas2Layout->setSpacing(0);
+  canvas2Layout->setMargin(2); canvas2Layout->setSpacing(2);
 
   canvas1_ = new CQGameBoyTilesCanvas(this, 0);
   canvas2_ = new CQGameBoyTilesCanvas(this, 1);
@@ -144,8 +144,8 @@ paintEvent(QPaintEvent *)
   int scale = tiles_->getScale();
   int vbank = tiles_->getVBank();
 
-  int tw = 8*scale;
-  int th = 8*scale;
+  int tw = 8;
+  int th = 8;
 
   int rows = 16;
   int cols = 16;
@@ -156,8 +156,8 @@ paintEvent(QPaintEvent *)
     int x = tw*(i % cols);
     int y = th*(i / cols);
 
-    video->drawTile(&painter, x, y, vbank, bank_, i,
-                    palette, false, false, /*isSprite*/false, scale);
+    video->drawTile(&painter, x*scale, y*scale, vbank, bank_, i, palette, false, false,
+                    /*isSprite*/false, scale);
   }
 }
 

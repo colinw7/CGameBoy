@@ -4,6 +4,7 @@
 #include <CQGameBoyKeys.h>
 #include <CQGameBoyInterrupt.h>
 #include <CQGameBoyTimer.h>
+#include <CQGameBoyMemoryMap.h>
 #include <CQGameBoyInfo.h>
 #include <CQGameBoyDbg.h>
 
@@ -92,6 +93,22 @@ addTimer()
   timer_->raise();
 
   return timer_;
+}
+
+CQGameBoyMemoryMap *
+CQGameBoy::
+addMemoryMap()
+{
+  if (! memoryMap_) {
+    memoryMap_ = new CQGameBoyMemoryMap(this);
+
+    //memoryMap_->setFixedFont(fixedFont_);
+  }
+
+  memoryMap_->show();
+  memoryMap_->raise();
+
+  return memoryMap_;
 }
 
 CQGameBoyInfo *
@@ -211,6 +228,24 @@ execStop(bool b)
 
 QColor
 CQGameBoy::
+vramBgPaletteColor(uchar palette, uchar ind) const
+{
+  uchar r, g, b;
+
+  bgPaletteColor(palette, ind, r, g, b);
+
+  return QColor(r, g, b);
+}
+
+void
+CQGameBoy::
+setVRamBgPaletteColor(uchar palette, uchar ind, const QColor &c)
+{
+  setBgPaletteColor(palette, ind, c.red(), c.green(), c.blue());
+}
+
+QColor
+CQGameBoy::
 vramSpritePaletteColor(uchar palette, uchar ind) const
 {
   uchar r, g, b;
@@ -220,15 +255,11 @@ vramSpritePaletteColor(uchar palette, uchar ind) const
   return QColor(r, g, b);
 }
 
-QColor
+void
 CQGameBoy::
-vramBgPaletteColor(uchar palette, uchar ind) const
+setVRamSpritePaletteColor(uchar palette, uchar ind, const QColor &c)
 {
-  uchar r, g, b;
-
-  bgPaletteColor(palette, ind, r, g, b);
-
-  return QColor(r, g, b);
+  setSpritePaletteColor(palette, ind, c.red(), c.green(), c.blue());
 }
 
 const QColor &

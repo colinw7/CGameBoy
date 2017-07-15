@@ -71,6 +71,7 @@ class CQGameBoyScreen : public QFrame, public CZ80Screen {
   void keysSlot();
   void interruptSlot();
   void timerSlot();
+  void memoryMapSlot();
   void infoSlot();
 
  private:
@@ -85,7 +86,7 @@ class CQGameBoyScreen : public QFrame, public CZ80Screen {
   void drawBackgroundPixel(int pixel, int line);
 
   void drawTilePixel(int x, int y, int bank, int tile, int pixel, int line,
-                     uchar palette, bool isSprite);
+                     int vtile, int palette, bool isSprite);
 
   void displaySprites();
 

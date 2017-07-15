@@ -48,6 +48,8 @@ CZ80()
   load_pos_ = 0;
   load_len_ = 65536;
 
+  opData_ = new CZ80OpData;
+
   initOpInds();
 
   reset();
@@ -70,6 +72,8 @@ CZ80::
 
   delete [] memory_;
   delete [] flags_;
+
+  delete opData_;
 }
 
 void
@@ -95,18 +99,29 @@ void
 CZ80::
 initOpInds()
 {
-  uint ind = 0;
+  for (uint i = 0; i < 256; ++i)
+    op_normal[i].ind = i;
 
-  for (uint i = 0; i < 256; ++i) op_normal[i].ind = ind++;
-  for (uint i = 0; i < 256; ++i) op_cb    [i].ind = ind++;
+  for (uint i = 0; i < 256; ++i)
+    op_cb[i].ind = 0xcb00 | i;
+
 #ifndef GAMEBOY_Z80
-  for (uint i = 0; i < 256; ++i) op_dd    [i].ind = ind++;
-  for (uint i = 0; i < 256; ++i) op_ed    [i].ind = ind++;
-  for (uint i = 0; i < 256; ++i) op_fd    [i].ind = ind++;
+  for (uint i = 0; i < 256; ++i)
+    op_dd[i].ind = 0xdd00 | i;
+
+  for (uint i = 0; i < 256; ++i)
+    op_ed[i].ind = 0xed00 | i;
+
+  for (uint i = 0; i < 256; ++i)
+    op_fd[i].ind = 0xfd00 | i;
 #endif
+
 #ifndef GAMEBOY_Z80
-  for (uint i = 0; i < 256; ++i) op_dd_cb [i].ind = ind++;
-  for (uint i = 0; i < 256; ++i) op_fd_cb [i].ind = ind++;
+  for (uint i = 0; i < 256; ++i)
+    op_dd_cb[i].ind = 0xddcb00 | i;
+
+  for (uint i = 0; i < 256; ++i)
+    op_fd_cb[i].ind = 0xfdcb00 | i;
 #endif
 }
 
@@ -173,7 +188,7 @@ resetRegisters()
   setI(0);
   setR(0);
 
-  setIFF1(0x00);
+  setIFF(0);
 
   setIM(0);
 }
@@ -1219,16 +1234,27 @@ addA(uchar a)
 
 void
 CZ80::
-addHL(ushort hl)
+addHL(ushort n)
 {
+#ifdef GAMEBOY_Z80
+  uint result  = getHL() + n;
+  uint hresult = (getHL() & 0xFFF) + (n & 0xFFF);
+
+  resNFlag();
+  setHFlag(hresult & 0x1000);
+  setCFlag( result & 0x10000);
+
+  setHL(result & 0xFFFF);
+#else
+
 #ifdef CZ80_ADD_16_RETAIN_SZP
   bool s = tstSFlag();
   bool z = tstZFlag();
   bool p = tstPFlag();
 #endif
 
-  uchar h = (hl & 0xFF00) >> 8;
-  uchar l =  hl & 0x00FF ;
+  uchar h = (n & 0xFF00) >> 8;
+  uchar l =  n & 0x00FF ;
 
   setL(addR(getL(), l));
   setH(adcR(getH(), h));
@@ -1239,6 +1265,8 @@ addHL(ushort hl)
   setPFlag(p);
 #else
   setZFlag(getHL() == 0x0000);
+#endif
+
 #endif
 }
 
@@ -2634,10 +2662,15 @@ uchar
 CZ80::
 swap(uchar r)
 {
-  uchar h = r & 0xF0;
-  uchar l = r & 0x0F;
+  uchar l =  r       & 0x0F;
+  uchar h = (r >> 4) & 0x0F;
 
-  r = (h >> 4) | (l << 4);
+  r = (l << 4) | h;
+
+  setZFlag(r == 0x00);
+  resNFlag();
+  resHFlag();
+  resCFlag();
 
   return r;
 }
@@ -3185,7 +3218,7 @@ halt()
     // exec next instruction but only increment PC by one
     ushort pc = getPC();
 
-    step();
+    execStep();
 
     setPC(pc + 1);
   }
@@ -3195,6 +3228,12 @@ halt()
 #else
   setHalt(true);
 #endif
+}
+
+void
+CZ80::
+stop()
+{
 }
 
 //------------

@@ -21,6 +21,8 @@ class CGameBoyMemData : public CZ80MemData {
 
   bool memTrigger(const uchar *data, ushort pos, ushort);
 
+  uchar biosData(ushort pos);
+
  private:
   void memReadData(ushort pos, uchar *data);
 

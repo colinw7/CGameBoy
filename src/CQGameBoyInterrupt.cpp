@@ -37,11 +37,18 @@ CQGameBoyInterrupt(CQGameBoy *gameboy) :
   QHBoxLayout *regLayout = new QHBoxLayout;
 
   iffEdit_  = new CQZ80RegEdit(z80, CZ80Reg::IFF);
-  statEdit_ = new CQGameBoyHexEdit;
+//statEdit_ = new CQGameBoyHexEdit;
+  statEdit_ = new CQGameBoyAddrEdit(gameboy, "STAT", 0xff41);
+  ifEdit_   = new CQGameBoyAddrEdit(gameboy, "IF"  , 0xff0f);
+  ieEdit_   = new CQGameBoyAddrEdit(gameboy, "IE"  , 0xffff);
 
   regLayout->addWidget(iffEdit_);
   regLayout->addWidget(new QLabel("STAT"));
   regLayout->addWidget(statEdit_);
+  regLayout->addWidget(new QLabel("IF"));
+  regLayout->addWidget(ifEdit_);
+  regLayout->addWidget(new QLabel("IE"));
+  regLayout->addWidget(ieEdit_);
 
   layout->addLayout(regLayout);
 
@@ -78,8 +85,12 @@ updateState()
 
   enableCheck_->setChecked(z80->getAllowInterrupts());
 
-  iffEdit_ ->setValue(z80->getIFF());
-  statEdit_->setValue(z80->getMemory(0xff41));
+  iffEdit_->setValue(z80->getIFF());
+
+//statEdit_->setValue(z80->getMemory(0xff41));
+  statEdit_->update();
+  ifEdit_  ->update();
+  ieEdit_  ->update();
 
   canvas_->update();
 }

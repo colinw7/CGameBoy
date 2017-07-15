@@ -16,23 +16,24 @@ CONFIG += debug
 
 # Input
 SOURCES += \
-CQGameBoyMain.cpp \
 CQGameBoy.cpp \
-CQGameBoyScreen.cpp \
-CQGameBoyVideo.cpp \
-CQGameBoyGraphics.cpp \
-CQGameBoyTiles.cpp \
-CQGameBoyTile.cpp \
-CQGameBoySprites.cpp \
-CQGameBoySpriteList.cpp \
-CQGameBoyPalette.cpp \
-CQGameBoyVReg.cpp \
-CQGameBoyKeys.cpp \
-CQGameBoyInterrupt.cpp \
-CQGameBoyTimer.cpp \
 CQGameBoyDbg.cpp \
-CQGameBoyInfo.cpp \
+CQGameBoyGraphics.cpp \
 CQGameBoyHexEdit.cpp \
+CQGameBoyInfo.cpp \
+CQGameBoyInterrupt.cpp \
+CQGameBoyKeys.cpp \
+CQGameBoyMain.cpp \
+CQGameBoyMemoryMap.cpp \
+CQGameBoyPalette.cpp \
+CQGameBoyScreen.cpp \
+CQGameBoySpriteList.cpp \
+CQGameBoySprites.cpp \
+CQGameBoyTile.cpp \
+CQGameBoyTiles.cpp \
+CQGameBoyTimer.cpp \
+CQGameBoyVideo.cpp \
+CQGameBoyVReg.cpp \
 \
 CGameBoy.cpp \
 CGameBoyExecData.cpp \
@@ -60,15 +61,18 @@ CZ80OpData.cpp \
 CZ80Rst.cpp \
 CZ80Snapshot.cpp \
 CZ80SpeedData.cpp \
+\
+CQHexdump.cpp \
 
 HEADERS += \
+CQGameBoy.h \
 CQGameBoyDbg.h \
 CQGameBoyGraphics.h \
-CQGameBoy.h \
 CQGameBoyHexEdit.h \
 CQGameBoyInfo.h \
 CQGameBoyInterrupt.h \
 CQGameBoyKeys.h \
+CQGameBoyMemoryMap.h \
 CQGameBoyPalette.h \
 CQGameBoyScreen.h \
 CQGameBoySpriteList.h \
@@ -116,6 +120,8 @@ CZ80Snapshot.h \
 CZ80SpeedData.h \
 CZ80Trace.h \
 CZ80Types.h \
+\
+CQHexdump.h \
 
 DESTDIR     = ../bin
 OBJECTS_DIR = ../obj

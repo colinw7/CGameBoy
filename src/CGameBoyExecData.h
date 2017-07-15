@@ -14,6 +14,8 @@ class CGameBoyExecData : public CZ80ExecData {
   void preStep () override;
   void postStep() override;
 
+  void preExec() override;
+
   void setStop(bool b) override;
   void setHalt(bool b) override;
 

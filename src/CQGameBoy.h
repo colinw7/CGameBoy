@@ -12,6 +12,7 @@ class CQGameBoyVideo;
 class CQGameBoyKeys;
 class CQGameBoyInterrupt;
 class CQGameBoyTimer;
+class CQGameBoyMemoryMap;
 class CQGameBoyInfo;
 class CQGameBoyDbg;
 
@@ -47,6 +48,7 @@ class CQGameBoy : public QWidget, public CGameBoy {
   CQGameBoyKeys      *addKeys();
   CQGameBoyInterrupt *addInterrupt();
   CQGameBoyTimer     *addTimer();
+  CQGameBoyMemoryMap *addMemoryMap();
   CQGameBoyInfo      *addInfo();
   CQGameBoyDbg       *addDebug();
 
@@ -65,8 +67,10 @@ class CQGameBoy : public QWidget, public CGameBoy {
   void execStop(bool b) override;
 
   QColor vramBgPaletteColor(uchar palette, uchar ind) const;
+  void setVRamBgPaletteColor(uchar palette, uchar ind, const QColor &c);
 
   QColor vramSpritePaletteColor(uchar palette, uchar ind) const;
+  void setVRamSpritePaletteColor(uchar palette, uchar ind, const QColor &c);
 
   const QColor &mappedPaletteColor(uchar palette, uchar ind) const;
 
@@ -83,6 +87,7 @@ class CQGameBoy : public QWidget, public CGameBoy {
   QPointer<CQGameBoyKeys>      keys_;
   QPointer<CQGameBoyInterrupt> interrupt_;
   QPointer<CQGameBoyTimer>     timer_;
+  QPointer<CQGameBoyMemoryMap> memoryMap_;
   QPointer<CQGameBoyInfo>      info_;
   QPointer<CQGameBoyDbg>       dbg_;
 };

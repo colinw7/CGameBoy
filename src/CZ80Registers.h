@@ -26,6 +26,25 @@ struct CZ80Registers {
   union { ushort iff_; struct { uchar iff1_; uchar iff2_; }; };
 
   uchar im_;
+
+  CZ80Registers() {
+    af_   = 0;
+    bc_   = 0;
+    de_   = 0;
+    hl_   = 0;
+    af_1_ = 0;
+    bc_1_ = 0;
+    de_1_ = 0;
+    hl_1_ = 0;
+    ix_   = 0;
+    iy_   = 0;
+    sp_   = 0;
+    pc_   = 0;
+    i_    = 0;
+    r_    = 0;
+    iff_  = 0;
+    im_   = 0;
+  }
 };
 
 #endif

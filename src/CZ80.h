@@ -25,13 +25,13 @@ enum class CZ80Flag {
 #ifdef GAMEBOY_Z80
   // 76543210
   // ZSHC----
-  N=0,      // Not used (Always zero)
+  S=0,      // Not used (Always zero)
   P=1, V=1, // Not used (Always zero)
   X=2,      // Not used (Always zero)
   Y=3,      // Not used (Always zero)
   C=4,      // Carry
   H=5,      // Half Carry
-  S=6,      // Sign
+  N=6,      // Last Op was Subtract
   Z=7,      // Zero
 #else
   // 75643210
@@ -214,6 +214,8 @@ class CZ80 {
 
   void setLoadPos(ushort pos) { load_pos_ = pos; }
   void setLoadLen(ushort len) { load_len_ = len; }
+
+  CZ80OpData *opData() const { return opData_; }
 
   // -----------
 
@@ -824,14 +826,16 @@ class CZ80 {
   bool execute();
   bool execute(ushort pos);
 
-  bool next();
-  void skip();
-  bool step();
-  bool cont();
+  bool execNext();
+  void execSkip();
+  bool execStep();
+  bool execCont();
+  void execStop();
 
  private:
   bool execute1(bool notify);
-  bool step1(bool notify);
+  bool execStep1(bool notify);
+
 
   // ---------
 
@@ -2060,8 +2064,9 @@ class CZ80 {
   CFile *dump_file_ { nullptr };
 
   CZ80AssembleData assembleData_;
-  MacroMap         assemble_macros_;
+  MacroMap         assembleMacros_;
   CZ80LabelData    labelData_;
+  CZ80OpData*      opData_;
 };
 
 #endif

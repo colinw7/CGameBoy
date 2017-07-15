@@ -978,10 +978,12 @@ f_djnz(CZ80OpData *opData)
 #else
 void
 CZ80::
-f_stop(CZ80OpData *)
+f_stop(CZ80OpData *opData)
 {
   // TODO: Halt gameboy processor until key pressed
   std::cerr << "STOP" << std::endl;
+
+  opData->z80->stop();
 }
 #endif
 

@@ -4,10 +4,13 @@
 #include <CQGameBoyScreen.h>
 #include <CQGameBoy.h>
 
-#include <QLabel>
+#include <QColorDialog>
 #include <QSpinBox>
+#include <QToolButton>
+#include <QLabel>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QMouseEvent>
 #include <QPainter>
 
 CQGameBoyPalette::
@@ -21,13 +24,22 @@ CQGameBoyPalette(CQGameBoyVideo *video) :
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setMargin(0); layout->setSpacing(0);
 
+  //---
+
+  QVBoxLayout *paletteLayout = new QVBoxLayout;
+  paletteLayout->setMargin(0); paletteLayout->setSpacing(0);
+
   if (gameboy->isGBC()) {
     for (int i = 0; i < 8; ++i) {
-      palettes_.push_back(new CQGameBoyColorPalette(this, i));
+      CQGameBoyColorPalette *palette = new CQGameBoyColorPalette(this, i);
+
+      connect(palette, SIGNAL(colorPressed(int, int)), this, SLOT(paletteColorPressed(int, int)));
+
+      palettes_.push_back(palette);
     }
 
     for (auto &palette : palettes_)
-      layout->addWidget(palette);
+      paletteLayout->addWidget(palette);
   }
   else {
     sets_.push_back(new CQGameBoyPaletteSet(this, "BGP" , 0xff47));
@@ -35,8 +47,29 @@ CQGameBoyPalette(CQGameBoyVideo *video) :
     sets_.push_back(new CQGameBoyPaletteSet(this, "OBP1", 0xff49));
 
     for (auto &set : sets_)
-      layout->addWidget(set);
+      paletteLayout->addWidget(set);
   }
+
+  layout->addLayout(paletteLayout);
+
+  //---
+
+  QHBoxLayout *colorLayout = new QHBoxLayout;
+
+  layout->addLayout(colorLayout);
+
+  colorLabel_  = new QLabel;
+  colorButton_ = new QToolButton;
+
+  colorButton_->setAutoFillBackground(true);
+
+  connect(colorButton_, SIGNAL(clicked()), this, SLOT(colorButtonSlot()));
+
+  colorLayout->addWidget(colorLabel_);
+  colorLayout->addWidget(colorButton_);
+  colorLayout->addStretch(1);
+
+  //---
 
   layout->addStretch(1);
 }
@@ -62,12 +95,69 @@ update()
   }
 }
 
+void
+CQGameBoyPalette::
+paletteColorPressed(int color, int palette)
+{
+  palette_ = palette;
+  color_   = color;
+
+  CQGameBoy *gameboy = video_->screen()->gameboy();
+
+  QColor c = gameboy->vramBgPaletteColor(palette_, color_);
+
+  colorLabel_->setText(QString("%1:%2").arg(palette_).arg(color_));
+
+  setButtonColor(c);
+}
+
+void
+CQGameBoyPalette::
+colorButtonSlot()
+{
+  CQGameBoy *gameboy = video_->screen()->gameboy();
+
+  QColor c = gameboy->vramBgPaletteColor(palette_, color_);
+
+  QColor c1 = QColorDialog::getColor(c, this);
+
+  if (c1.isValid()) {
+    CQGameBoy *gameboy = video_->screen()->gameboy();
+
+    gameboy->setVRamBgPaletteColor(palette_, color_, c1);
+
+    setButtonColor(c1);
+  }
+
+  update();
+}
+
+void
+CQGameBoyPalette::
+setButtonColor(const QColor &c)
+{
+  QPalette palette = colorButton_->palette();
+
+  palette.setColor(colorButton_->backgroundRole(), c);
+
+  colorButton_->setPalette(palette);
+}
+
 //------
 
 CQGameBoyColorPalette::
 CQGameBoyColorPalette(CQGameBoyPalette *palette, uchar ind) :
  palette_(palette), ind_(ind)
 {
+}
+
+void
+CQGameBoyColorPalette::
+mousePressEvent(QMouseEvent *e)
+{
+  int n = e->x()/size_;
+
+  emit colorPressed(n, ind_);
 }
 
 void
@@ -82,10 +172,10 @@ paintEvent(QPaintEvent *)
 
   uchar r, g, b;
 
-  gameboy->bgPaletteColor(ind_, 0, r, b, g); QColor c1 = QColor(r, g, b);
-  gameboy->bgPaletteColor(ind_, 1, r, b, g); QColor c2 = QColor(r, g, b);
-  gameboy->bgPaletteColor(ind_, 2, r, b, g); QColor c3 = QColor(r, g, b);
-  gameboy->bgPaletteColor(ind_, 3, r, b, g); QColor c4 = QColor(r, g, b);
+  gameboy->bgPaletteColor(ind_, 0, r, g, b); QColor c1 = QColor(r, g, b);
+  gameboy->bgPaletteColor(ind_, 1, r, g, b); QColor c2 = QColor(r, g, b);
+  gameboy->bgPaletteColor(ind_, 2, r, g, b); QColor c3 = QColor(r, g, b);
+  gameboy->bgPaletteColor(ind_, 3, r, g, b); QColor c4 = QColor(r, g, b);
 
   int x = 0;
   int y = 0;
@@ -109,6 +199,15 @@ CQGameBoyPaletteSet::
 CQGameBoyPaletteSet(CQGameBoyPalette *palette, const QString &name, ushort addr) :
  palette_(palette), name_(name), addr_(addr)
 {
+}
+
+void
+CQGameBoyPaletteSet::
+mousePressEvent(QMouseEvent *e)
+{
+  int n = e->x()/size_;
+
+  emit colorPressed(n, addr_);
 }
 
 void

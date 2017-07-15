@@ -35,7 +35,7 @@ bootSlot()
 
   z80->addBreakpoint(0x0100);
 
-  z80->cont();
+  z80->execCont();
 
   z80->removeBreakpoint(0x0100);
 

@@ -11,3 +11,4 @@
 . Handle HALT correctly (continue after interrupt)
 . CStrUtil::toHexString -> CZ80::hexString
 . Use CBit namespace for bit flags
+. Cycle accurate, all operators based on cpu ticks

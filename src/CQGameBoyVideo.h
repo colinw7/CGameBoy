@@ -35,7 +35,7 @@ class CQGameBoyVideo : public QFrame, public CZ80Trace {
   void updateSprites();
   void updatePalette();
 
-  void drawScreen(QPainter *painter, int x, int y, int screen, int bank, int scale);
+  void drawScreen(QPainter *painter, int x, int y, int tileMap, int bank, int scale);
 
   void drawTile(QPainter *painter, int x, int y, int vbank, int bank, int tile,
                 uchar palette, bool xflip, bool yflip, bool isSprite, int scale);

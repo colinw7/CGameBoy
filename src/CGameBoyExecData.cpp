@@ -1,5 +1,6 @@
 #include <CGameBoyExecData.h>
 #include <CGameBoy.h>
+#include <CZ80OpData.h>
 
 CGameBoyExecData::
 CGameBoyExecData(CGameBoy *gameboy) :
@@ -14,6 +15,23 @@ preStep()
   if (z80_.getPC() == 0x0100) {
     gameboy_->setBiosEnabled(false);
   }
+}
+
+void
+CGameBoyExecData::
+preExec()
+{
+#if 0
+//if (! gameboy_->isBiosEnabled())
+int pc = z80_.getPC() - z80_.opData()->op->len;
+int op = z80_.opData()->op->ind;
+if (op > 0xff) ++pc;
+
+std::cerr << std::hex << pc << ":" << std::hex << (op & 0xff) <<
+             " AF=" << int(z80_.getAF()) << " BC=" << int(z80_.getBC()) <<
+             " DE=" << int(z80_.getDE()) << " HL=" << int(z80_.getHL()) <<
+             " SP=" << int(z80_.getSP()) << std::endl;
+#endif
 }
 
 void
@@ -79,10 +97,10 @@ postStep()
 
     // vertical blank (LCD has drawn a frame)
     if      (IS_BIT(iflag, 0)) {
-      z80_.resetBit(0xff0f, 0);
-
       if (IS_BIT(ie, 0)) {
-        //std::cerr << "vertical blank interrupt" << std::endl;
+        z80_.resetBit(0xff0f, 0);
+
+        std::cerr << "vertical blank interrupt" << std::endl;
 
         z80_.setIM0(0x40);
         z80_.interrupt();
@@ -91,10 +109,10 @@ postStep()
     // LCD controller changed
     else if (IS_BIT(iflag, 1)) {
       // TODO
-      z80_.resetBit(0xff0f, 1);
-
       if (IS_BIT(ie, 1)) {
-        //std::cerr << "LCD controller interrupt" << std::endl;
+        z80_.resetBit(0xff0f, 1);
+
+        std::cerr << "LCD controller interrupt" << std::endl;
 
         z80_.setIM0(0x48);
         z80_.interrupt();
@@ -102,10 +120,10 @@ postStep()
     }
     // timer overflow
     else if (IS_BIT(iflag, 2)) {
-      z80_.resetBit(0xff0f, 2);
-
       if (IS_BIT(ie, 2)) {
-        //std::cerr << "timer interrupt" << std::endl;
+        z80_.resetBit(0xff0f, 2);
+
+        std::cerr << "timer interrupt" << std::endl;
 
         z80_.setIM0(0x50);
         z80_.interrupt();
@@ -113,10 +131,10 @@ postStep()
     }
     // Serial I/O transfer end
     else if (IS_BIT(iflag, 3)) {
-      z80_.resetBit(0xff0f, 3);
-
       if (IS_BIT(ie, 3)) {
-        //std::cerr << "serial interrupt" << std::endl;
+        z80_.resetBit(0xff0f, 3);
+
+        std::cerr << "serial interrupt" << std::endl;
 
         z80_.setIM0(0x58);
         z80_.interrupt();
@@ -124,10 +142,10 @@ postStep()
     }
     // Transition from High to Low of Pin number P10-P13 (key)
     else if (IS_BIT(iflag, 4)) {
-      z80_.resetBit(0xff0f, 4);
-
       if (IS_BIT(ie, 4)) {
-        //std::cerr << "key interrupt" << std::endl;
+        z80_.resetBit(0xff0f, 4);
+
+        std::cerr << "key interrupt" << std::endl;
 
         z80_.setIM0(0x60);
         z80_.interrupt();

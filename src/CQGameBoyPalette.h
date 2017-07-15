@@ -7,6 +7,9 @@ class CQGameBoyVideo;
 class CQGameBoyColorPalette;
 class CQGameBoyPaletteSet;
 
+class QLabel;
+class QToolButton;
+
 class CQGameBoyPalette : public QFrame {
   Q_OBJECT
 
@@ -19,13 +22,25 @@ class CQGameBoyPalette : public QFrame {
 
   void update();
 
+ private slots:
+  void paletteColorPressed(int color, int palette);
+
+  void colorButtonSlot();
+
+ private:
+  void setButtonColor(const QColor &c);
+
  private:
   typedef std::vector<CQGameBoyColorPalette *> Palettes;
   typedef std::vector<CQGameBoyPaletteSet *>   Sets;
 
-  CQGameBoyVideo* video_ { nullptr };
+  CQGameBoyVideo* video_       { nullptr };
   Palettes        palettes_;
   Sets            sets_;
+  QLabel*         colorLabel_  { nullptr };
+  QToolButton*    colorButton_ { nullptr };
+  int             palette_     { 0 };
+  int             color_       { 0 };
 };
 
 //------
@@ -36,9 +51,14 @@ class CQGameBoyColorPalette : public QFrame {
  public:
   CQGameBoyColorPalette(CQGameBoyPalette *sprites, uchar ind);
 
+  void mousePressEvent(QMouseEvent *e);
+
   void paintEvent(QPaintEvent *);
 
   QSize sizeHint() const;
+
+ signals:
+  void colorPressed(int, int);
 
  private:
   CQGameBoyPalette *palette_ { nullptr };
@@ -55,9 +75,14 @@ class CQGameBoyPaletteSet : public QFrame {
  public:
   CQGameBoyPaletteSet(CQGameBoyPalette *sprites, const QString &name, ushort addr);
 
+  void mousePressEvent(QMouseEvent *e);
+
   void paintEvent(QPaintEvent *);
 
   QSize sizeHint() const;
+
+ signals:
+  void colorPressed(int, int);
 
  private:
   CQGameBoyPalette *palette_ { nullptr };

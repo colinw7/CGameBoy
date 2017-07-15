@@ -29,20 +29,15 @@ memReadData(ushort pos, uchar *data)
 {
   // BIOS at startup
   if (gameboy()->isBiosEnabled()) {
-    if (gameboy_->isGBC()) {
-      if (pos < 0x100) {
-        *data = CGameBoyBios::cgbData[pos];
-        return;
-      }
-
-      if (pos >= 0x200 && pos < 0x900) {
-        *data = CGameBoyBios::cgbData[pos - 0x100];
+    if (gameboy()->isGBC()) {
+      if (pos < 0x100 || (pos >= 0x200 && pos < 0x900)) {
+        *data = biosData(pos);
         return;
       }
     }
     else {
-      if      (pos < 0x100) {
-        *data = CGameBoyBios::gbData[pos];
+      if (pos < 0x100) {
+        *data = biosData(pos);
         return;
       }
     }
@@ -57,7 +52,6 @@ memReadData(ushort pos, uchar *data)
   // 16kB switchable ROM bank (0x4000 - 0x7fff)
   else if (pos < 0x8000) {
     if (gameboy()->cartridge()) {
-      //uint pos1 = pos - 0x4000;
       uint pos1 = pos;
 
       *data = gameboy()->readCartridge(pos1 + gameboy()->romOffset());
@@ -133,6 +127,12 @@ memReadData(ushort pos, uchar *data)
     else if (pos == 0xff02) {
       *data = z80_.getMemory(pos);
     }
+    // UNDOCUMENTED
+    else if (pos == 0xff03) {
+      //std::cerr << "Undocumented memory access to " << std::hex << int(pos) << std::endl;
+
+      *data = 0xff;
+    }
     // Divider Register
     else if (pos == 0xff04) {
       *data = z80_.getMemory(pos);
@@ -148,6 +148,12 @@ memReadData(ushort pos, uchar *data)
     // Timer Control
     else if (pos == 0xff07) {
       *data = z80_.getMemory(pos);
+    }
+    // UNDOCUMENTED
+    else if (pos >= 0xff08 && pos <= 0xff0e) {
+      //std::cerr << "Undocumented memory access to " << std::hex << int(pos) << std::endl;
+
+      *data = 0xff;
     }
     // Interrupt Flag
     else if (pos == 0xff0f) {
@@ -209,11 +215,25 @@ memReadData(ushort pos, uchar *data)
     else if (pos == 0xff4b) {
       *data = z80_.getMemory(pos);
     }
+    // UNDOCUMENTED
+    else if (pos == 0xff4c) {
+      //std::cerr << "Undocumented memory access to " << std::hex << int(pos) << std::endl;
+
+      *data = 0xff;
+    }
     // KEY1 - Prepare Speed Switch
     else if (pos == 0xff4d) {
-      *data = (gameboy()->isDoubleSpeed() ? 0x80 : 0x00);
+      if (gameboy()->isGBC()) {
+        // TODO: wait for STOP instruction
 
-      // *data = z80_.getMemory(pos);
+        *data = (gameboy()->isDoubleSpeed() ? 0xFE : 0x7E);
+
+        //std::cerr << "Read Speed Switch " << std::hex << int(*data) << std::endl;
+
+        // *data = z80_.getMemory(pos);
+      }
+      else
+        *data = z80_.getMemory(pos);
     }
     // VBK - VRAM Bank (CBG)
     else if (pos == 0xff4f) {
@@ -237,7 +257,7 @@ memReadData(ushort pos, uchar *data)
     }
     // HDMA5 - New DMA Length/Mode/Start (CBG)
     else if (pos == 0xff55) {
-      *data = 0; // always return zero (DMA complete)
+      *data = 0xff; // always return zero (DMA complete)
 
       //*data = z80_.getMemory(pos);
     }
@@ -260,6 +280,18 @@ memReadData(ushort pos, uchar *data)
     // SVBK - WRAM Bank
     else if (pos == 0xff70) {
       *data = z80_.getMemory(pos);
+    }
+    // UNDOCUMENTED
+    else if (pos >= 0xff76) {
+      //std::cerr << "Undocumented memory access to " << std::hex << int(pos) << std::endl;
+
+      *data = (gameboy_->isGBC() ? 0x00 : 0xff);
+    }
+    // UNDOCUMENTED
+    else if (pos >= 0xff77) {
+      //std::cerr << "Undocumented memory access to " << std::hex << int(pos) << std::endl;
+
+      *data = (gameboy_->isGBC() ? 0x00 : 0xff);
     }
     else {
       *data = z80_.getMemory(pos);
@@ -359,6 +391,7 @@ memPostWriteData(ushort pos, uchar data)
     //std::cerr << "Write Internal RAM " << std::hex << pos << " " <<
     //             std::hex << int(data) << std::endl;
     if (gameboy_->isGBC()) {
+      // WRAM (1-7)
       ushort pos1 = pos - 0xd000;
 
       ushort offset = (gameboy()->wramBank() - 1)*0x1000;
@@ -516,13 +549,19 @@ memPostWriteData(ushort pos, uchar data)
     }
     // DMA Transfer and Start Address
     else if (pos == 0xff46) {
-      ushort addr = (data << 8);
-      ushort len  = 0xa0;
+      ushort src = (data << 8);
+      ushort dst = 0xFE00;
+      ushort len = 0xa0;
 
-      //std::cerr << "Write DMA (0xa0 bytes) from " << std::hex << int(addr) << std::endl;
+      //std::cerr << "Write DMA (0xa0 bytes) from " << std::hex << int(src) << std::endl;
 
       for (ushort i = 0; i < len; ++i) {
-        z80_.setByte(0xFE00 + i, z80_.getByte(addr + i));
+        uchar c;
+
+        memReadData(src + i, &c);
+
+        //memPostWriteData(dst + i, c);
+        z80_.setByte(dst + i, c);
       }
 
       // DMA takes 160 ms (runs in parallel with Z80)
@@ -558,11 +597,16 @@ memPostWriteData(ushort pos, uchar data)
         //std::cerr << "Write WX " << std::hex << int(data) << std::endl;
       }
     }
-    // KEY1 - Prepare Speed Switch
+    // KEY1 - Prepare Speed Switch (GBC)
     else if (pos == 0xff4d) {
-      std::cerr << "Prepare Speed Switch " << std::hex << int(data) << std::endl;
+      if (gameboy()->isGBC()) {
+        std::cerr << "Write Speed Switch " << std::hex << int(data) << std::endl;
 
-      gameboy()->setDoubleSpeed(data & 0x01);
+  //    int currentSpeed = TST_BIT(data, 7);
+        int prepareSpeed = TST_BIT(data, 0);
+
+        gameboy()->setDoubleSpeed(prepareSpeed);
+      }
     }
     // VBK - VRAM Bank (CBG)
     else if (pos == 0xff4f) {
@@ -588,25 +632,40 @@ memPostWriteData(ushort pos, uchar data)
     }
     // HDMA5 - New DMA Length/Mode/Start (CBG)
     else if (pos == 0xff55) {
-      ushort src  = ((z80_.getMemory(0xff51) << 8) || z80_.getMemory(0xff52) & 0xFFF0);
-      ushort dst  = ((z80_.getMemory(0xff53) << 8) || z80_.getMemory(0xff54) & 0xFFF0);
-      ushort len  = ((data & 0x7F) + 1)*0x10;
-      int    mode = (data & 0x80 ? 1 : 0);
+      if (gameboy()->isGBC()) {
+        // HDMA transfer from ROM or RAM to VRAM :
+        // . The Source Start Address may be located at 0000-7FF0 or A000-DFF0, the lower
+        //   four bits of the address are ignored (treated as zero).
+        // . The Destination Start Address may be located at 8000-9FF0, the lower four bits
+        //   of the address are ignored (treated as zero), the upper 3 bits are ignored either
+        //   (destination is always in VRAM)
+        ushort src  = ((z80_.getMemory(0xff51) << 8) | z80_.getMemory(0xff52)) & 0xFFF0;
+        ushort dst  = ((z80_.getMemory(0xff53) << 8) | z80_.getMemory(0xff54)) & 0xFFF0;
+        ushort len  = ((data & 0x7F) + 1)*0x10;
+        int    mode = (data & 0x80 ? 1 : 0);
 
-      std::cerr << "Write HDMA (" << std::hex << int(len) << " bytes) from " <<
-                   std::hex << int(src) << " to " << std::hex << int(dst) <<
-                   " Mode " << mode << std::endl;
+        std::cerr << "Write HDMA (" << std::hex << int(len) << " bytes) from " <<
+                     std::hex << int(src) << " to " << std::hex << int(dst) <<
+                     " Mode " << mode << std::endl;
 
-      for (ushort i = 0; i < len; ++i) {
-        z80_.setByte(dst + i, z80_.getByte(src + i));
+        assert(dst >= 0x8000 && dst + len <= 0xA000);
+
+        for (ushort i = 0; i < len; ++i) {
+          uchar c;
+
+          memReadData(src + i, &c);
+
+          //memPostWriteData(dst + i, c);
+          z80_.setByte(dst + i, c);
+        }
+
+        // DMA takes 160 ms (runs in parallel with Z80)
+        //ushort cycles = z80_.msCycles(160);
       }
-
-      // DMA takes 160 ms (runs in parallel with Z80)
-      //ushort cycles = z80_.msCycles(160);
     }
     // BCPS/BGPI - Background Palette Index (CGB)
     else if (pos == 0xff68) {
-      std::cerr << "Set Background Palette Index " << std::hex << int(data) << std::endl;
+      //std::cerr << "Set Background Palette Index " << std::hex << int(data) << std::endl;
     }
     // BCPD/BGPD - Background Palette Data (CGB)
     else if (pos == 0xff69) {
@@ -614,8 +673,8 @@ memPostWriteData(ushort pos, uchar data)
 
       uchar ind1 = (ind & 0x3F);
 
-      std::cerr << "Set Background Palette Data " << std::hex << int(ind1) << "=" <<
-                                                     std::hex << int(data) << std::endl;
+      //std::cerr << "Set Background Palette Data " << std::hex << int(ind1) << "=" <<
+      //                                               std::hex << int(data) << std::endl;
 
       gameboy()->setBgPaleteData(ind1, data);
 
@@ -629,7 +688,7 @@ memPostWriteData(ushort pos, uchar data)
     }
     // OCPS/OBPI - Sprite Palette Index
     else if (pos == 0xff6a) {
-      std::cerr << "Set Sprite Palette Index " << std::hex << int(data) << std::endl;
+      //std::cerr << "Set Sprite Palette Index " << std::hex << int(data) << std::endl;
     }
     // OCPD/OBPD - Sprite Palette Data
     else if (pos == 0xff6b) {
@@ -637,8 +696,8 @@ memPostWriteData(ushort pos, uchar data)
 
       uchar ind1 = (ind & 0x3F);
 
-      std::cerr << "Set Background Palette Data " << std::hex << int(ind1) << "=" <<
-                                                     std::hex << int(data) << std::endl;
+      //std::cerr << "Set Background Palette Data " << std::hex << int(ind1) << "=" <<
+      //                                               std::hex << int(data) << std::endl;
 
       gameboy()->setSpritePaleteData(ind1, data);
 
@@ -704,14 +763,21 @@ memTriggerData(uchar data, ushort pos)
 
   //---
 
-  uchar type = z80_.getByte(0x147);
+  uchar type = gameboy()->cartridgeType();
 
   uchar mbc = 0;
 
-  if      (type == 1 || type == 2 || type == 3)
+  if      (type == 0x01 || type == 0x02 || type == 0x03)
     mbc = 1;
-  else if (type == 5 || type == 6)
+  else if (type == 0x05 || type == 0x06)
     mbc = 2;
+  else if (type == 0x0F || type == 0x10 || type == 0x11 || type == 0x12|| type == 0x13)
+    mbc = 3;
+  else if (type == 0x15 || type == 0x16 || type == 0x17)
+    mbc = 4;
+  else if (type == 0x19 || type == 0x1A || type == 0x1B || type == 0x1C || type == 0x1D ||
+           type == 0x1E)
+    mbc = 5;
 
   //---
 
@@ -823,7 +889,7 @@ memTriggerData(uchar data, ushort pos)
 
       uchar bank = data & 0x1f;
 
-      int maxBanks = gameboy()->cartridgeLen()/0x4000;
+      int maxBanks = gameboy()->maxRomBanks();
 
       if (bank > maxBanks)
         bank %= maxBanks;
@@ -839,4 +905,25 @@ memTriggerData(uchar data, ushort pos)
       //              "  Offset : "     << std::hex << gameboy()->romOffset() << std::endl;
     }
   }
+}
+
+uchar
+CGameBoyMemData::
+biosData(ushort pos)
+{
+  if (gameboy_->isGBC()) {
+    if (pos < 0x100)
+      return CGameBoyBios::cgbData[pos];
+
+    if (pos >= 0x200 && pos < 0x900)
+      return CGameBoyBios::cgbData[pos - 0x100];
+  }
+  else {
+    if (pos < 0x100)
+      return CGameBoyBios::gbData[pos];
+  }
+
+  assert(false);
+
+  return 0;
 }

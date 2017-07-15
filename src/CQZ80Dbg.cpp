@@ -634,6 +634,15 @@ void
 CQZ80Dbg::
 postStepProc()
 {
+/*
+  if (memoryGroup_      ->isChecked() ||
+      instructionsGroup_->isChecked() ||
+      registersGroup_   ->isChecked() ||
+      flagsGroup_       ->isChecked() ||
+      stackGroup_       ->isChecked() ||
+      traceBackGroup_   ->isChecked() ||
+      breakpointsGroup_ ->isChecked()) {
+*/
   while (qApp->hasPendingEvents())
     qApp->processEvents();
 }
@@ -960,7 +969,7 @@ void
 CQZ80Dbg::
 nextSlot()
 {
-  z80_->next();
+  z80_->execNext();
 
   updateAll();
 }
@@ -969,7 +978,7 @@ void
 CQZ80Dbg::
 stepSlot()
 {
-  z80_->step();
+  z80_->execStep();
 
   updateAll();
 }
@@ -978,7 +987,7 @@ void
 CQZ80Dbg::
 continueSlot()
 {
-  z80_->cont();
+  z80_->execCont();
 
   updateAll();
 }
@@ -987,7 +996,7 @@ void
 CQZ80Dbg::
 stopSlot()
 {
-  z80_->stop();
+  z80_->execStop();
 
   updateAll();
 }

@@ -33,6 +33,14 @@ struct CGameBoySprite {
   }
 };
 
+struct CGameBoyTileAttr {
+  int  pnum     { 0 };
+  int  bank     { 0 };
+  bool hflip    { false };
+  bool vflip    { false };
+  int  priority { 0 };
+};
+
 class CGameBoy {
  public:
   // LCDC - LCD Control (0xff40) (Bits Low to High 0-7)
@@ -117,9 +125,20 @@ class CGameBoy {
 
   uchar *cartridge() const { return cartridge_; }
 
-  uchar readCartridge(uint pos) const { return cartridge_[pos]; }
+  uchar readCartridge(uint pos) const {
+    assert(pos < cartridgeLen_);
+
+    return cartridge_[pos];
+  }
 
   size_t cartridgeLen() const { return cartridgeLen_; }
+
+  uchar cartridgeType() const { return cartridgeType_; }
+  void setCartridgeType(uchar v) { cartridgeType_ = v; }
+
+  //---
+
+  uint maxRomBanks() const { return cartridgeLen()/0x4000; }
 
   uchar romBank() const { return romBank_; }
   void setRomBank(uchar v) { romBank_ = v; }
@@ -163,7 +182,7 @@ class CGameBoy {
   //---
 
   uchar wramBank() const { return wramBank_; }
-  void setWRamBank(uchar i) { wramBank_ = i; }
+  void setWRamBank(uchar i) { assert(i > 0 && i < 8); wramBank_ = i; }
 
   uchar *wram() const { return wram_; }
 
@@ -180,12 +199,24 @@ class CGameBoy {
 
   //---
 
+  uchar biosData(ushort pos);
+
   bool loadCartridge(const std::string &fileName);
   bool loadAsm(const std::string &fileName);
+
+  void enableMemFlags(bool enable);
+
+  void init();
+
+  //---
 
   bool onScreen(ushort pos, ushort len);
 
   ushort getTileAddr(int bank, int tile) const;
+
+  uchar getTileNum(int tableNum, int tx, int ty) const;
+
+  void getTileAttr(int tableNum, int tx, int ty, CGameBoyTileAttr &attr) const;
 
   bool getLineSprites(int line, int height, std::vector<CGameBoySprite> &sprites) const;
 
@@ -196,6 +227,9 @@ class CGameBoy {
 
   bool isGBC() const { return gbc_; }
   void setGBC(bool b);
+
+  bool isSGB() const { return sgb_; }
+  void setSGB(bool b);
 
   uchar keySel() const;
 
@@ -230,16 +264,24 @@ class CGameBoy {
     bgPalette_.setData(ind, data);
   }
 
-  void setSpritePaleteData(uchar ind, uchar data) {
-    spritePalette_.setData(ind, data);
-  }
-
   void bgPaletteColor(uchar palette, uchar color, uchar &r, uchar &g, uchar &b) const {
     bgPalette_.paletteColor(palette, color, r, g, b);
   }
 
+  void setBgPaletteColor(uchar palette, uchar color, uchar r, uchar g, uchar b) {
+    bgPalette_.setPaletteColor(palette, color, r, g, b);
+  }
+
+  void setSpritePaleteData(uchar ind, uchar data) {
+    spritePalette_.setData(ind, data);
+  }
+
   void spritePaletteColor(uchar palette, uchar color, uchar &r, uchar &g, uchar &b) const {
     spritePalette_.paletteColor(palette, color, r, g, b);
+  }
+
+  void setSpritePaletteColor(uchar palette, uchar color, uchar r, uchar g, uchar b) {
+    spritePalette_.setPaletteColor(palette, color, r, g, b);
   }
 
   //---
@@ -261,9 +303,31 @@ class CGameBoy {
       uchar c1 = getData(palette*8 + color*2 + 0);
       uchar c2 = getData(palette*8 + color*2 + 1);
 
-      r = (( c1 & 0x1f      )                  ) << 3;
-      g = (((c1 & 0xe0) >> 5) | (c2 & 0x3 << 3)) << 3;
-      b = (((c2 & 0x7c) >> 2)                  ) << 3;
+      dataToColor(c1, c2, r, g, b);
+    }
+
+    void setPaletteColor(uchar palette, uchar color, uchar r, uchar g, uchar b) {
+      uchar c1, c2;
+
+      colorToData(r, g, b, c1, c2);
+
+      setData(palette*8 + color*2 + 0, c1);
+      setData(palette*8 + color*2 + 1, c2);
+    }
+
+    void dataToColor(uchar c1, uchar c2, uchar &r, uchar &g, uchar &b) const {
+      r = (((c1 & 0x1f)     )                    ) << 3; // bits 0-4 of c1
+      g = (((c1 & 0xe0) >> 5) | ((c2 & 0x3) << 3)) << 3; // bits 7-5 of c1 and 0-1 of c2
+      b = (((c2 & 0x7c) >> 2)                    ) << 3; // bits 6-2 of c2
+    }
+
+    void colorToData(uchar r, uchar g, uchar b, uchar &c1, uchar &c2) {
+      uchar r1 = r >> 3;
+      uchar g1 = g >> 3;
+      uchar b1 = b >> 3;
+
+      c1 = ( r1       | (g1 << 5));
+      c2 = ((g1 >> 3) | (b1 << 2));
     }
   };
 
@@ -276,6 +340,7 @@ class CGameBoy {
   CGameBoyPortData *portData_      { nullptr }; // needed ?
   bool              invert_        { false };
   bool              gbc_           { false };
+  bool              sgb_           { false };
   int               scale_         { 1 };
   bool              biosEnabled_   { true };
   uchar*            cartridge_     { nullptr };

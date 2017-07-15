@@ -130,7 +130,7 @@ updatePalette()
 
 void
 CQGameBoyVideo::
-drawScreen(QPainter *painter, int x, int y, int screen, int bank, int scale)
+drawScreen(QPainter *painter, int x, int y, int tileMap, int bank, int scale)
 {
   CQGameBoy *gameboy = this->screen()->gameboy();
 
@@ -142,22 +142,25 @@ drawScreen(QPainter *painter, int x, int y, int screen, int bank, int scale)
     palette = z80->getByte(0xff47);
   }
 
-  ushort memStart = (screen == 0 ? 0x9800 : 0x9C00);
-
-  ushort tileMem = memStart;
+  //ushort memStart = (tileMap == 0 ? 0x9800 : 0x9C00);
+  //ushort tileMem = memStart;
 
   bool isSprite = false;
 
   // draw whole screen (not just visible area)
   for (int ty = 0; ty < 32; ++ty) {
     for (int tx = 0; tx < 32; ++tx) {
-      uchar tile = z80->getByte(tileMem);
+      //uchar tile = z80->getByte(tileMem);
+      uchar tile = gameboy->getTileNum(tileMap, tx, ty);
 
       bool vbank = 0;
       bool xflip = false;
       bool yflip = false;
 
       if (gameboy->isGBC()) {
+        CGameBoyTileAttr attr;
+
+#if 0
         uchar cp = gameboy->getVRam(1, tileMem - 0x8000);
 
         // Bit 0-2  Background Palette number  (BGP0-7)
@@ -167,13 +170,19 @@ drawScreen(QPainter *painter, int x, int y, int screen, int bank, int scale)
         // Bit 6    Vertical Flip              (0=Normal, 1=Mirror vertically)
         // Bit 7    BG-to-OAM Priority         (0=Use OAM priority bit, 1=BG Priority)
 
-        palette = cp & 0x7;
-        vbank   = TST_BIT(cp, 3);
+        attr.pnum     = cp & 0x7;
+        attr.bank     = TST_BIT(cp, 3);
+        attr.xflip    = TST_BIT(cp, 5);
+        attr.yflip    = TST_BIT(cp, 6);
+        attr.priority = TST_BIT(cp, 7);
+#else
+        gameboy->getTileAttr(tileMap, tx, ty, attr);
+#endif
 
-        xflip = TST_BIT(cp, 5);
-        yflip = TST_BIT(cp, 6);
-
-      //int priority = TST_BIT(cp, 7);
+        vbank   = attr.bank;
+        palette = attr.pnum;
+        xflip   = attr.hflip;
+        yflip   = attr.vflip;
       }
 
       //---
@@ -183,7 +192,7 @@ drawScreen(QPainter *painter, int x, int y, int screen, int bank, int scale)
 
       drawTile(painter, x1, y1, vbank, bank, tile, palette, xflip, yflip, isSprite, scale);
 
-      ++tileMem;
+      //++tileMem;
     }
   }
 }
@@ -206,19 +215,33 @@ drawTileLine(QPainter *painter, int x, int y, int vbank, int bank, int tile, int
 
   CZ80 *z80 = gameboy->getZ80();
 
+  //---
+
+  int line1 = (yflip ? 7 - line : line);
+
   ushort p = gameboy->getTileAddr(bank, tile);
 
-  ushort pi = p + 2*line; // 2 bytes per line
+  ushort pi = p + 2*line1; // 2 bytes per line
 
-  int oldBank = gameboy->vramBank();
+  assert(pi >= 0x8000 && pi < 0x9fff);
 
-  gameboy->setVRamBank(vbank);
+  uchar b1, b2;
 
-  uchar b1 = z80->getByte(pi    );
-  uchar b2 = z80->getByte(pi + 1);
+  if (gameboy->isGBC()) {
+    b1 = gameboy->getVRam(vbank, pi     - 0x8000);
+    b2 = gameboy->getVRam(vbank, pi + 1 - 0x8000);
+  }
+  else {
+    b1 = z80->getByte(pi    );
+    b2 = z80->getByte(pi + 1);
+  }
 
   for (int pixel = 0; pixel < 8; ++pixel) {
-    int ipixel = 7 - pixel;
+    int pixel1 = (xflip ? 7 - pixel : pixel);
+
+    //---
+
+    int ipixel = 7 - pixel1;
 
     bool set1 = TST_BIT(b1, ipixel);
     bool set2 = TST_BIT(b2, ipixel);
@@ -228,9 +251,6 @@ drawTileLine(QPainter *painter, int x, int y, int vbank, int bank, int tile, int
     // 0 transparent for sprites
     //if (ind == 0)
     //  continue;
-
-    int j1 = (xflip ? 7 - ipixel : ipixel);
-    int i1 = (yflip ? 7 - line   : line  );
 
     QColor c;
 
@@ -247,12 +267,10 @@ drawTileLine(QPainter *painter, int x, int y, int vbank, int bank, int tile, int
     if (scale <= 1) {
       painter->setPen(c);
 
-      painter->drawPoint(x + j1, y + i1);
+      painter->drawPoint(x + pixel, y + line);
     }
     else {
-      painter->fillRect(QRect(x + j1*scale, y + i1*scale, scale, scale), c);
+      painter->fillRect(QRect(x + pixel*scale, y + line*scale, scale, scale), c);
     }
   }
-
-  gameboy->setVRamBank(oldBank);
 }

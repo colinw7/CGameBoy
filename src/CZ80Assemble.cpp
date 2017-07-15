@@ -1607,16 +1607,16 @@ CZ80::
 assembleDefineMacro(const std::string &name, const std::vector<std::string> &args,
                     const std::string &body)
 {
-  assemble_macros_[name] = CZ80Macro(name, args, body);
+  assembleMacros_[name] = CZ80Macro(name, args, body);
 }
 
 bool
 CZ80::
 assembleGetMacro(const std::string &name, std::vector<std::string> &args, std::string &body) const
 {
-  auto p = assemble_macros_.find(name);
+  auto p = assembleMacros_.find(name);
 
-  if (p == assemble_macros_.end())
+  if (p == assembleMacros_.end())
     return false;
 
   const CZ80Macro &macro = (*p).second;

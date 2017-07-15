@@ -6,7 +6,7 @@
 #include <QFrame>
 
 class CQGameBoy;
-class CQGameBoyHexEdit;
+class CQGameBoyAddrEdit;
 class CQGameBoyInterruptCanvas;
 class CQZ80RegEdit;
 class QCheckBox;
@@ -34,7 +34,9 @@ class CQGameBoyInterrupt : public QFrame, public CZ80Trace {
   CQGameBoy*                gameboy_     { nullptr };
   QCheckBox*                enableCheck_ { nullptr };
   CQZ80RegEdit*             iffEdit_     { nullptr };
-  CQGameBoyHexEdit*         statEdit_    { nullptr };
+  CQGameBoyAddrEdit*        statEdit_    { nullptr };
+  CQGameBoyAddrEdit*        ifEdit_      { nullptr };
+  CQGameBoyAddrEdit*        ieEdit_      { nullptr };
   CQGameBoyInterruptCanvas* canvas_      { nullptr };
 };
 

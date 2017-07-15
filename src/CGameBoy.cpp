@@ -35,9 +35,9 @@ CGameBoy()
 
   //---
 
-  z80->setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
-                                   uint(CZ80MemType::WRITE_TRIGGER));
   z80->setMemFlags(0x8000, 0x2000, uint(CZ80MemType::SCREEN));
+
+  enableMemFlags(true);
 }
 
 CGameBoy::
@@ -63,6 +63,13 @@ setDoubleSpeed(bool b)
     getZ80()->setCPUHz(8*1024*1024);
   else
     getZ80()->setCPUHz(4*1024*1024);
+}
+
+uchar
+CGameBoy::
+biosData(ushort pos)
+{
+  return memData_->biosData(pos);
 }
 
 bool
@@ -107,10 +114,18 @@ loadCartridge(const std::string &filename)
     return false;
   }
 
-  cartridgeType_ = cartridge_[0x0147];
+  //---
 
-  if (cartridge_[0x0143] == 0xc0)
+  // init state from cartridge
+  if      (readCartridge(0x0143) == 0xc0)
     setGBC(true);
+  else if (readCartridge(0x0143) == 0x80)
+    setGBC(true); // and original GB
+
+  if (readCartridge(0x0146) == 0x03)
+    setSGB(true);
+
+  setCartridgeType(readCartridge(0x0147));
 
   //---
 
@@ -118,13 +133,12 @@ loadCartridge(const std::string &filename)
 
   memData_->setEnabled(false);
 
-  z80->resetMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
-                                     uint(CZ80MemType::WRITE_TRIGGER));
+  enableMemFlags(false);
 
+  // copy cartridge into Z80 mem
   z80->setBytes(cartridge_, 0, 0x8000);
 
-  z80->setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
-                                   uint(CZ80MemType::WRITE_TRIGGER));
+  enableMemFlags(true);
 
   memData_->setEnabled(true);
 
@@ -139,19 +153,49 @@ loadAsm(const std::string &filename)
 
   memData_->setEnabled(false);
 
-  z80->resetMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
-                                     uint(CZ80MemType::WRITE_TRIGGER));
+  enableMemFlags(false);
 
   bool rc = z80->load(filename);
 
-  z80->setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
-                                   uint(CZ80MemType::WRITE_TRIGGER));
+  enableMemFlags(true);
 
   memData_->setEnabled(true);
 
   //---
 
   return rc;
+}
+
+void
+CGameBoy::
+enableMemFlags(bool enable)
+{
+  CZ80 *z80 = getZ80();
+
+  if (enable)
+    z80->setMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+                                     uint(CZ80MemType::WRITE_TRIGGER));
+  else
+    z80->resetMemFlags(0x0000, 0x8000, uint(CZ80MemType::READ_ONLY) |
+                                       uint(CZ80MemType::WRITE_TRIGGER));
+}
+
+void
+CGameBoy::
+init()
+{
+  CZ80 *z80 = getZ80();
+
+  z80->setSP(0xfffe);
+
+  if (isGBC())
+    z80->setAF(0x11b0);
+  else
+    z80->setAF(0x01b0);
+
+  z80->setBC(0x0013);
+  z80->setDE(0x00d8);
+  z80->setHL(0x014d);
 }
 
 bool
@@ -183,6 +227,52 @@ getTileAddr(int bank, int tile) const
   return memStart + tile*16; // 16 bytes per tile
 }
 
+uchar
+CGameBoy::
+getTileNum(int tileMap, int tx, int ty) const
+{
+  ushort tileInd = ty*32 + tx; // 32 bytes per line, 1 byte per tile
+
+  ushort tileMem = (tileMap == 0 ? 0x9800 : 0x9C00) + tileInd;
+
+  const CZ80 *z80 = getZ80();
+
+  //return z80->getByte(tileMem);
+
+  if (isGBC()) {
+    // get tile map index (from VRAM 0)
+    return getVRam(0, tileMem - 0x8000);
+  }
+  else {
+    return z80->getMemory(tileMem);
+  }
+}
+
+void
+CGameBoy::
+getTileAttr(int tileMap, int tx, int ty, CGameBoyTileAttr &attr) const
+{
+  ushort tileInd = ty*32 + tx; // 32 bytes per line, 1 byte per tile
+
+  ushort tileMem = (tileMap == 0 ? 0x9800 : 0x9C00) + tileInd;
+
+  // get color attributes for tile (from VRAM 1)
+  uchar cp = getVRam(1, tileMem - 0x8000);
+
+  // Bit 0-2  Background Palette number (BGP0-7)
+  // Bit 3    Tile VRAM Bank number     (0=Bank 0, 1=Bank 1)
+  // Bit 4    Not used
+  // Bit 5    Horizontal Flip           (0=Normal, 1=Mirror horizontally)
+  // Bit 6    Vertical Flip             (0=Normal, 1=Mirror vertically)
+  // Bit 7    BG-to-OAM Priority        (0=Use OAM priority bit, 1=BG Priority)
+
+  attr.pnum     = cp & 0x7;
+  attr.bank     = TST_BIT(cp, 3);
+  attr.hflip    = TST_BIT(cp, 5);
+  attr.vflip    = TST_BIT(cp, 6);
+  attr.priority = TST_BIT(cp, 7);
+}
+
 bool
 CGameBoy::
 getLineSprites(int line, int height, std::vector<CGameBoySprite> &sprites) const
@@ -203,7 +293,7 @@ getLineSprites(int line, int height, std::vector<CGameBoySprite> &sprites) const
     int x1 = sprite.x - 8;
     int x2 = x1 + 8;
 
-    if (x2 < 0 || x1 >= 144)
+    if (x2 < 0 || x1 >= int(getScreenPixelWidth()))
       continue;
 
     sprites.push_back(sprite);
@@ -258,6 +348,13 @@ setGBC(bool b)
     if (! wram_)
       wram_ = allocMem<uchar>(0x8000);
   }
+}
+
+void
+CGameBoy::
+setSGB(bool b)
+{
+  sgb_ = b;
 }
 
 uchar

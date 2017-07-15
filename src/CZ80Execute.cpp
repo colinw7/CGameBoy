@@ -24,7 +24,7 @@ execute(ushort pos)
   if (speedData_)
     speedData_->init();
 
-  cont();
+  execCont();
 
   if (debugData_)
     debugData_->callTermProcs();
@@ -34,7 +34,7 @@ execute(ushort pos)
 
 bool
 CZ80::
-next()
+execNext()
 {
   ushort pc = getPC();
 
@@ -47,7 +47,7 @@ next()
   // run until pc at following instruction
   addBreakpoint(pc1);
 
-  cont();
+  execCont();
 
   removeBreakpoint(pc1);
 
@@ -56,7 +56,7 @@ next()
 
 void
 CZ80::
-skip()
+execSkip()
 {
   ushort pc = getPC();
 
@@ -71,7 +71,7 @@ skip()
 
 bool
 CZ80::
-cont()
+execCont()
 {
   execute1(true);
 
@@ -83,7 +83,7 @@ CZ80::
 execute1(bool notify)
 {
   while (true) {
-    step1(notify);
+    execStep1(notify);
 
     if (getHalt() || getStop())
       break;
@@ -99,14 +99,14 @@ execute1(bool notify)
 
 bool
 CZ80::
-step()
+execStep()
 {
-  return step1(true);
+  return execStep1(true);
 }
 
 bool
 CZ80::
-step1(bool notify)
+execStep1(bool notify)
 {
   if (notify)
     callPreStepProcs();
@@ -120,21 +120,22 @@ step1(bool notify)
   if (! getHalt()) {
     ushort pc = getPC();
 
-    CZ80OpData opData;
+    readOpData(pc, opData_);
 
-    readOpData(pc, &opData);
-
-    ushort pc1 = pc + opData.op->len;
+    ushort pc1 = pc + opData_->op->len;
 
     setPC(pc1);
 
     if (dump_)
-      opData.dump(dump_file_);
+      opData_->dump(dump_file_);
 
-    opData.execute();
+    if (execData_)
+      execData_->preExec();
 
-    r = opData.op->r;
-    t = opData.op->t;
+    opData_->execute();
+
+    r = opData_->op->r;
+    t = opData_->op->t;
   }
 
   incR(r);
@@ -154,7 +155,7 @@ step1(bool notify)
 
 void
 CZ80::
-stop()
+execStop()
 {
   setStop(true);
 }

@@ -151,13 +151,13 @@ drawSprites(QPainter *painter, int x, int y, int scale)
       int x1 = sprite.x - 8;
       int x2 = x1 + 8;
 
-      if (x2 < 0 || x1 >= 144)
+      if (x2 < 0 || x1 >= int(gameboy->getScreenPixelWidth()))
         continue;
 
       int y1 = sprite.y - 16;
       int y2 = y1 + 8;
 
-      if (y2 < 0 || y1 >= 160)
+      if (y2 < 0 || y1 >= int(gameboy->getScreenPixelHeight()))
         continue;
 
       uchar palette;
@@ -180,13 +180,13 @@ drawSprites(QPainter *painter, int x, int y, int scale)
       int x1 = sprite.x - 8;
       int x2 = x1 + 8;
 
-      if (x2 < 0 || x1 >= 144)
+      if (x2 < 0 || x1 >= int(gameboy->getScreenPixelWidth()))
         continue;
 
       int y1 = sprite.y - 16;
       int y2 = y1 + 16;
 
-      if (y2 < 0 || y1 >= 160)
+      if (y2 < 0 || y1 >= int(gameboy->getScreenPixelHeight()))
         continue;
 
       int t1 = sprite.t & 0xFE;

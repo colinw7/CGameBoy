@@ -446,7 +446,7 @@ controller is currently accessing VRAM. So General Purpose DMA should be used
 only if the Display is disabled, or during V-Blank, or (for rather short
 blocks) during H-Blank.
 The execution of the program continues when the transfer has been completed,
-and FF55 then contains a value if FFh.
+and FF55 then contains a value of FFh.
 
 Bit7=1 - H-Blank DMA
 The H-Blank DMA transfers 10h bytes of data during each H-Blank, ie. at
@@ -2634,6 +2634,7 @@ MBC Timing Issues
 -----------------
 
 Using MBCs with CGB Double Speed Mode
+
 The MBC5 has been designed to support CGB Double Speed Mode.
 There have been rumours that older MBCs (like MBC1-3) wouldn't be fast enough
 in that mode. If so, it might be nethertheless possible to use Double Speed

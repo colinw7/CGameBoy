@@ -101,6 +101,10 @@ main(int argc, char **argv)
 
   //------
 
+  gameboy->init();
+
+  //------
+
   if (! debug && ! graphics)
     screen->exec();
 

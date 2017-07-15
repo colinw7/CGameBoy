@@ -166,7 +166,7 @@ struct CZ80Op {
   uchar       r     { 0 };      // register count
   ushort      t     { 0 };      // cycle count
   uchar       len   { 0 };      // instruction len
-  ushort      ind   { 0 };      // index (auto set)
+  uint        ind   { 0 };      // index (auto set)
   ulong       count { 0 };      // execution count
   uchar       edata { 0 };      // execution data
 
