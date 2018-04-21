@@ -4,7 +4,9 @@
 #include <QFrame>
 
 class CQZ80Dbg;
+class QScrollBar;
 
+#if 0
 class CQZ80MemLine {
  public:
   CQZ80MemLine(ushort pc=0, const std::string &pcStr="", const std::string &memStr="",
@@ -37,8 +39,23 @@ class CQZ80Mem : public QFrame {
 
   void setFont(const QFont &font);
 
+  void updatePC();
+
+  void updateData();
+
+  void updateMemory(ushort pos, ushort len);
+
+  void setMemoryLine(uint pos);
+
   void setLine(uint i, const std::string &pcStr, const std::string &memStr,
                const std::string &textStr);
+
+  std::string getByteChar(uchar c);
+
+  int vbarValue() const;
+  void setVBarValue(int v);
+
+  void resizeEvent(QResizeEvent *);
 
   void contextMenuEvent(QContextMenuEvent *event);
 
@@ -55,12 +72,38 @@ class CQZ80Mem : public QFrame {
  private:
   typedef std::vector<CQZ80MemLine> LineList;
 
-  CQZ80Dbg* dbg_        { nullptr };
-  LineList  lines_;
-  int       yOffset_    { 0 };
-  int       charWidth_  { 8 };
-  int       charHeight_ { 12 };
-  int       dx_         { 2 };
+  CQZ80Dbg*   dbg_        { nullptr };
+  int         vw_         { 0 };
+  QScrollBar* vbar_       { nullptr };
+  LineList    lines_;
+  int         yOffset_    { 0 };
+  int         charWidth_  { 8 };
+  int         charHeight_ { 12 };
+  int         dx_         { 2 };
 };
+#else
+#include <CQHexdump.h>
+
+class CQZ80MemIFace;
+
+class CQZ80Mem : public CQHexdump {
+  Q_OBJECT
+
+ public:
+  CQZ80Mem(CQZ80Dbg *dbg);
+
+ ~CQZ80Mem();
+
+  void updatePC();
+
+  void updateData();
+
+  void updateMemory(ushort pos, ushort len);
+
+ private:
+  CQZ80Dbg*      dbg_   { nullptr };
+  CQZ80MemIFace* iface_ { nullptr };
+};
+#endif
 
 #endif

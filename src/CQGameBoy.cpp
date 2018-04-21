@@ -278,6 +278,22 @@ mappedPaletteColor(uchar palette, uchar ind) const
   return paletteColor(ind1);
 }
 
+void
+CQGameBoy::
+setMappedPaletteColor(uchar palette, uchar ind, const QColor &c)
+{
+  int ind1 = 0;
+
+  switch (ind) {
+    case 0: ind1 =  palette & 0x03      ; break;
+    case 1: ind1 = (palette & 0x0c) >> 2; break;
+    case 2: ind1 = (palette & 0x30) >> 4; break;
+    case 3: ind1 = (palette & 0xc0) >> 6; break;
+  }
+
+  return setPaletteColor(ind1, c);
+}
+
 const QColor &
 CQGameBoy::
 paletteColor(uchar ind) const
@@ -288,5 +304,18 @@ paletteColor(uchar ind) const
     case 1: return color1();
     case 2: return color2();
     case 3: return color3();
+  }
+}
+
+void
+CQGameBoy::
+setPaletteColor(uchar ind, const QColor &c)
+{
+  switch (ind) {
+    default: assert(false);
+    case 0: setColor0(c); break;
+    case 1: setColor1(c); break;
+    case 2: setColor2(c); break;
+    case 3: setColor3(c); break;
   }
 }

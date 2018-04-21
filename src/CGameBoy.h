@@ -55,7 +55,7 @@ class CGameBoy {
     uchar lcdDispEnable:1;     // Bit 7 - LCD Display Enable             (0=Off, 1=On)
   };
 
-  // IF - Interrupt Flag (0xffff)
+  // IF - Interrupt Flag (0xff0f)
   struct InterruptFlag {
     uchar vblank:1;
     uchar lcdc  :1;
@@ -73,6 +73,14 @@ class CGameBoy {
     uchar serial:1;
     uchar key   :1;
     uchar pad   :3;
+  };
+
+  enum class InterruptType {
+    VBLANK   = 0,
+    LCD_STAT = 1,
+    TIMER    = 2,
+    SERIAL   = 3,
+    JOYPAD   = 4
   };
 
  public:
@@ -222,8 +230,18 @@ class CGameBoy {
 
   bool getSprite(int i, CGameBoySprite &sprite) const;
 
+  //---
+
+  // Interrupts
   uchar interruptFlag  () const { return z80_.getMemory(0xff0f); }
   uchar interruptEnable() const { return z80_.getMemory(0xffff); }
+
+  void handleInterrupts();
+
+  void signalInterrupt(InterruptType type);
+  void clearInterrupt (InterruptType type);
+
+  //---
 
   bool isGBC() const { return gbc_; }
   void setGBC(bool b);
@@ -335,33 +353,34 @@ class CGameBoy {
 
  private:
   CZ80              z80_;
-  CGameBoyExecData *execData_      { nullptr };
-  CGameBoyMemData  *memData_       { nullptr };
-  CGameBoyPortData *portData_      { nullptr }; // needed ?
-  bool              invert_        { false };
-  bool              gbc_           { false };
-  bool              sgb_           { false };
-  int               scale_         { 1 };
-  bool              biosEnabled_   { true };
-  uchar*            cartridge_     { nullptr };
-  size_t            cartridgeLen_  { 0 };
-  uchar             cartridgeType_ { 0 };
-  uchar             romBank_       { 1 };
-  uint              romOffset_     { 0x0000 };
-  uchar             romMode_       { 0 }; // 0: 8k RAM, 1: 32k RAM
-  uchar*            ram_           { nullptr };
-  uchar             ramBank_       { 0 };
-  ushort            ramOffset_     { 0x0000 };
-  bool              ramEnabled_    { true };
-  uchar             vramBank_      { 0 };
-  uchar*            vram_          { nullptr };
-  uchar             wramBank_      { 1 };
-  uchar*            wram_          { nullptr };
-  uchar             memoryModel_   { 0 };
-  bool              doubleSpeed_   { false };
-  uchar             keys_[2]       { 0x0f, 0x0f };
+  CGameBoyExecData *execData_       { nullptr };
+  CGameBoyMemData  *memData_        { nullptr };
+  CGameBoyPortData *portData_       { nullptr }; // needed ?
+  bool              invert_         { false };
+  bool              gbc_            { false };
+  bool              sgb_            { false };
+  int               scale_          { 1 };
+  bool              biosEnabled_    { true };
+  uchar*            cartridge_      { nullptr };
+  size_t            cartridgeLen_   { 0 };
+  uchar             cartridgeType_  { 0 };
+  uchar             romBank_        { 1 };
+  uint              romOffset_      { 0x0000 };
+  uchar             romMode_        { 0 }; // 0: 8k RAM, 1: 32k RAM
+  uchar*            ram_            { nullptr };
+  uchar             ramBank_        { 0 };
+  ushort            ramOffset_      { 0x0000 };
+  bool              ramEnabled_     { true };
+  uchar             vramBank_       { 0 };
+  uchar*            vram_           { nullptr };
+  uchar             wramBank_       { 1 };
+  uchar*            wram_           { nullptr };
+  uchar             memoryModel_    { 0 };
+  bool              doubleSpeed_    { false };
+  uchar             keys_[2]        { 0x0f, 0x0f };
   ColorPalette      bgPalette_;
   ColorPalette      spritePalette_;
+  bool              traceInterrupt_ { false };
 };
 
 #endif

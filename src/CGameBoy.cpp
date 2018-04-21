@@ -23,6 +23,8 @@ T *allocMem(ulong size) {
 CGameBoy::
 CGameBoy()
 {
+  traceInterrupt_ = (getenv("CGAMEBOY_TRACE_INTERRUPT"));
+
   CZ80 *z80 = getZ80();
 
   z80->setExecData(execData_ = new CGameBoyExecData(this));
@@ -196,6 +198,8 @@ init()
   z80->setBC(0x0013);
   z80->setDE(0x00d8);
   z80->setHL(0x014d);
+
+  z80->setMemory(0xff47, 0xe4); // BGP
 }
 
 bool
@@ -377,7 +381,7 @@ keyPress(CKeyType key)
   else if (key == selectKey()) { RESET_BIT(keys_[0], 2); }
   else if (key == startKey ()) { RESET_BIT(keys_[0], 3); }
 
-  z80_.setBit(0xff0f, 4);
+  signalInterrupt(InterruptType::JOYPAD);
 }
 
 void
@@ -393,5 +397,95 @@ keyRelease(CKeyType key)
   else if (key == selectKey()) { SET_BIT(keys_[0], 2); }
   else if (key == startKey ()) { SET_BIT(keys_[0], 3); }
 
-  z80_.setBit(0xff0f, 4);
+  signalInterrupt(InterruptType::JOYPAD);
+}
+
+//------
+
+void
+CGameBoy::
+handleInterrupts()
+{
+  // handle interrupt flags if enabled
+  if (! z80_.getIFF1())
+    return;
+
+  // signal bit in IF (0xff0f) must be enabled in IE (0xffff)
+  uchar iflag = interruptFlag  ();
+  uchar ie    = interruptEnable();
+
+  if (! (iflag & ie))
+    return;
+
+  //---
+
+  // check flags checked in priority order (first found is serviced)
+
+  // vertical blank (LCD has drawn a frame)
+  if      (IS_BIT(iflag, 0) && IS_BIT(ie, 0)) {
+    clearInterrupt(InterruptType::VBLANK);
+
+    if (traceInterrupt_)
+      std::cerr << "vertical blank interrupt" << std::endl;
+
+    z80_.setIM0(0x40);
+    z80_.interrupt();
+  }
+  // LCD controller changed
+  else if (IS_BIT(iflag, 1) && IS_BIT(ie, 1)) {
+    clearInterrupt(InterruptType::LCD_STAT);
+
+    if (traceInterrupt_)
+      std::cerr << "LCD controller interrupt" << std::endl;
+
+    z80_.setIM0(0x48);
+    z80_.interrupt();
+  }
+  // timer overflow
+  else if (IS_BIT(iflag, 2) && IS_BIT(ie, 2)) {
+    clearInterrupt(InterruptType::TIMER);
+
+    if (traceInterrupt_)
+      std::cerr << "timer interrupt" << std::endl;
+
+    z80_.setIM0(0x50);
+    z80_.interrupt();
+  }
+  // Serial I/O transfer end
+  else if (IS_BIT(iflag, 3) && IS_BIT(ie, 3)) {
+    clearInterrupt(InterruptType::SERIAL);
+
+    if (traceInterrupt_)
+      std::cerr << "serial interrupt" << std::endl;
+
+    z80_.setIM0(0x58);
+    z80_.interrupt();
+  }
+  // Transition from High to Low of Pin number P10-P13 (key)
+  else if (IS_BIT(iflag, 4) && IS_BIT(ie, 4)) {
+    clearInterrupt(InterruptType::JOYPAD);
+
+    if (traceInterrupt_)
+      std::cerr << "key interrupt" << std::endl;
+
+    z80_.setIM0(0x60);
+    z80_.interrupt();
+  }
+  else {
+    assert(false);
+  }
+}
+
+void
+CGameBoy::
+signalInterrupt(InterruptType type)
+{
+  z80_.setBit(0xff0f, int(type));
+}
+
+void
+CGameBoy::
+clearInterrupt(InterruptType type)
+{
+  z80_.resetBit(0xff0f, int(type));
 }

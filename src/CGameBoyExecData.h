@@ -23,6 +23,7 @@ class CGameBoyExecData : public CZ80ExecData {
   CGameBoy *gameboy_ { nullptr };
   ulong     m_       { 0 };
   ulong     timer_   { 0 };
+  bool      trace_   { false };
 };
 
 #endif

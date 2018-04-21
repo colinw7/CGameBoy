@@ -73,8 +73,10 @@ class CQGameBoy : public QWidget, public CGameBoy {
   void setVRamSpritePaletteColor(uchar palette, uchar ind, const QColor &c);
 
   const QColor &mappedPaletteColor(uchar palette, uchar ind) const;
+  void setMappedPaletteColor(uchar palette, uchar ind, const QColor &c);
 
   const QColor &paletteColor(uchar i) const;
+  void setPaletteColor(uchar i, const QColor &c);
 
  private:
   QColor                       color0_ { 255, 255, 255 };

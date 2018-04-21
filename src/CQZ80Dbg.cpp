@@ -4,6 +4,7 @@
 #include <CQZ80Stack.h>
 #include <CQZ80TraceBack.h>
 #include <CQZ80RegEdit.h>
+#include <CQZ80FlagCheck.h>
 #include <CZ80.h>
 #include <CZ80OpData.h>
 
@@ -67,21 +68,8 @@ setFixedFont(const QFont &font)
   traceBack_       ->setFont(getFixedFont());
   breakpointsText_ ->setFont(getFixedFont());
 
-  afEdit_ ->setFont(getFixedFont());
-  af1Edit_->setFont(getFixedFont());
-  bcEdit_ ->setFont(getFixedFont());
-  bc1Edit_->setFont(getFixedFont());
-  deEdit_ ->setFont(getFixedFont());
-  de1Edit_->setFont(getFixedFont());
-  hlEdit_ ->setFont(getFixedFont());
-  hl1Edit_->setFont(getFixedFont());
-  ixEdit_ ->setFont(getFixedFont());
-  iEdit_  ->setFont(getFixedFont());
-  iyEdit_ ->setFont(getFixedFont());
-  rEdit_  ->setFont(getFixedFont());
-  spEdit_ ->setFont(getFixedFont());
-  iffEdit_->setFont(getFixedFont());
-  pcEdit_ ->setFont(getFixedFont());
+  for (auto &regEdit : regEdits_)
+    regEdit.second->setFont(getFixedFont());
 }
 
 void
@@ -155,18 +143,7 @@ addWidgets()
 
   memoryText_->setFont(getFixedFont());
 
-  memoryVBar_ = new QScrollBar;
-
-  memoryVBar_->setObjectName("memoryVbar");
-  memoryVBar_->setPageStep  (getNumMemoryLines());
-  memoryVBar_->setSingleStep(1);
-  memoryVBar_->setRange     (0, 8192 - memoryVBar_->pageStep());
-
-  connect(memoryVBar_, SIGNAL(valueChanged(int)), memoryText_, SLOT(sliderSlot(int)));
-
   memoryLayout->addWidget(memoryText_);
-  memoryLayout->addWidget(memoryVBar_);
-  memoryLayout->addStretch();
 
   leftLayout->addWidget(memoryGroup_);
 
@@ -185,21 +162,7 @@ addWidgets()
 
   instructionsText_->setFont(getFixedFont());
 
-  instructionsVBar_ = new QScrollBar;
-
-  instructionsVBar_->setObjectName("instructionsVbar");
-  instructionsVBar_->setPageStep  (getNumMemoryLines());
-  instructionsVBar_->setSingleStep(1);
-  instructionsVBar_->setRange     (0, 8192 - instructionsVBar_->pageStep());
-
-  connect(instructionsVBar_, SIGNAL(valueChanged(int)),
-          instructionsText_, SLOT(sliderSlot(int)));
-
   instructionsLayout->addWidget(instructionsText_);
-  instructionsLayout->addWidget(instructionsVBar_);
-  instructionsLayout->addStretch();
-
-  instructionsText_->setVBar(instructionsVBar_);
 
   leftLayout->addWidget(instructionsGroup_);
 
@@ -351,78 +314,70 @@ void
 CQZ80Dbg::
 addFlagsWidgets()
 {
-  sFlagCheck_ = new QCheckBox("");
-  zFlagCheck_ = new QCheckBox("");
-  yFlagCheck_ = new QCheckBox("");
-  hFlagCheck_ = new QCheckBox("");
-  xFlagCheck_ = new QCheckBox("");
-  pFlagCheck_ = new QCheckBox("");
-  nFlagCheck_ = new QCheckBox("");
-  cFlagCheck_ = new QCheckBox("");
+  // 75643210
+  // SZYHXPNC
 
-  sFlagCheck_->setObjectName("sFlagCheck");
-  zFlagCheck_->setObjectName("zFlagCheck");
-  yFlagCheck_->setObjectName("yFlagCheck");
-  hFlagCheck_->setObjectName("hFlagCheck");
-  xFlagCheck_->setObjectName("xFlagCheck");
-  pFlagCheck_->setObjectName("pFlagCheck");
-  nFlagCheck_->setObjectName("nFlagCheck");
-  cFlagCheck_->setObjectName("cFlagCheck");
+  std::vector<CZ80Flag> flags = {{
+    CZ80Flag::S, CZ80Flag::Z, CZ80Flag::Y, CZ80Flag::H,
+    CZ80Flag::X, CZ80Flag::P, CZ80Flag::N, CZ80Flag::C
+  }};
 
-  flagsLayout_->addWidget(new QLabel("S"), 0, 0); flagsLayout_->addWidget(sFlagCheck_, 1, 0);
-  flagsLayout_->addWidget(new QLabel("Z"), 0, 1); flagsLayout_->addWidget(zFlagCheck_, 1, 1);
-  flagsLayout_->addWidget(new QLabel("Y"), 0, 2); flagsLayout_->addWidget(yFlagCheck_, 1, 2);
-  flagsLayout_->addWidget(new QLabel("H"), 0, 3); flagsLayout_->addWidget(hFlagCheck_, 1, 3);
-  flagsLayout_->addWidget(new QLabel("X"), 0, 4); flagsLayout_->addWidget(xFlagCheck_, 1, 4);
-  flagsLayout_->addWidget(new QLabel("P"), 0, 5); flagsLayout_->addWidget(pFlagCheck_, 1, 5);
-  flagsLayout_->addWidget(new QLabel("N"), 0, 6); flagsLayout_->addWidget(nFlagCheck_, 1, 6);
-  flagsLayout_->addWidget(new QLabel("C"), 0, 7); flagsLayout_->addWidget(cFlagCheck_, 1, 7);
+  int col = 0;
 
-  flagsLayout_->setColumnStretch(8, 1);
+  for (const auto &flag : flags) {
+    CQZ80FlagCheck *check = new CQZ80FlagCheck(z80_, flag);
+
+    flagChecks_[flag] = check;
+
+    flagsLayout_->addWidget(new QLabel(check->flagName()), 0, col);
+    flagsLayout_->addWidget(check                        , 1, col);
+
+    ++col;
+  }
+
+  flagsLayout_->setColumnStretch(col, 1);
 }
 
 void
 CQZ80Dbg::
 addRegistersWidgets()
 {
-  afEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::AF );
-  af1Edit_ = new CQZ80RegEdit(z80_, CZ80Reg::AF1);
-  bcEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::BC );
-  bc1Edit_ = new CQZ80RegEdit(z80_, CZ80Reg::BC1);
-  deEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::DE );
-  de1Edit_ = new CQZ80RegEdit(z80_, CZ80Reg::DE1);
-  hlEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::HL );
-  hl1Edit_ = new CQZ80RegEdit(z80_, CZ80Reg::HL1);
-  ixEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::IX );
-  iEdit_   = new CQZ80RegEdit(z80_, CZ80Reg::I  );
-  iyEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::IY );
-  rEdit_   = new CQZ80RegEdit(z80_, CZ80Reg::R  );
-  spEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::SP );
-  iffEdit_ = new CQZ80RegEdit(z80_, CZ80Reg::IFF);
-  pcEdit_  = new CQZ80RegEdit(z80_, CZ80Reg::PC );
+  std::vector<CZ80Reg> registers = {{
+    CZ80Reg::AF, CZ80Reg::AF1,
+    CZ80Reg::BC, CZ80Reg::BC1,
+    CZ80Reg::DE, CZ80Reg::DE1,
+    CZ80Reg::HL, CZ80Reg::HL1,
+    CZ80Reg::IX, CZ80Reg::IY ,
+    CZ80Reg::SP,
+    CZ80Reg::PC,
+    CZ80Reg::I , CZ80Reg::R  , CZ80Reg::IFF
+  }};
 
-  registersLayout_->addWidget(afEdit_ , 0, 0);
-  registersLayout_->addWidget(af1Edit_, 0, 1);
+  for (const auto &reg : registers)
+    regEdits_[reg] = new CQZ80RegEdit(z80_, reg);
 
-  registersLayout_->addWidget(bcEdit_ , 1, 0);
-  registersLayout_->addWidget(bc1Edit_, 1, 1);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::AF ], 0, 0);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::AF1], 0, 1);
 
-  registersLayout_->addWidget(deEdit_ , 2, 0);
-  registersLayout_->addWidget(de1Edit_, 2, 1);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::BC ], 1, 0);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::BC1], 1, 1);
 
-  registersLayout_->addWidget(hlEdit_ , 3, 0);
-  registersLayout_->addWidget(hl1Edit_, 3, 1);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::DE ], 2, 0);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::DE1], 2, 1);
 
-  registersLayout_->addWidget(ixEdit_ , 4, 0);
-  registersLayout_->addWidget(iEdit_  , 4, 1);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::HL ], 3, 0);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::HL1], 3, 1);
 
-  registersLayout_->addWidget(iyEdit_ , 5, 0);
-  registersLayout_->addWidget(rEdit_  , 5, 1);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::IX ], 4, 0);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::I  ], 4, 1);
 
-  registersLayout_->addWidget(spEdit_ , 6, 0);
-  registersLayout_->addWidget(iffEdit_, 6, 1);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::IY ], 5, 0);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::R  ], 5, 1);
 
-  registersLayout_->addWidget(pcEdit_ , 7, 0);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::SP ], 6, 0);
+  registersLayout_->addWidget(regEdits_[CZ80Reg::IFF], 6, 1);
+
+  registersLayout_->addWidget(regEdits_[CZ80Reg::PC ], 7, 0);
 
   registersLayout_->setColumnStretch(2, 1);
 }
@@ -520,68 +475,7 @@ void
 CQZ80Dbg::
 setMemoryText()
 {
-  uint len = 65536;
-
-  ushort numLines = len / 8;
-
-  if ((len % 8) != 0) ++numLines;
-
-  uint pos = z80_->getPC();
-
-  z80_->setPC(0);
-
-  std::string str;
-
-  uint pos1 = 0;
-
-  for (ushort i = 0; i < numLines; ++i) {
-    setMemoryLine(pos1);
-
-    pos1 += 8;
-  }
-
-  z80_->setPC(pos);
-}
-
-void
-CQZ80Dbg::
-setMemoryLine(uint pos)
-{
-  std::string pcStr = CStrUtil::toHexString(pos, 4);
-
-  //-----
-
-  std::string memStr;
-
-  for (ushort j = 0; j < 8; ++j) {
-    if (j > 0) memStr += " ";
-
-    memStr += CStrUtil::toHexString(z80_->getByte(pos + j), 2);
-  }
-
-  std::string textStr;
-
-  for (ushort j = 0; j < 8; ++j) {
-    uchar c = z80_->getByte(pos + j);
-
-    textStr += getByteChar(c);
-  }
-
-  memoryText_->setLine(pos, pcStr, memStr, textStr);
-}
-
-std::string
-CQZ80Dbg::
-getByteChar(uchar c)
-{
-  std::string str;
-
-  if (c >= 0x20 && c < 0x7f)
-    str += c;
-  else
-    str += '.';
-
-  return str;
+  memoryText_->updateData();
 }
 
 void
@@ -651,89 +545,50 @@ void
 CQZ80Dbg::
 regChanged(CZ80Reg reg)
 {
-  if (reg == CZ80Reg::AF || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      afEdit_->setValue(z80_->getAF());
-
-    if (reg == CZ80Reg::NONE || isFlagsTrace()) {
-      cFlagCheck_->setChecked(z80_->tstCFlag());
-      nFlagCheck_->setChecked(z80_->tstNFlag());
-      pFlagCheck_->setChecked(z80_->tstPFlag());
-      xFlagCheck_->setChecked(z80_->tstXFlag());
-      hFlagCheck_->setChecked(z80_->tstHFlag());
-      yFlagCheck_->setChecked(z80_->tstYFlag());
-      zFlagCheck_->setChecked(z80_->tstZFlag());
-      sFlagCheck_->setChecked(z80_->tstSFlag());
+  // update register widgets
+  if (isRegistersTrace()) {
+    if (reg == CZ80Reg::NONE) {
+      for (auto &regEdit : regEdits_)
+        regEdit.second->updateValue();
+    }
+    else {
+      regEdits_[reg]->updateValue();
     }
   }
 
-  if (reg == CZ80Reg::BC || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      bcEdit_->setValue(z80_->getBC());
+  // update flags widgets
+  if (isFlagsTrace()) {
+    if (reg == CZ80Reg::AF || reg == CZ80Reg::NONE) {
+      for (auto &flagChecks : flagChecks_)
+        flagChecks.second->updateState();
+    }
   }
 
-  if (reg == CZ80Reg::DE || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      deEdit_->setValue(z80_->getDE());
-  }
-
-  if (reg == CZ80Reg::HL || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      hlEdit_->setValue(z80_->getHL());
-  }
-
-  if (reg == CZ80Reg::IX || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      ixEdit_->setValue(z80_->getIX());
-  }
-
-  if (reg == CZ80Reg::IY || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      iyEdit_->setValue(z80_->getIY());
-  }
-
-  if (reg == CZ80Reg::SP || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      spEdit_->setValue(z80_->getSP());
-
-    if (reg == CZ80Reg::NONE || isStackTrace())
-      updateStack();
-  }
-
-  if (reg == CZ80Reg::PC || reg == CZ80Reg::NONE) {
+  // update breakpoints, memory and instructions widgets for PC change
+  if (reg == CZ80Reg::NONE || reg == CZ80Reg::PC) {
     uint pc = z80_->getPC();
 
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      pcEdit_->setValue(pc);
+    //----
 
-    if (reg == CZ80Reg::NONE || isBreakpointsTrace())
+    if (isBreakpointsTrace())
       breakpointsEdit_->setText(CStrUtil::toHexString(pc, 4).c_str());
 
     //----
 
-    int mem1 = memoryVBar_->value();
-    int mem2 = mem1 + 20;
-    int mem  = pc / 8;
-
-    if (reg == CZ80Reg::NONE || isMemoryTrace()) {
-      if (mem < mem1 || mem > mem2) {
-        memoryVBar_->setValue(mem);
-      }
-      else {
-        memoryText_->update();
-      }
+    if (isMemoryTrace()) {
+      memoryText_->updatePC();
     }
 
     //----
 
-    if (reg == CZ80Reg::NONE || isInstructionsTrace()) {
+    if (isInstructionsTrace()) {
       uint lineNum;
 
       if (! instructionsText_->getLineForPC(pc, lineNum))
         updateInstructions();
 
       if (instructionsText_->getLineForPC(pc, lineNum))
-        instructionsVBar_->setValue(lineNum);
+        instructionsText_->setVBarValue(lineNum);
 
       //----
 
@@ -747,41 +602,6 @@ regChanged(CZ80Reg reg)
       else
         opData_->setText("");
     }
-  }
-
-  if (reg == CZ80Reg::I || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      iEdit_->setValue(z80_->getI  ());
-  }
-
-  if (reg == CZ80Reg::R || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      rEdit_->setValue(z80_->getR  ());
-  }
-
-  if (reg == CZ80Reg::AF1 || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      af1Edit_->setValue(z80_->getAF1());
-  }
-
-  if (reg == CZ80Reg::BC1 || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      bc1Edit_->setValue(z80_->getBC1());
-  }
-
-  if (reg == CZ80Reg::DE1 || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      de1Edit_->setValue(z80_->getDE1());
-  }
-
-  if (reg == CZ80Reg::HL1 || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      hl1Edit_->setValue(z80_->getHL1());
-  }
-
-  if (reg == CZ80Reg::IFF || reg == CZ80Reg::NONE) {
-    if (reg == CZ80Reg::NONE || isRegistersTrace())
-      iffEdit_->setValue(z80_->getIFF());
   }
 }
 
@@ -803,16 +623,7 @@ void
 CQZ80Dbg::
 memChangedI(ushort pos, ushort len)
 {
-  ushort pos1 = pos;
-  ushort pos2 = pos + len;
-
-  uint lineNum1 = pos1/8;
-  uint lineNum2 = pos2/8;
-
-  for (uint lineNum = lineNum1; lineNum <= lineNum2; ++lineNum)
-    setMemoryLine(8*lineNum);
-
-  memoryText_->update();
+  memoryText_->updateMemory(pos, len);
 
   memoryDirty_ = false;
 }
@@ -898,6 +709,9 @@ CQZ80Dbg::
 registersTraceSlot()
 {
   setRegistersTrace(registersGroup_->isChecked());
+
+  if (registersGroup_->isChecked())
+    regChanged(CZ80Reg::NONE);
 }
 
 void
@@ -905,6 +719,9 @@ CQZ80Dbg::
 flagsTraceSlot()
 {
   setFlagsTrace(flagsGroup_->isChecked());
+
+  if (flagsGroup_->isChecked())
+    regChanged(CZ80Reg::NONE);
 }
 
 void

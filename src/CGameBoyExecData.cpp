@@ -4,8 +4,9 @@
 
 CGameBoyExecData::
 CGameBoyExecData(CGameBoy *gameboy) :
- CZ80ExecData(*gameboy->getZ80()), gameboy_(gameboy)
+ CZ80ExecData(*gameboy->getZ80()), gameboy_(gameboy), trace_(false)
 {
+  trace_ = getenv("CGAMEBOY_EXEC_TRACE");
 }
 
 void
@@ -21,17 +22,18 @@ void
 CGameBoyExecData::
 preExec()
 {
-#if 0
-//if (! gameboy_->isBiosEnabled())
-int pc = z80_.getPC() - z80_.opData()->op->len;
-int op = z80_.opData()->op->ind;
-if (op > 0xff) ++pc;
+  if (trace_) {
+    //if (gameboy_->isBiosEnabled()) return;
 
-std::cerr << std::hex << pc << ":" << std::hex << (op & 0xff) <<
-             " AF=" << int(z80_.getAF()) << " BC=" << int(z80_.getBC()) <<
-             " DE=" << int(z80_.getDE()) << " HL=" << int(z80_.getHL()) <<
-             " SP=" << int(z80_.getSP()) << std::endl;
-#endif
+    int pc = z80_.getPC() - z80_.opData()->op->len;
+    int op = z80_.opData()->op->ind;
+    if (op > 0xff) ++pc;
+
+    std::cerr << std::hex << pc << ":" << std::hex << (op & 0xff) <<
+                 " AF=" << int(z80_.getAF()) << " BC=" << int(z80_.getBC()) <<
+                 " DE=" << int(z80_.getDE()) << " HL=" << int(z80_.getHL()) <<
+                 " SP=" << int(z80_.getSP()) << std::endl;
+  }
 }
 
 void
@@ -83,75 +85,14 @@ postStep()
       z80_.setByte(0xff05, newTima & 0xff);
 
       // timer overflow interrupt
-      if (overflow && z80_.getAllowInterrupts())
-        z80_.setBit(0xff0f, 2);
+      if (overflow)
+        gameboy_->signalInterrupt(CGameBoy::InterruptType::TIMER);
     }
   }
 
   //------
 
-  // handle interrupt flags if enabled
-  if (z80_.getIFF1()) {
-    uchar iflag = z80_.getByte(0xff0f);
-    uchar ie    = z80_.getByte(0xffff);
-
-    // vertical blank (LCD has drawn a frame)
-    if      (IS_BIT(iflag, 0)) {
-      if (IS_BIT(ie, 0)) {
-        z80_.resetBit(0xff0f, 0);
-
-        std::cerr << "vertical blank interrupt" << std::endl;
-
-        z80_.setIM0(0x40);
-        z80_.interrupt();
-      }
-    }
-    // LCD controller changed
-    else if (IS_BIT(iflag, 1)) {
-      // TODO
-      if (IS_BIT(ie, 1)) {
-        z80_.resetBit(0xff0f, 1);
-
-        std::cerr << "LCD controller interrupt" << std::endl;
-
-        z80_.setIM0(0x48);
-        z80_.interrupt();
-      }
-    }
-    // timer overflow
-    else if (IS_BIT(iflag, 2)) {
-      if (IS_BIT(ie, 2)) {
-        z80_.resetBit(0xff0f, 2);
-
-        std::cerr << "timer interrupt" << std::endl;
-
-        z80_.setIM0(0x50);
-        z80_.interrupt();
-      }
-    }
-    // Serial I/O transfer end
-    else if (IS_BIT(iflag, 3)) {
-      if (IS_BIT(ie, 3)) {
-        z80_.resetBit(0xff0f, 3);
-
-        std::cerr << "serial interrupt" << std::endl;
-
-        z80_.setIM0(0x58);
-        z80_.interrupt();
-      }
-    }
-    // Transition from High to Low of Pin number P10-P13 (key)
-    else if (IS_BIT(iflag, 4)) {
-      if (IS_BIT(ie, 4)) {
-        z80_.resetBit(0xff0f, 4);
-
-        std::cerr << "key interrupt" << std::endl;
-
-        z80_.setIM0(0x60);
-        z80_.interrupt();
-      }
-    }
-  }
+  gameboy_->handleInterrupts();
 }
 
 void

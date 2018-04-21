@@ -14,6 +14,7 @@ class CQZ80Inst;
 class CQZ80Stack;
 class CQZ80TraceBack;
 class CQZ80RegEdit;
+class CQZ80FlagCheck;
 class CZ80;
 
 class QGroupBox;
@@ -119,9 +120,6 @@ class CQZ80Dbg : public QFrame, public CZ80Trace {
   QPushButton *addButtonWidget(const QString &name, const QString &label);
 
   void setMemoryText();
-  void setMemoryLine(uint pos);
-
-  std::string getByteChar(uchar c);
 
   void updateInstructions();
 
@@ -176,6 +174,9 @@ class CQZ80Dbg : public QFrame, public CZ80Trace {
   void exitSlot();
 
  protected:
+  typedef std::map<CZ80Reg,CQZ80RegEdit*>    RegEdits;
+  typedef std::map<CZ80Flag,CQZ80FlagCheck*> FlagChecks;
+
   CZ80  *z80_ { nullptr };
   QFont  fixedFont_;
 
@@ -203,41 +204,18 @@ class CQZ80Dbg : public QFrame, public CZ80Trace {
 
   QGroupBox  *memoryGroup_ { nullptr };
   CQZ80Mem   *memoryText_  { nullptr };
-  QScrollBar *memoryVBar_  { nullptr };
 
   QGroupBox  *instructionsGroup_ { nullptr };
   CQZ80Inst  *instructionsText_  { nullptr };
-  QScrollBar *instructionsVBar_  { nullptr };
   QLineEdit  *opData_            { nullptr };
 
-  QGroupBox    *registersGroup_  { nullptr };
-  QGridLayout  *registersLayout_ { nullptr };
-  CQZ80RegEdit *afEdit_          { nullptr };
-  CQZ80RegEdit *af1Edit_         { nullptr };
-  CQZ80RegEdit *bcEdit_          { nullptr };
-  CQZ80RegEdit *bc1Edit_         { nullptr };
-  CQZ80RegEdit *deEdit_          { nullptr };
-  CQZ80RegEdit *de1Edit_         { nullptr };
-  CQZ80RegEdit *hlEdit_          { nullptr };
-  CQZ80RegEdit *hl1Edit_         { nullptr };
-  CQZ80RegEdit *ixEdit_          { nullptr };
-  CQZ80RegEdit *iEdit_           { nullptr };
-  CQZ80RegEdit *iyEdit_          { nullptr };
-  CQZ80RegEdit *rEdit_           { nullptr };
-  CQZ80RegEdit *spEdit_          { nullptr };
-  CQZ80RegEdit *iffEdit_         { nullptr };
-  CQZ80RegEdit *pcEdit_          { nullptr };
+  QGroupBox   *registersGroup_  { nullptr };
+  QGridLayout *registersLayout_ { nullptr };
+  RegEdits     regEdits_;
 
   QGroupBox   *flagsGroup_  { nullptr };
   QGridLayout *flagsLayout_ { nullptr };
-  QCheckBox   *sFlagCheck_  { nullptr };
-  QCheckBox   *zFlagCheck_  { nullptr };
-  QCheckBox   *yFlagCheck_  { nullptr };
-  QCheckBox   *hFlagCheck_  { nullptr };
-  QCheckBox   *xFlagCheck_  { nullptr };
-  QCheckBox   *pFlagCheck_  { nullptr };
-  QCheckBox   *nFlagCheck_  { nullptr };
-  QCheckBox   *cFlagCheck_  { nullptr };
+  FlagChecks   flagChecks_;
 
   QGroupBox  *stackGroup_ { nullptr };
   CQZ80Stack *stackText_  { nullptr };

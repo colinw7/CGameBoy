@@ -1,14 +1,34 @@
 #include <CQZ80Memory.h>
 #include <CQZ80Dbg.h>
 #include <QMenu>
+#include <QScrollBar>
 #include <QContextMenuEvent>
 #include <QPainter>
+#include <QStyle>
 
+#if 0
 CQZ80Mem::
 CQZ80Mem(CQZ80Dbg *dbg) :
  QFrame(nullptr), dbg_(dbg)
 {
   setObjectName("mem");
+
+  vw_ = style()->pixelMetric(QStyle::PM_ScrollBarExtent);
+
+  setContentsMargins(0, 0, vw_, 0);
+
+  //--
+
+  vbar_ = new QScrollBar(Qt::Vertical, this);
+
+  vbar_->setObjectName("memoryVbar");
+  vbar_->setPageStep  (dbg->getNumMemoryLines());
+  vbar_->setSingleStep(1);
+  vbar_->setRange     (0, 8192 - vbar_->pageStep());
+
+  connect(vbar_, SIGNAL(valueChanged(int)), this, SLOT(sliderSlot(int)));
+
+  //--
 
   lines_.resize(8192);
 }
@@ -30,6 +50,100 @@ setFont(const QFont &font)
 
 void
 CQZ80Mem::
+updatePC()
+{
+  CZ80 *z80 = dbg_->getZ80();
+
+  ushort pc = z80->getPC();
+
+  int mem1 = vbarValue();
+  int mem2 = mem1 + 20;
+  int mem  = pc / 8;
+
+  if (mem < mem1 || mem > mem2) {
+    setVBarValue(mem);
+  }
+  else {
+    update();
+  }
+}
+
+void
+CQZ80Mem::
+updateData()
+{
+  //CZ80 *z80 = dbg_->getZ80();
+
+  uint len = 65536;
+
+  ushort numLines = len / 8;
+
+  if ((len % 8) != 0) ++numLines;
+
+  //uint pos = z80->getPC();
+
+  //z80_->setPC(0);
+
+  std::string str;
+
+  uint pos1 = 0;
+
+  for (ushort i = 0; i < numLines; ++i) {
+    setMemoryLine(pos1);
+
+    pos1 += 8;
+  }
+
+  //z80_->setPC(pos);
+}
+
+void
+CQZ80Mem::
+updateMemory(ushort pos, ushort len)
+{
+  ushort pos1 = pos;
+  ushort pos2 = pos + len;
+
+  uint lineNum1 = pos1/8;
+  uint lineNum2 = pos2/8;
+
+  for (uint lineNum = lineNum1; lineNum <= lineNum2; ++lineNum)
+    setMemoryLine(8*lineNum);
+
+  update();
+}
+
+void
+CQZ80Mem::
+setMemoryLine(uint pos)
+{
+  CZ80 *z80 = dbg_->getZ80();
+
+  std::string pcStr = CStrUtil::toHexString(pos, 4);
+
+  //-----
+
+  std::string memStr;
+
+  for (ushort j = 0; j < 8; ++j) {
+    if (j > 0) memStr += " ";
+
+    memStr += CStrUtil::toHexString(z80->getByte(pos + j), 2);
+  }
+
+  std::string textStr;
+
+  for (ushort j = 0; j < 8; ++j) {
+    uchar c = z80->getByte(pos + j);
+
+    textStr += getByteChar(c);
+  }
+
+  setLine(pos, pcStr, memStr, textStr);
+}
+
+void
+CQZ80Mem::
 setLine(uint pc, const std::string &pcStr, const std::string &memStr, const std::string &textStr)
 {
   uint lineNum = pc / 8;
@@ -37,6 +151,42 @@ setLine(uint pc, const std::string &pcStr, const std::string &memStr, const std:
   assert(lineNum < lines_.size());
 
   lines_[lineNum] = CQZ80MemLine(pc, pcStr, memStr, textStr);
+}
+
+std::string
+CQZ80Mem::
+getByteChar(uchar c)
+{
+  std::string str;
+
+  if (c >= 0x20 && c < 0x7f)
+    str += c;
+  else
+    str += '.';
+
+  return str;
+}
+
+int
+CQZ80Mem::
+vbarValue() const
+{
+  return vbar_->value();
+}
+
+void
+CQZ80Mem::
+setVBarValue(int v)
+{
+  vbar_->setValue(v);
+}
+
+void
+CQZ80Mem::
+resizeEvent(QResizeEvent *)
+{
+  vbar_->move  (width() - vw_, 0);
+  vbar_->resize(vw_, height());
 }
 
 void
@@ -192,3 +342,78 @@ dumpSlot()
 
   fclose(fp);
 }
+#else
+class CQZ80MemIFace : public CQHexdumpDataIFace {
+ public:
+  CQZ80MemIFace(CZ80 *z80) :
+   z80_(z80) {
+  }
+
+  std::size_t size() const override { return 65536; }
+
+  uchar data(uint i) const override { return z80_->getByte(i); }
+
+ public:
+  CZ80* z80_ { nullptr };
+};
+
+CQZ80Mem::
+CQZ80Mem(CQZ80Dbg *dbg) :
+ CQHexdump(nullptr), dbg_(dbg)
+{
+  setObjectName("mem");
+
+  setShowAddress(true);
+  setWidth(8);
+
+  CZ80 *z80 = dbg_->getZ80();
+
+  iface_ = new CQZ80MemIFace(z80);
+
+  setData(iface_);
+}
+
+CQZ80Mem::
+~CQZ80Mem()
+{
+  delete iface_;
+}
+
+void
+CQZ80Mem::
+updatePC()
+{
+  CZ80 *z80 = dbg_->getZ80();
+
+  ushort pc = z80->getPC();
+
+  setPosition(pc);
+
+  // scrollToPosition();
+}
+
+void
+CQZ80Mem::
+updateData()
+{
+  CZ80 *z80 = dbg_->getZ80();
+
+  const CZ80::MemFlagsArray &memFlagsArray = z80->memFlagsArray();
+
+  for (const auto &memFlags : memFlagsArray) {
+    if      (memFlags.flags() & int(CZ80MemType::READ_ONLY))
+      addMemColor(memFlags.pos(), memFlags.len(), dbg_->readOnlyBgColor());
+    else if (memFlags.flags() & int(CZ80MemType::SCREEN))
+      addMemColor(memFlags.pos(), memFlags.len(), dbg_->screenBgColor());
+  }
+
+  update();
+}
+
+void
+CQZ80Mem::
+updateMemory(ushort /*pos*/, ushort /*len*/)
+{
+  updateData();
+}
+#endif

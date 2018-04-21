@@ -123,9 +123,6 @@ screenStep(int t)
 
         if (screenLine_ >= gameboy_->getScreenPixelHeight()) {
           setLCDMode(1); // Vertical Blank
-
-          if (z80->getAllowInterrupts())
-            z80->setBit(0xff0f, 0);
         }
         else {
           setLCDMode(2); // OAM
@@ -182,20 +179,23 @@ setLCDMode(int mode)
   // update mode in STAT (bottom two bits)
   z80->setByte(0xff41, (stat & 0xFC) | screenMode_);
 
-  if (TST_BIT(stat, 5))
-    z80->setBit(0xff0f, 1);
-
   if      (screenMode_ == 0) { // Horizontal Blank
+    // signal STAT interrupt if STAT bit set
     if (TST_BIT(stat, 3))
-      z80->setBit(0xff0f, 1); // enable interrupt if STAT bit set
+      gameboy()->signalInterrupt(CGameBoy::InterruptType::LCD_STAT);
   }
   else if (screenMode_ == 1) { // Vertical Blank
+    // signal Vertical Blank interrupt
+    gameboy()->signalInterrupt(CGameBoy::InterruptType::VBLANK);
+
+    // signal STAT interrupt if STAT bit set
     if (TST_BIT(stat, 4))
-      z80->setBit(0xff0f, 1); // enable interrupt if STAT bit set
+      gameboy()->signalInterrupt(CGameBoy::InterruptType::LCD_STAT);
   }
   else if (screenMode_ == 2) { // OAM
+    // signal STAT interrupt if STAT bit set
     if (TST_BIT(stat, 5))
-      z80->setBit(0xff0f, 1); // enable interrupt if STAT bit set
+      gameboy()->signalInterrupt(CGameBoy::InterruptType::LCD_STAT);
   }
 }
 
@@ -214,14 +214,12 @@ updateLCDLine()
   if (lyc == screenLine_) {
     z80->setBit(0xff41, 2); // set coincidence in STAT
 
+    // signal STAT interrupt if STAT bit set
     if (TST_BIT(stat, 6))
-      z80->setBit(0xff0f, 1); // enable interrupt if STAT bit set
+      gameboy()->signalInterrupt(CGameBoy::InterruptType::LCD_STAT);
   }
   else {
     z80->resetBit(0xff41, 2); // reset coincidence in STAT
-
-    if (TST_BIT(stat, 6))
-      z80->resetBit(0xff0f, 0); // disable interrupt if STAT bit set
   }
 }
 
@@ -601,7 +599,11 @@ drawLineSprites(int y)
       for (int xo = 0; xo < 8; ++xo) {
         int xof = (sprite.xflip ? 7 - xo : xo);
 
-        drawTilePixel(x1 + xo, y, bank, sprite.t, xof, yof, sprite.bankNum, palette, true);
+        int x2 = x1 + xo;
+
+        if (x2 >= 0 && x2 < int(gameboy_->getScreenPixelWidth())) {
+          drawTilePixel(x2, y, bank, sprite.t, xof, yof, sprite.bankNum, palette, true);
+        }
       }
     }
     else {
@@ -611,10 +613,14 @@ drawLineSprites(int y)
       for (int xo = 0; xo < 8; ++xo) {
         int xof = (sprite.xflip ? 7 - xo : xo);
 
-        if (yo < 8)
-          drawTilePixel(x1 + xo, y, bank, t1, xof, yof    , sprite.bankNum, palette, true);
-        else
-          drawTilePixel(x1 + xo, y, bank, t2, xof, yof - 8, sprite.bankNum, palette, true);
+        int x2 = x1 + xo;
+
+        if (x2 >= 0 && x2 < int(gameboy_->getScreenPixelWidth())) {
+          if (yo < 8)
+            drawTilePixel(x2, y, bank, t1, xof, yof    , sprite.bankNum, palette, true);
+          else
+            drawTilePixel(x2, y, bank, t2, xof, yof - 8, sprite.bankNum, palette, true);
+        }
       }
     }
   }

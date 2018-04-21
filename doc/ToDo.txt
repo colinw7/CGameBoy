@@ -1,6 +1,6 @@
 . Background using SCREEN/READONLY flags
 . Edit Video Flags
-. Cartridget Info Window
+. Cartridge Info Window
 . Show/Hide Graphics ...
 . Buttons for Keys
 . Graphical Border + Keys for Screen
@@ -12,3 +12,5 @@
 . CStrUtil::toHexString -> CZ80::hexString
 . Use CBit namespace for bit flags
 . Cycle accurate, all operators based on cpu ticks
+. Replace memory widget
+. Resizable instructions widget

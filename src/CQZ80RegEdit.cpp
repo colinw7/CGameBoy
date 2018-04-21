@@ -26,11 +26,11 @@ CQZ80RegEdit(CZ80 *z80, CZ80Reg reg) :
     case CZ80Reg::HL : str = "HL" ; break;
     case CZ80Reg::HL1: str = "HL'"; break;
     case CZ80Reg::IX : str = "IX" ; break;
-    case CZ80Reg::I  : str = "I"  ; break;
     case CZ80Reg::IY : str = "IY" ; break;
-    case CZ80Reg::R  : str = "R"  ; break;
     case CZ80Reg::SP : str = "SP" ; break;
     case CZ80Reg::PC : str = "PC" ; break;
+    case CZ80Reg::I  : str = "I"  ; break;
+    case CZ80Reg::R  : str = "R"  ; break;
     case CZ80Reg::IFF: str = "IFF"; break;
     default          : assert(false);
   }
@@ -68,11 +68,36 @@ setFont(const QFont &font)
 
 void
 CQZ80RegEdit::
+updateValue()
+{
+  switch (reg_) {
+    case CZ80Reg::AF : setValue(z80_->getAF ()); break;
+    case CZ80Reg::AF1: setValue(z80_->getAF1()); break;
+    case CZ80Reg::BC : setValue(z80_->getBC ()); break;
+    case CZ80Reg::BC1: setValue(z80_->getBC1()); break;
+    case CZ80Reg::DE : setValue(z80_->getDE ()); break;
+    case CZ80Reg::DE1: setValue(z80_->getDE1()); break;
+    case CZ80Reg::HL : setValue(z80_->getHL ()); break;
+    case CZ80Reg::HL1: setValue(z80_->getHL1()); break;
+    case CZ80Reg::IX : setValue(z80_->getIX ()); break;
+    case CZ80Reg::I  : setValue(z80_->getI  ()); break;
+    case CZ80Reg::IY : setValue(z80_->getIY ()); break;
+    case CZ80Reg::R  : setValue(z80_->getR  ()); break;
+    case CZ80Reg::SP : setValue(z80_->getSP ()); break;
+    case CZ80Reg::PC : setValue(z80_->getPC ()); break;
+    case CZ80Reg::IFF: setValue(z80_->getIFF()); break;
+    default          : assert(false);
+  }
+}
+
+void
+CQZ80RegEdit::
 setValue(uint value)
 {
   int len = 4;
 
-  if (reg_ == CZ80Reg::I || reg_ == CZ80Reg::R || reg_ == CZ80Reg::IFF) len = 2;
+  if (reg_ == CZ80Reg::I || reg_ == CZ80Reg::R || reg_ == CZ80Reg::IFF)
+    len = 2;
 
   edit_->setText(CStrUtil::toHexString(value, len).c_str());
 }

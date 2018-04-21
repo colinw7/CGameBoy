@@ -160,7 +160,34 @@ class CircBufferT {
 
 //--------
 
+class CZ80MemFlags {
+ public:
+  CZ80MemFlags(ushort pos, ushort len, uchar flags) :
+   pos_(pos), len_(len), flags_(flags) {
+  }
+
+  ushort pos() const { return pos_; }
+  ushort len() const { return len_; }
+
+  const uchar &flags() const { return flags_; }
+  void setFlags(const uchar &v) { flags_ = v; }
+
+  bool overlaps(ushort pos, ushort len) const {
+    return ! (pos + len - 1 < pos_ || pos > pos_ + len_ - 1);
+  }
+
+ private:
+  ushort pos_   { 0 };
+  ushort len_   { 0 };
+  uchar  flags_ { 0 };
+};
+
+//--------
+
 class CZ80 {
+ public:
+  typedef std::vector<CZ80MemFlags> MemFlagsArray;
+
  public:
   CZ80();
  ~CZ80();
@@ -453,6 +480,8 @@ class CZ80 {
   void setMemFlags  (ushort pos, ushort len, uchar flag);
   void resetMemFlags(ushort pos, ushort len, uchar flag);
 
+  const MemFlagsArray &memFlagsArray() const { return memFlagsArray_; }
+
   // -------
 
  public:
@@ -702,7 +731,9 @@ class CZ80 {
   void ex_p_sp_hl();
   void ex_p_sp_ix();
   void ex_p_sp_iy();
+#ifndef GAMEBOY_Z80
   void exx();
+#endif
   void ldi();
   void ldir();
   void ldd();
@@ -2035,7 +2066,8 @@ class CZ80 {
   bool allowInterrupts_ { true };
 
   uchar         *memory_ { nullptr };
-  uchar         *flags_  { nullptr };
+//uchar         *flags_  { nullptr };
+  MemFlagsArray  memFlagsArray_;
   CZ80Registers  registers_;
 
   PCBuffer pcBuffer_;

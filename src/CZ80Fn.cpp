@@ -6682,4 +6682,6 @@ f_invalid(CZ80OpData *opData)
   std::cerr << "invalid op : " << std::hex << opData->op->ind << std::endl;
 
   //assert(false);
+
+  f_halt(opData);
 }

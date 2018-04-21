@@ -126,6 +126,7 @@ execStep1(bool notify)
 
     setPC(pc1);
 
+    // TODO: move to pre-exec
     if (dump_)
       opData_->dump(dump_file_);
 
@@ -136,10 +137,17 @@ execStep1(bool notify)
 
     r = opData_->op->r;
     t = opData_->op->t;
-  }
 
-  incR(r);
-  incT(t);
+    incR(r);
+    incT(t);
+
+    if (execData_)
+      execData_->postExec();
+  }
+  else {
+    incR(r); // dummy instruction tick
+    incT(t);
+  }
 
   if (execData_)
     execData_->postStep();

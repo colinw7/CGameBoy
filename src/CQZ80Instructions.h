@@ -37,8 +37,6 @@ class CQZ80Inst : public QFrame {
  public:
   CQZ80Inst(CQZ80Dbg *dbg);
 
-  void setVBar(QScrollBar *vbar) { vbar_ = vbar; }
-
   void setFont(const QFont &font);
 
   void clear();
@@ -51,9 +49,14 @@ class CQZ80Inst : public QFrame {
   bool getLineForPC(uint pc, uint &lineNum) const;
   uint getPCForLine(uint lineNum);
 
+  int vbarValue() const;
+  void setVBarValue(int v);
+
   void clearBreakpoints() { breakpoints_.clear(); }
 
   void addBreakPoint(uint pc) { breakpoints_.insert(pc); }
+
+  void resizeEvent(QResizeEvent *);
 
   void mouseDoubleClickEvent(QMouseEvent *e);
 
@@ -77,6 +80,7 @@ class CQZ80Inst : public QFrame {
   typedef std::set<uint>             BreakpointList;
 
   CQZ80Dbg*      dbg_        { nullptr };
+  int            vw_         { 0 };
   QScrollBar*    vbar_       { nullptr };
   LineList       lines_;
   int            yOffset_    { 0 };

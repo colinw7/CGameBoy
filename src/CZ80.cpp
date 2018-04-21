@@ -20,10 +20,10 @@ CZ80::
 CZ80()
 {
   memory_ = new uchar [65536];
-  flags_  = new uchar [65536];
+//flags_  = new uchar [65536];
 
   memset(memory_, 0, 65536);
-  memset(flags_ , 0, 65536);
+//memset(flags_ , 0, 65536);
 
   cpuHz_     = 4*1024*1024; // 4Mhz
   screenHtz_ = 50;
@@ -71,7 +71,7 @@ CZ80::
   delete dump_file_;
 
   delete [] memory_;
-  delete [] flags_;
+//delete [] flags_;
 
   delete opData_;
 }
@@ -1045,9 +1045,16 @@ bool
 CZ80::
 isReadOnly(ushort pos, ushort len) const
 {
+  for (const auto &memFlags : memFlagsArray_) {
+    if (memFlags.overlaps(pos, len) && memFlags.flags() & uint(CZ80MemType::READ_ONLY))
+      return true;
+  }
+
+#if 0
   for (ushort i = 0; i < len; ++i, ++pos)
     if (flags_[pos] & uint(CZ80MemType::READ_ONLY))
       return true;
+#endif
 
   return false;
 }
@@ -1056,9 +1063,16 @@ bool
 CZ80::
 isWriteTrigger(ushort pos, ushort len) const
 {
+  for (const auto &memFlags : memFlagsArray_) {
+    if (memFlags.overlaps(pos, len) && memFlags.flags() & uint(CZ80MemType::WRITE_TRIGGER))
+      return true;
+  }
+
+#if 0
   for (ushort i = 0; i < len; ++i, ++pos)
     if (flags_[pos] & uint(CZ80MemType::WRITE_TRIGGER))
       return true;
+#endif
 
   return false;
 }
@@ -1067,9 +1081,16 @@ bool
 CZ80::
 isScreen(ushort pos, ushort len) const
 {
+  for (const auto &memFlags : memFlagsArray_) {
+    if (memFlags.overlaps(pos, len) && memFlags.flags() & uint(CZ80MemType::SCREEN))
+      return true;
+  }
+
+#if 0
   for (ushort i = 0; i < len; ++i, ++pos)
     if (flags_[pos] & uint(CZ80MemType::SCREEN))
       return true;
+#endif
 
   return false;
 }
@@ -1078,16 +1099,49 @@ void
 CZ80::
 setMemFlags(ushort pos, ushort len, uchar flag)
 {
+  bool found = false;
+
+  for (auto &memFlags : memFlagsArray_) {
+    if (memFlags.overlaps(pos, len)) {
+      memFlags.setFlags(memFlags.flags() | flag);
+
+      found = true;
+
+      break;
+    }
+  }
+
+  if (! found)
+    memFlagsArray_.push_back(CZ80MemFlags(pos, len, flag));
+
+#if 0
   for (ushort i = 0; i < len; ++i, ++pos)
     flags_[pos] |= flag;
+#endif
 }
 
 void
 CZ80::
 resetMemFlags(ushort pos, ushort len, uchar flag)
 {
+  bool found = false;
+
+  for (auto &memFlags : memFlagsArray_) {
+    if (memFlags.overlaps(pos, len)) {
+      memFlags.setFlags(memFlags.flags() & ~flag);
+
+      found = true;
+
+      break;
+    }
+  }
+
+  assert(found);
+
+#if 0
   for (ushort i = 0; i < len; ++i, ++pos)
     flags_[pos] &= ~flag;
+#endif
 }
 
 //---------
@@ -3295,6 +3349,7 @@ ex_p_sp_iy()
   setIY  (sp);
 }
 
+#ifndef GAMEBOY_Z80
 void
 CZ80::
 exx()
@@ -3305,6 +3360,7 @@ exx()
   t = getDE1(); setDE1(getDE()); setDE(t);
   t = getHL1(); setHL1(getHL()); setHL(t);
 }
+#endif
 
 //---------
 

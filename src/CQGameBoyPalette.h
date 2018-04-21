@@ -23,7 +23,9 @@ class CQGameBoyPalette : public QFrame {
   void update();
 
  private slots:
-  void paletteColorPressed(int color, int palette);
+  void colorPalettePressed(int color, int palette);
+
+  void colorSetPressed(int color, int addr);
 
   void colorButtonSlot();
 
@@ -40,6 +42,7 @@ class CQGameBoyPalette : public QFrame {
   QLabel*         colorLabel_  { nullptr };
   QToolButton*    colorButton_ { nullptr };
   int             palette_     { 0 };
+  int             addr_        { 0 };
   int             color_       { 0 };
 };
 

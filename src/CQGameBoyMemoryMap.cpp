@@ -482,7 +482,13 @@ data(uint i) const
     return gameboy->readCartridge(i);
   }
   else if (type_ == Type::VRAM) {
-    return gameboy->getVRam(bankNum(), i);
+    if (gameboy->isGBC())
+      return gameboy->getVRam(bankNum(), i);
+    else {
+      CZ80 *z80 = gameboy->getZ80();
+
+      return z80->getByte(start() + i);
+    }
   }
   else {
     CZ80 *z80 = gameboy->getZ80();

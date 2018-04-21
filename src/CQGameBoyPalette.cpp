@@ -33,7 +33,7 @@ CQGameBoyPalette(CQGameBoyVideo *video) :
     for (int i = 0; i < 8; ++i) {
       CQGameBoyColorPalette *palette = new CQGameBoyColorPalette(this, i);
 
-      connect(palette, SIGNAL(colorPressed(int, int)), this, SLOT(paletteColorPressed(int, int)));
+      connect(palette, SIGNAL(colorPressed(int, int)), this, SLOT(colorPalettePressed(int, int)));
 
       palettes_.push_back(palette);
     }
@@ -46,8 +46,11 @@ CQGameBoyPalette(CQGameBoyVideo *video) :
     sets_.push_back(new CQGameBoyPaletteSet(this, "OBP0", 0xff48));
     sets_.push_back(new CQGameBoyPaletteSet(this, "OBP1", 0xff49));
 
-    for (auto &set : sets_)
+    for (auto &set : sets_) {
       paletteLayout->addWidget(set);
+
+      connect(set, SIGNAL(colorPressed(int, int)), this, SLOT(colorSetPressed(int, int)));
+    }
   }
 
   layout->addLayout(paletteLayout);
@@ -97,9 +100,10 @@ update()
 
 void
 CQGameBoyPalette::
-paletteColorPressed(int color, int palette)
+colorPalettePressed(int color, int palette)
 {
   palette_ = palette;
+  addr_    = 0;
   color_   = color;
 
   CQGameBoy *gameboy = video_->screen()->gameboy();
@@ -113,20 +117,52 @@ paletteColorPressed(int color, int palette)
 
 void
 CQGameBoyPalette::
+colorSetPressed(int color, int addr)
+{
+  palette_ = 0;
+  addr_    = addr;
+  color_   = color;
+
+  CQGameBoy *gameboy = video_->screen()->gameboy();
+
+  CZ80 *z80 = gameboy->getZ80();
+
+  const QColor &c = gameboy->mappedPaletteColor(z80->getByte(addr_), color_);
+
+  colorLabel_->setText(QString("%1:%2").arg(CZ80::hexString((ushort) addr_).c_str()).arg(color));
+
+  setButtonColor(c);
+}
+
+void
+CQGameBoyPalette::
 colorButtonSlot()
 {
   CQGameBoy *gameboy = video_->screen()->gameboy();
 
-  QColor c = gameboy->vramBgPaletteColor(palette_, color_);
+  if (gameboy->isGBC()) {
+    QColor c = gameboy->vramBgPaletteColor(palette_, color_);
 
-  QColor c1 = QColorDialog::getColor(c, this);
+    QColor c1 = QColorDialog::getColor(c, this);
 
-  if (c1.isValid()) {
-    CQGameBoy *gameboy = video_->screen()->gameboy();
+    if (c1.isValid()) {
+      gameboy->setVRamBgPaletteColor(palette_, color_, c1);
 
-    gameboy->setVRamBgPaletteColor(palette_, color_, c1);
+      setButtonColor(c1);
+    }
+  }
+  else {
+    CZ80 *z80 = gameboy->getZ80();
 
-    setButtonColor(c1);
+    const QColor &c = gameboy->mappedPaletteColor(z80->getByte(addr_), color_);
+
+    QColor c1 = QColorDialog::getColor(c, this);
+
+    if (c1.isValid()) {
+      gameboy->setMappedPaletteColor(z80->getByte(addr_), color_, c1);
+
+      setButtonColor(c1);
+    }
   }
 
   update();
@@ -205,9 +241,15 @@ void
 CQGameBoyPaletteSet::
 mousePressEvent(QMouseEvent *e)
 {
-  int n = e->x()/size_;
+  QFontMetrics fm(font());
 
-  emit colorPressed(n, addr_);
+  int tw = fm.width("XXXXX");
+
+  if (e->x() >= tw && e->x() <= int(tw + 4*size_)) {
+    int n = (e->x() - tw)/size_;
+
+    emit colorPressed(n, addr_);
+  }
 }
 
 void
@@ -222,21 +264,16 @@ paintEvent(QPaintEvent *)
 
   CZ80 *z80 = gameboy->getZ80();
 
-  uchar data = z80->getByte(addr_);
-
-  uchar data00 = (data & 0x03);
-  uchar data01 = (data & 0x0c) >> 2;
-  uchar data10 = (data & 0x30) >> 4;
-  uchar data11 = (data & 0xc0) >> 6;
-
   QPainter painter(this);
 
   painter.fillRect(rect(), bg_);
 
-  const QColor &c1 = gameboy->paletteColor(data00);
-  const QColor &c2 = gameboy->paletteColor(data01);
-  const QColor &c3 = gameboy->paletteColor(data10);
-  const QColor &c4 = gameboy->paletteColor(data11);
+  uchar data = z80->getByte(addr_);
+
+  const QColor &c1 = gameboy->mappedPaletteColor(data, 0);
+  const QColor &c2 = gameboy->mappedPaletteColor(data, 1);
+  const QColor &c3 = gameboy->mappedPaletteColor(data, 2);
+  const QColor &c4 = gameboy->mappedPaletteColor(data, 3);
 
   int x = 0;
   int y = 0;

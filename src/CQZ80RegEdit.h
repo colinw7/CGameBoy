@@ -15,6 +15,8 @@ class CQZ80RegEdit : public QFrame {
 
   void setFont(const QFont &font);
 
+  void updateValue();
+
   void setValue(uint value);
   uint getValue() const;
 

@@ -17,7 +17,8 @@ class CZ80ExecData {
   virtual void preStep () { }
   virtual void postStep() { }
 
-  virtual void preExec() { }
+  virtual void preExec () { }
+  virtual void postExec() { }
 
   virtual void decT(uchar) { }
   virtual void incT(uchar) { }

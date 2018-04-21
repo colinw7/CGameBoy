@@ -5,12 +5,30 @@
 #include <QScrollBar>
 #include <QContextMenuEvent>
 #include <QPainter>
+#include <QStyle>
 
 CQZ80Inst::
 CQZ80Inst(CQZ80Dbg *dbg) :
  QFrame(nullptr), dbg_(dbg)
 {
   setObjectName("inst");
+
+  vw_ = style()->pixelMetric(QStyle::PM_ScrollBarExtent);
+
+  setContentsMargins(0, 0, vw_, 0);
+
+  //--
+
+  vbar_ = new QScrollBar(Qt::Vertical, this);
+
+  vbar_->setObjectName("instructionsVbar");
+  vbar_->setPageStep  (dbg->getNumMemoryLines());
+  vbar_->setSingleStep(1);
+  vbar_->setRange     (0, 8192 - vbar_->pageStep());
+
+  connect(vbar_, SIGNAL(valueChanged(int)), this, SLOT(sliderSlot(int)));
+
+  //--
 
   lines_.resize(65536);
 }
@@ -73,6 +91,28 @@ CQZ80Inst::
 getPCForLine(uint lineNum)
 {
   return linePcMap_[lineNum];
+}
+
+int
+CQZ80Inst::
+vbarValue() const
+{
+  return vbar_->value();
+}
+
+void
+CQZ80Inst::
+setVBarValue(int v)
+{
+  vbar_->setValue(v);
+}
+
+void
+CQZ80Inst::
+resizeEvent(QResizeEvent *)
+{
+  vbar_->move  (width() - vw_, 0);
+  vbar_->resize(vw_, height());
 }
 
 void

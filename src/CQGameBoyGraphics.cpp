@@ -134,13 +134,21 @@ tileClickSlot(int tileMap, int tx, int ty)
   int tile     = gameboy->getTileNum(tileMap, tx, ty);
 //int tileData = tileDataSpin_->value();
 
-  CGameBoyTileAttr attr;
+  QString text;
 
-  gameboy->getTileAttr(tileMap, tx, ty, attr);
+  if (gameboy->isGBC()) {
+    CGameBoyTileAttr attr;
 
-  QString text = QString("(%1 %2) : Tile %3, Palette %4, VBank %5, XFlip %6, YFlip %7").
-                        arg(tx).arg(ty).arg(tile).arg(attr.pnum).arg(attr.bank).
-                        arg(attr.hflip).arg(attr.vflip);
+    gameboy->getTileAttr(tileMap, tx, ty, attr);
+
+    text = QString("(%1 %2) : Tile %3, Palette %4, VBank %5, XFlip %6, YFlip %7").
+                   arg(tx).arg(ty).arg(tile).arg(attr.pnum).arg(attr.bank).
+                   arg(attr.hflip).arg(attr.vflip);
+  }
+  else {
+    text = QString("(%1 %2) : Tile %3").
+                   arg(tx).arg(ty).arg(tile);
+  }
 
   infoLabel_->setText(text);
 }

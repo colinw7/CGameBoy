@@ -528,7 +528,7 @@ memPostWriteData(ushort pos, uchar data)
     // LCDC
     else if (pos == 0xff40) {
       if (data != lastLCDC_) {
-        std::cerr << "Write LCDC " << std::hex << int(data) << std::endl;
+        //std::cerr << "Write LCDC " << std::hex << int(data) << std::endl;
       }
     }
     // LCDC Status (STAT)
