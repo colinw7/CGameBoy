@@ -154,7 +154,7 @@ enum CZ80OpId {
   OP_XOR
 };
 
-class CZ80OpData;
+struct CZ80OpData;
 
 struct CZ80Op {
   CZ80OpId    id    { OP_NOP }; // op id

@@ -44,15 +44,15 @@ class CQGameBoyScreen : public QFrame, public CZ80Screen {
 
   void redraw();
 
-  void paintEvent(QPaintEvent *);
+  void paintEvent(QPaintEvent *) override;
 
-  void mousePressEvent  (QMouseEvent *e);
-  void mouseReleaseEvent(QMouseEvent *e);
+  void mousePressEvent  (QMouseEvent *e) override;
+  void mouseReleaseEvent(QMouseEvent *e) override;
 
-  void keyPressEvent  (QKeyEvent *e);
-  void keyReleaseEvent(QKeyEvent *e);
+  void keyPressEvent  (QKeyEvent *e) override;
+  void keyReleaseEvent(QKeyEvent *e) override;
 
-  void contextMenuEvent(QContextMenuEvent *e);
+  void contextMenuEvent(QContextMenuEvent *e) override;
 
   void drawScreen();
 
@@ -61,7 +61,7 @@ class CQGameBoyScreen : public QFrame, public CZ80Screen {
   void drawLineSprites(int y);
 
  public:
-  QSize sizeHint() const;
+  QSize sizeHint() const override;
 
  public slots:
   void instTimeOut();
