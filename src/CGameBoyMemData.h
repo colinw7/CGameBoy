@@ -19,7 +19,7 @@ class CGameBoyMemData : public CZ80MemData {
   void memPreWrite (const uchar *data, ushort pos, ushort) override;
   void memPostWrite(const uchar *data, ushort pos, ushort) override;
 
-  bool memTrigger(const uchar *data, ushort pos, ushort);
+  bool memTrigger(const uchar *data, ushort pos, ushort) override;
 
   uchar biosData(ushort pos);
 

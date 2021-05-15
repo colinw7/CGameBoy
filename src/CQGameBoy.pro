@@ -46,6 +46,7 @@ CQZ80Instructions.cpp \
 CQZ80Stack.cpp \
 CQZ80TraceBack.cpp \
 CQZ80RegEdit.cpp \
+CQZ80FlagCheck.cpp \
 \
 CZ80.cpp \
 CZ80Assemble.cpp \
@@ -94,6 +95,7 @@ CQZ80Instructions.h \
 CQZ80Stack.h \
 CQZ80TraceBack.h \
 CQZ80RegEdit.h \
+CQZ80FlagCheck.h \
 \
 CZ80AssembleData.h \
 CZ80Assemble.h \
