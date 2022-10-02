@@ -10,7 +10,7 @@ MOC_DIR = .moc
 
 INCLUDEPATH += . ../include
 
-QMAKE_CXXFLAGS += -std=c++14 -DGAMEBOY_Z80 -DCL_PARSER
+QMAKE_CXXFLAGS += -std=c++17 -DGAMEBOY_Z80 -DCL_PARSER
 
 CONFIG += debug
 

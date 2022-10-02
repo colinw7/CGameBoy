@@ -243,7 +243,7 @@ mousePressEvent(QMouseEvent *e)
 {
   QFontMetrics fm(font());
 
-  int tw = fm.width("XXXXX");
+  int tw = fm.horizontalAdvance("XXXXX");
 
   if (e->x() >= tw && e->x() <= int(tw + 4*size_)) {
     int n = (e->x() - tw)/size_;
@@ -258,7 +258,7 @@ paintEvent(QPaintEvent *)
 {
   QFontMetrics fm(font());
 
-  int tw = fm.width("XXXXX");
+  int tw = fm.horizontalAdvance("XXXXX");
 
   CQGameBoy *gameboy = palette_->video()->screen()->gameboy();
 
@@ -294,7 +294,7 @@ sizeHint() const
 {
   QFontMetrics fm(font());
 
-  int tw = fm.width("XXXX");
+  int tw = fm.horizontalAdvance("XXXX");
 
   return QSize(tw + size_*4, size_);
 }

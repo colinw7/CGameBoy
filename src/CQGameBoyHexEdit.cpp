@@ -65,7 +65,7 @@ setFont(const QFont &font)
 {
   QFontMetrics fm(font);
 
-  int w = fm.width("XXXX");
+  int w = fm.horizontalAdvance("XXXX");
 
   label_->setFixedWidth(w);
 

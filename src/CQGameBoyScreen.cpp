@@ -1,10 +1,12 @@
 #include <CQGameBoyScreen.h>
 #include <CQGameBoy.h>
 #include <CQUtil.h>
-#include <QMouseEvent>
+
 #include <svg/GameboyShell_png.h>
 
+#include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QMenu>
 #include <QTimer>
 

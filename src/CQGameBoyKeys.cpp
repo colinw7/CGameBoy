@@ -37,7 +37,7 @@ paintEvent(QPaintEvent *)
   int bx  = fm.ascent();
   int by  = fm.ascent();
   int dy  = fm.height() + 2;
-  int cw1 = fm.width("Right");
+  int cw1 = fm.horizontalAdvance("Right");
 
   uchar sel = gameboy()->keySel();
 

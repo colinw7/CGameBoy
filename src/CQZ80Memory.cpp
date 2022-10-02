@@ -41,7 +41,7 @@ setFont(const QFont &font)
 
   QFontMetrics fm(font);
 
-  int memoryWidth = fm.width("0000  00 00 00 00 00 00 00 00  XXXXXXXX");
+  int memoryWidth = fm.horizontalAdvance("0000  00 00 00 00 00 00 00 00  XXXXXXXX");
   int charHeight  = fm.height();
 
   setFixedWidth (memoryWidth + 32);
@@ -222,7 +222,7 @@ paintEvent(QPaintEvent *)
   QFontMetrics fm(font());
 
   charHeight_ = fm.height();
-  charWidth_  = fm.width(" ");
+  charWidth_  = fm.horizontalAdvance(" ");
 
   int charAscent = fm.ascent();
 
@@ -272,8 +272,8 @@ paintEvent(QPaintEvent *)
         std::string mid = line.memStr().substr(i1, 2);
         std::string rhs = line.memStr().substr(i2);
 
-        int w1 = fm.width(lhs.c_str());
-        int w2 = fm.width(mid.c_str());
+        int w1 = fm.horizontalAdvance(lhs.c_str());
+        int w2 = fm.horizontalAdvance(mid.c_str());
 
         p.drawText(x          , ya, lhs.c_str());
         p.drawText(x + w1 + w2, ya, rhs.c_str());

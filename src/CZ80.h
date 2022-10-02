@@ -453,10 +453,10 @@ class CZ80 {
   uchar  getByte(ushort pos) const;
   ushort getWord() const;
   ushort getWord(ushort pos) const;
-  char   getSByte() const { return (schar) getByte(); }
-  char   getSByte(ushort pos) const { return (schar) getByte(pos); }
-  short  getSWord() const { return (sshort) getWord(); }
-  short  getSWord(ushort pos) const { return (sshort) getWord(pos); }
+  char   getSByte() const { return schar(getByte()); }
+  char   getSByte(ushort pos) const { return schar(getByte(pos)); }
+  short  getSWord() const { return sshort(getWord()); }
+  short  getSWord(ushort pos) const { return sshort(getWord(pos)); }
   bool   getBit(ushort pos, uchar bit) const;
   void   getBytes(uchar *c, ushort pos, ushort len) const;
 

@@ -137,9 +137,9 @@ paintEvent(QPaintEvent *)
   int by = fm.ascent();
   int dy = fm.height() + 2;
 
-  int cw1 = fm.width("Serial I/O");
-  int cw2 = fm.width("Flag");
-  int cw3 = fm.width("Enable");
+  int cw1 = fm.horizontalAdvance("Serial I/O");
+  int cw2 = fm.horizontalAdvance("Flag");
+  int cw3 = fm.horizontalAdvance("Enable");
 
   int x, y;
 

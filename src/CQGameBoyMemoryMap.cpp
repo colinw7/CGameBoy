@@ -170,9 +170,7 @@ setHexdumpRegion(CQGameBoyMemoryRegion *region)
 
     //---
 
-    QString text;
-
-    text.sprintf("%04x - %04x : ", region->start(), region->end());
+    auto text = QString::asprintf("%04x - %04x : ", region->start(), region->end());
 
     text += region->name();
 
@@ -369,8 +367,8 @@ paintEvent(QPaintEvent *)
     painter.drawRect(r);
 
     if (r.height() >= 3*fm.height()) {
-      QString ts; ts.sprintf("0x%04x", region->start());
-      QString te; te.sprintf("0x%04x", region->end  ());
+      QString ts = QString::asprintf("0x%04x", region->start());
+      QString te = QString::asprintf("0x%04x", region->end  ());
 
       painter.drawText(r.left() + b, r.top   () + b + fm.ascent (), ts);
       painter.drawText(r.left() + b, r.bottom() - b - fm.descent(), te);
