@@ -3,6 +3,7 @@
 #include <CQGameBoyScreen.h>
 #include <CQGameBoy.h>
 #include <CQUtil.h>
+#include <CQUtilEvent.h>
 
 #include <QSpinBox>
 #include <QCheckBox>

@@ -1,6 +1,7 @@
 #include <CQGameBoyScreen.h>
 #include <CQGameBoy.h>
 #include <CQUtil.h>
+#include <CQUtilEvent.h>
 
 #include <svg/GameboyShell_png.h>
 
